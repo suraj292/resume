@@ -43,6 +43,7 @@ onUnmounted(() => {
         <router-link to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Resume Builder</router-link>
         <router-link to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">ATS Checker</router-link>
         <router-link to="/templates" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Templates</router-link>
+        <router-link to="/blog" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Blog</router-link>
         <router-link to="/pricing" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Pricing</router-link>
         <router-link to="/contact" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Contact</router-link>
       </div>
@@ -67,6 +68,7 @@ onUnmounted(() => {
       <router-link to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Resume Builder</router-link>
       <router-link to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">ATS Checker</router-link>
       <router-link to="/templates" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Templates</router-link>
+      <router-link to="/blog" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Blog</router-link>
       <router-link to="/pricing" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Pricing</router-link>
       <router-link to="/contact" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Contact</router-link>
       <div class="h-px bg-slate-100 my-2"></div>

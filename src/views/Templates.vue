@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import templatesData from '../data/templates.json'
+import dummyData from '../data/dummydata.json'
 
 const activeFilter = ref('all')
 const isModalOpen = ref(false)
@@ -16,6 +17,7 @@ const filters = [
 ]
 
 const templates = ref(templatesData)
+const resumeData = ref(dummyData)
 
 const openModal = (template) => {
   selectedTemplate.value = template
@@ -92,18 +94,190 @@ const getTypeTags = (type) => {
                     v-show="isVisible(template.type)" 
                     class="template-card group bg-white rounded-2xl border border-slate-200 overflow-hidden relative"
                 >
-                    <!-- Thumbnail (Dynamically rendered based on JSON config) -->
-                    <div class="aspect-[3/4] relative p-6 cursor-pointer bg-slate-50" @click="openModal(template)">
-                        <div 
-                            class="w-full h-full bg-white shadow-sm flex relative overflow-hidden transition-transform duration-500 group-hover:scale-105"
-                            :class="template.thumbnail.mainClass"
-                        >
-                            <!-- Render elements recursively or iteratively -->
-                            <div v-for="(el, index) in template.thumbnail.elements" :key="index" :class="el.class">
-                                <div v-if="el.children">
-                                    <div v-for="(child, cIndex) in el.children" :key="cIndex" :class="child.class"></div>
+                    <!-- Thumbnail with Real Content -->
+                    <div class="aspect-[3/4] relative p-4 cursor-pointer bg-gradient-to-br from-slate-50 to-slate-100" @click="openModal(template)">
+                        <div class="w-full h-full bg-white shadow-md relative overflow-hidden transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-xl rounded-sm border border-slate-200/50">
+                            
+                            <!-- Modernist / Two Column Layout -->
+                            <div v-if="template.layout.style === 'two-column'" class="flex h-full">
+                                <!-- Left Sidebar -->
+                                <div class="w-[35%] bg-slate-50 p-3 space-y-2 border-r border-slate-200">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-slate-300 to-slate-400 rounded-full mx-auto mb-2 ring-2 ring-white"></div>
+                                    <div class="space-y-1">
+                                        <div class="font-bold uppercase tracking-wider text-slate-700 text-[2.5px] mb-0.5">Contact</div>
+                                        <div class="text-slate-600 text-[2px] leading-tight break-all">{{ resumeData.contact.email.substring(0, 18) }}</div>
+                                        <div class="text-slate-600 text-[2px]">{{ resumeData.contact.phone }}</div>
+                                        <div class="text-slate-600 text-[2px]">{{ resumeData.contact.location }}</div>
+                                    </div>
+                                    <div class="space-y-1 pt-1">
+                                        <div class="font-bold uppercase tracking-wider text-slate-700 text-[2.5px] mb-0.5">Skills</div>
+                                        <div v-for="(skill, i) in resumeData.skills.technical.slice(0, 5)" :key="i" class="text-slate-600 text-[2px] leading-relaxed pl-1 border-l-2" :class="template.layout.primaryColor.replace('bg-', 'border-')">{{ skill }}</div>
+                                    </div>
+                                </div>
+                                <!-- Right Content -->
+                                <div class="flex-1 p-3 space-y-2">
+                                    <div class="mb-2">
+                                        <div class="font-black text-slate-900 text-[5px] leading-tight mb-0.5">{{ resumeData.name }}</div>
+                                        <div :class="template.layout.primaryColor" class="text-white inline-block px-1 py-0.5 rounded-sm text-[2.5px] font-semibold">{{ resumeData.title }}</div>
+                                    </div>
+                                    <div class="h-[1px] bg-gradient-to-r from-slate-300 to-transparent"></div>
+                                    <div class="space-y-1.5">
+                                        <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Experience</div>
+                                        <div>
+                                            <div class="text-slate-900 font-bold text-[2.5px] mb-0.5">{{ resumeData.experience[0].position }}</div>
+                                            <div class="text-slate-600 text-[2px] mb-0.5">{{ resumeData.experience[0].company }} • {{ resumeData.experience[0].duration }}</div>
+                                            <div class="space-y-0.5">
+                                                <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                                <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                                <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Executive / Single Column Layout -->
+                            <div v-else-if="template.layout.style === 'single-column'" class="h-full p-3 space-y-2">
+                                <div class="text-center pb-2 border-b-2 border-slate-900">
+                                    <div class="font-black text-slate-900 text-[5px] tracking-wider mb-0.5" style="letter-spacing: 0.5px;">{{ resumeData.name.toUpperCase() }}</div>
+                                    <div class="text-slate-700 text-[2.5px] font-semibold">{{ resumeData.title }}</div>
+                                    <div class="text-slate-500 text-[2px] mt-0.5">{{ resumeData.contact.email }} • {{ resumeData.contact.phone }}</div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Professional Summary</div>
+                                    <div class="space-y-0.5">
+                                        <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                        <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                        <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                        <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1 pt-1">
+                                    <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Experience</div>
+                                    <div>
+                                        <div class="text-slate-900 font-bold text-[2.5px]">{{ resumeData.experience[0].position }}</div>
+                                        <div class="text-slate-600 text-[2px]">{{ resumeData.experience[0].company }}</div>
+                                        <div class="space-y-0.5 mt-0.5">
+                                            <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Creative / Sidebar Left Layout -->
+                            <div v-else-if="template.layout.style === 'sidebar-left'" class="flex h-full">
+                                <!-- Dark Sidebar -->
+                                <div class="w-[35%] bg-gradient-to-br from-slate-900 to-slate-800 p-2.5 text-white space-y-2">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-white/30 to-white/10 mx-auto mb-2 ring-2 ring-white/20"></div>
+                                    <div class="space-y-1 text-center">
+                                        <div class="font-bold text-[2.5px] leading-tight">{{ resumeData.name }}</div>
+                                        <div class="text-slate-300 text-[2px]">{{ resumeData.title }}</div>
+                                    </div>
+                                    <div class="h-[1px] bg-white/20 my-1"></div>
+                                    <div class="space-y-1">
+                                        <div class="font-semibold uppercase text-[2px] tracking-wide text-white/90">Contact</div>
+                                        <div class="text-white/70 text-[1.8px] leading-tight break-all">{{ resumeData.contact.email.substring(0, 18) }}</div>
+                                        <div class="text-white/70 text-[1.8px]">{{ resumeData.contact.phone }}</div>
+                                    </div>
+                                    <div class="space-y-1 pt-1">
+                                        <div class="font-semibold uppercase text-[2px] tracking-wide text-white/90">Skills</div>
+                                        <div v-for="(skill, i) in resumeData.skills.technical.slice(0, 3)" :key="i" class="text-white/70 text-[1.8px] pl-1 border-l border-white/30">{{ skill }}</div>
+                                    </div>
+                                </div>
+                                <!-- Right Content -->
+                                <div class="flex-1 p-3 space-y-2">
+                                    <div class="space-y-1">
+                                        <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">About</div>
+                                        <div class="space-y-0.5">
+                                            <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Experience</div>
+                                        <div class="text-slate-900 font-bold text-[2.5px]">{{ resumeData.experience[0].position }}</div>
+                                        <div class="text-slate-600 text-[2px]">{{ resumeData.experience[0].company }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tech Minimal Layout -->
+                            <div v-else-if="template.layout.style === 'minimal'" class="h-full p-3 space-y-2">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                                    <div>
+                                        <div class="font-black text-slate-900 text-[4px] leading-tight">{{ resumeData.name }}</div>
+                                        <div class="text-slate-700 text-[2.5px] font-medium">{{ resumeData.title }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-0.5">
+                                    <div v-for="(skill, i) in resumeData.skills.technical.slice(0, 4)" :key="i" :class="template.layout.primaryColor" class="text-white px-1 py-0.5 rounded text-[1.8px] font-medium">{{ skill }}</div>
+                                </div>
+                                <div class="space-y-1.5 pt-1">
+                                    <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Recent Experience</div>
+                                    <div>
+                                        <div class="text-slate-900 font-bold text-[2.5px]">{{ resumeData.experience[0].position }}</div>
+                                        <div class="text-slate-600 text-[2px] mb-0.5">{{ resumeData.experience[0].company }}</div>
+                                        <div class="space-y-0.5">
+                                            <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Centered Header / Graduate Layout -->
+                            <div v-else-if="template.layout.style === 'centered-header'" class="h-full p-3 space-y-2">
+                                <div class="text-center pb-2">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-200 to-indigo-300 rounded-full mx-auto mb-1 ring-2 ring-indigo-100"></div>
+                                    <div class="font-black text-slate-900 text-[4px] mb-0.5">{{ resumeData.name }}</div>
+                                    <div class="text-slate-700 text-[2.5px] font-medium">{{ resumeData.title }}</div>
+                                    <div class="text-slate-500 text-[2px] mt-0.5">{{ resumeData.contact.email }}</div>
+                                </div>
+                                <div class="h-[1px] bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+                                <div class="space-y-1">
+                                    <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Education</div>
+                                    <div class="text-slate-900 font-semibold text-[2.5px]">{{ resumeData.education[0].degree }}</div>
+                                    <div class="text-slate-600 text-[2px]">{{ resumeData.education[0].institution }}</div>
+                                    <div class="text-slate-500 text-[1.8px]">{{ resumeData.education[0].duration }}</div>
+                                </div>
+                                <div class="space-y-1 pt-1">
+                                    <div class="font-bold uppercase text-slate-800 text-[2.5px] tracking-wide">Experience</div>
+                                    <div class="space-y-0.5">
+                                        <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                        <div class="h-[1px] w-11/12 bg-slate-200 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grid Layout -->
+                            <div v-else-if="template.layout.style === 'grid'" class="h-full p-3 space-y-2">
+                                <div class="text-center pb-2 border-b-2 border-slate-900">
+                                    <div class="font-black text-slate-900 text-[5px] tracking-wider">{{ resumeData.name.toUpperCase() }}</div>
+                                    <div class="text-slate-700 text-[2px] mt-0.5">{{ resumeData.title }}</div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="space-y-1 p-1.5 bg-slate-50 rounded-sm">
+                                        <div class="font-bold text-slate-800 text-[2px] uppercase tracking-wider">Contact</div>
+                                        <div class="h-[1px] bg-slate-300 rounded"></div>
+                                        <div class="space-y-0.5">
+                                            <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-1 p-1.5 bg-slate-50 rounded-sm">
+                                        <div class="font-bold text-slate-800 text-[2px] uppercase tracking-wider">Skills</div>
+                                        <div class="h-[1px] bg-slate-300 rounded"></div>
+                                        <div class="space-y-0.5">
+                                            <div class="h-[1px] w-full bg-slate-200 rounded"></div>
+                                            <div class="h-[1px] w-4/5 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                         </div>
 
                         <!-- Hover Overlay -->
@@ -235,32 +409,122 @@ const getTypeTags = (type) => {
                         </div>
                     </div>
 
-                    <!-- Right: Visual Preview (Empty/Placeholder) -->
+                    <!-- Right: Visual Preview with Actual Content -->
                     <div class="w-full md:w-2/3 bg-slate-100 p-8 overflow-y-auto flex justify-center">
-                         <!-- A CSS-drawn A4 paper representation -->
-                         <div class="w-[210mm] min-h-[297mm] bg-white shadow-xl transform scale-[0.5] md:scale-[0.6] lg:scale-[0.7] origin-top p-12 text-slate-800 relative">
-                            <!-- Empty content message or blank structure based on layout -->
-                            <div class="absolute inset-0 flex items-center justify-center text-slate-300">
-                                <span class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 text-sm italic">
-                                    Content will be generated here
-                                </span>
-                            </div>
+                         <!-- A CSS-drawn A4 paper representation with real content -->
+                         <div class="w-[210mm] min-h-[297mm] bg-white shadow-xl transform scale-[0.5] md:scale-[0.6] lg:scale-[0.7] origin-top p-12 text-slate-800 relative text-sm leading-relaxed">
                             
-                            <!-- Static structure skeleton based on layout config (Visual only) -->
-                            <div v-if="selectedTemplate.layout.style === 'two-column'" class="flex h-full opacity-25 pointer-events-none">
-                                <div class="w-1/3 bg-slate-100 h-full mr-8"></div>
-                                <div class="flex-1 bg-slate-50 h-full"></div>
+                            <!-- Two Column Layout -->
+                            <div v-if="selectedTemplate.layout.style === 'two-column'" class="flex gap-8 h-full">
+                                <!-- Left Sidebar -->
+                                <div class="w-1/3 space-y-6">
+                                    <div class="w-24 h-24 bg-slate-300 rounded-full mx-auto"></div>
+                                    <div>
+                                        <h3 class="font-bold text-xs uppercase text-slate-600 mb-2">Contact</h3>
+                                        <p class="text-xs text-slate-600">{{ resumeData.contact.email }}</p>
+                                        <p class="text-xs text-slate-600">{{ resumeData.contact.phone }}</p>
+                                        <p class="text-xs text-slate-600">{{ resumeData.contact.location }}</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-xs uppercase text-slate-600 mb-2">Skills</h3>
+                                        <div v-for="skill in resumeData.skills.technical" :key="skill" class="text-xs text-slate-600 mb-1">{{ skill }}</div>
+                                    </div>
+                                </div>
+                                <!-- Right Content -->
+                                <div class="flex-1">
+                                    <div class="mb-6">
+                                        <h1 class="text-3xl font-bold text-slate-900">{{ resumeData.name }}</h1>
+                                        <div :class="selectedTemplate.layout.primaryColor" class="text-white inline-block px-2 py-1 mt-1 text-sm">{{ resumeData.title }}</div>
+                                    </div>
+                                    <div class="mb-6">
+                                        <h2 class="font-bold text-sm uppercase text-slate-700 mb-2">Professional Summary</h2>
+                                        <p class="text-xs text-slate-600">{{ resumeData.summary }}</p>
+                                    </div>
+                                    <div>
+                                        <h2 class="font-bold text-sm uppercase text-slate-700 mb-3">Experience</h2>
+                                        <div v-for="exp in resumeData.experience" :key="exp.company" class="mb-4">
+                                            <h3 class="font-semibold text-sm text-slate-800">{{ exp.position }}</h3>
+                                            <p class="text-xs text-slate-600">{{ exp.company }} • {{ exp.duration }}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div v-else-if="selectedTemplate.layout.style === 'sidebar-left'" class="flex h-full opacity-25 pointer-events-none">
-                                <div class="w-1/4 bg-slate-900 h-full mr-8"></div>
-                                <div class="flex-1 bg-slate-50 h-full"></div>
+
+                            <!-- Single Column Layout -->
+                            <div v-else-if="selectedTemplate.layout.style === 'single-column'" class="space-y-6">
+                                <div class="text-center border-b-2 border-slate-900 pb-4">
+                                    <h1 class="text-4xl font-bold text-slate-900 tracking-wide">{{ resumeData.name.toUpperCase() }}</h1>
+                                    <p class="text-lg text-slate-600 mt-1">{{ resumeData.title }}</p>
+                                    <p class="text-xs text-slate-500 mt-2">{{ resumeData.contact.email }} • {{ resumeData.contact.phone }} • {{ resumeData.contact.location }}</p>
+                                </div>
+                                <div>
+                                    <h2 class="font-bold text-sm uppercase text-slate-700 mb-2">Professional Summary</h2>
+                                    <p class="text-xs text-slate-600">{{ resumeData.summary }}</p>
+                                </div>
+                                <div>
+                                    <h2 class="font-bold text-sm uppercase text-slate-700 mb-3">Experience</h2>
+                                    <div v-for="exp in resumeData.experience" :key="exp.company" class="mb-4">
+                                        <h3 class="font-semibold text-sm text-slate-800">{{ exp.position }}</h3>
+                                        <p class="text-xs text-slate-600">{{ exp.company }} • {{ exp.duration }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div v-else class="h-full opacity-25 pointer-events-none">
-                                <div class="w-full h-32 bg-slate-50 mb-8 mx-auto"></div>
-                                <div class="space-y-4">
-                                    <div class="w-full h-4 bg-slate-50"></div>
-                                    <div class="w-full h-4 bg-slate-50"></div>
-                                    <div class="w-3/4 h-4 bg-slate-50"></div>
+
+                            <!-- Sidebar Left Layout -->
+                            <div v-else-if="selectedTemplate.layout.style === 'sidebar-left'" class="flex gap-0 h-full">
+                                <!-- Dark Sidebar -->
+                                <div class="w-1/3 bg-slate-900 text-white p-6 -m-12 mr-0 space-y-6">
+                                    <div class="w-20 h-20 bg-white/20 rounded-full mx-auto"></div>
+                                    <div class="text-center">
+                                        <h1 class="text-xl font-bold">{{ resumeData.name }}</h1>
+                                        <p class="text-sm text-slate-300 mt-1">{{ resumeData.title }}</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-xs uppercase mb-2">Contact</h3>
+                                        <p class="text-xs text-white/80 mb-1">{{ resumeData.contact.email }}</p>
+                                        <p class="text-xs text-white/80">{{ resumeData.contact.phone }}</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-xs uppercase mb-2">Skills</h3>
+                                        <div v-for="skill in resumeData.skills.technical.slice(0, 5)" :key="skill" class="text-xs text-white/80 mb-1">{{ skill }}</div>
+                                    </div>
+                                </div>
+                                <!-- Right Content -->
+                                <div class="flex-1 pl-8">
+                                    <div class="mb-6">
+                                        <h2 class="font-bold text-sm uppercase text-slate-700 mb-2">About Me</h2>
+                                        <p class="text-xs text-slate-600">{{ resumeData.summary.substring(0, 150) }}...</p>
+                                    </div>
+                                    <div>
+                                        <h2 class="font-bold text-sm uppercase text-slate-700 mb-3">Experience</h2>
+                                        <div v-for="exp in resumeData.experience" :key="exp.company" class="mb-4">
+                                            <h3 class="font-semibold text-sm text-slate-800">{{ exp.position }}</h3>
+                                            <p class="text-xs text-slate-600">{{ exp.company }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Other layouts default view -->
+                            <div v-else class="space-y-6">
+                                <div class="text-center pb-4 border-b border-slate-200">
+                                    <h1 class="text-3xl font-bold text-slate-900">{{ resumeData.name }}</h1>
+                                    <p class="text-base text-slate-600 mt-1">{{ resumeData.title }}</p>
+                                    <p class="text-xs text-slate-500 mt-2">{{ resumeData.contact.email }} • {{ resumeData.contact.phone }}</p>
+                                </div>
+                                <div>
+                                    <h2 class="font-bold text-sm uppercase text-slate-700 mb-2">Professional Summary</h2>
+                                    <p class="text-xs text-slate-600">{{ resumeData.summary }}</p>
+                                </div>
+                                <div>
+                                    <h2 class="font-bold text-sm uppercase text-slate-700 mb-3">Experience</h2>
+                                    <div v-for="exp in resumeData.experience" :key="exp.company" class="mb-4">
+                                        <h3 class="font-semibold text-sm text-slate-800">{{ exp.position }}</h3>
+                                        <p class="text-xs text-slate-600">{{ exp.company }} • {{ exp.location }} • {{ exp.duration }}</p>
+                                        <ul class="list-disc list-inside text-xs text-slate-600 mt-1 space-y-0.5">
+                                            <li v-for="(achievement, i) in exp.achievements.slice(0, 2)" :key="i">{{ achievement }}</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
 

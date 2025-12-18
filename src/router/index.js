@@ -6,6 +6,8 @@ import Templates from '../views/Templates.vue'
 import Pricing from '../views/Pricing.vue'
 import Auth from '../views/Auth.vue'
 import Contact from '../views/Contact.vue' // Import Contact view
+import Blog from '../views/Blog.vue'
+import BlogDetail from '../views/BlogDetail.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
@@ -15,6 +17,8 @@ const routes = [
     { path: '/pricing', name: 'Pricing', component: Pricing },
     { path: '/auth', name: 'Auth', component: Auth },
     { path: '/contact', name: 'Contact', component: Contact }, // Add Contact route
+    { path: '/blog', name: 'Blog', component: Blog },
+    { path: '/blog/:id', name: 'BlogDetail', component: BlogDetail },
 ]
 
 const router = createRouter({
