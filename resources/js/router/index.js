@@ -8,6 +8,7 @@ import Auth from '../pages/Auth.vue'
 import Contact from '../pages/Contact.vue' // Import Contact view
 import Blog from '../pages/Blog.vue'
 import BlogDetail from '../pages/BlogDetail.vue'
+import Profile from '../pages/Profile.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
@@ -17,6 +18,7 @@ const routes = [
     { path: '/pricing', name: 'Pricing', component: Pricing },
     { path: '/auth', name: 'Auth', component: Auth },
     { path: '/contact', name: 'Contact', component: Contact }, // Add Contact route
+    { path: '/profile', name: 'Profile', component: Profile },
     { path: '/blog', name: 'Blog', component: Blog },
     { path: '/blog/:id', name: 'BlogDetail', component: BlogDetail },
 ]

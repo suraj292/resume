@@ -38,6 +38,10 @@ Route::get('/blog', function () {
     return Inertia::render('Blog');
 })->name('blog');
 
+Route::get('/profile', function () {
+    return Inertia::render('Profile');
+})->name('profile');
+
 Route::get('/blog/{id}', function ($id) {
     return Inertia::render('BlogDetail', ['id' => $id]);
 })->name('blog.detail');
