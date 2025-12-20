@@ -237,14 +237,36 @@
               </header>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div v-for="template in templatesList" :key="template.id" @click="selectTemplate(template.id)" :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-500' : 'border-slate-100']">
-                  <div class="aspect-[3/4] bg-slate-50 rounded-xl mb-3 overflow-hidden p-3" v-html="template.preview"></div>
-                  <div class="px-2 pb-2">
-                    <div class="flex items-center justify-between">
-                      <p class="text-xs font-bold text-slate-800">{{ template.name }}</p>
-                      <i v-if="selectedTemplate === template.id" class="fa-solid fa-circle-check text-indigo-600 text-sm"></i>
+                <div 
+                  v-for="template in templatesFromJSON" 
+                  :key="template.id" 
+                  @click="selectTemplate(template.id)" 
+                  :class="[
+                    'template-card group relative bg-white border-2 p-3 rounded-2xl cursor-pointer hover:border-indigo-300 hover:shadow-xl transition-all duration-300',
+                    selectedTemplate === template.id ? 'template-card-active border-indigo-500 shadow-lg ring-2 ring-indigo-100' : 'border-slate-200'
+                  ]">
+                  <!-- Template Thumbnail -->
+                  <div :class="['aspect-[3/4] rounded-xl mb-3 overflow-hidden relative', template.thumbnail.bg]">
+                    <TemplateRenderer :elements="template.thumbnail.elements" :mainClass="template.thumbnail.mainClass" />
+                    
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-all duration-300 flex items-center justify-center">
+                      <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-2 shadow-lg">
+                        <i class="fa-solid fa-eye text-indigo-600 text-sm"></i>
+                      </div>
                     </div>
-                    <p class="text-[9px] text-slate-400 mt-0.5 uppercase tracking-wider font-bold">{{ template.category }}</p>
+                  </div>
+                  
+                  <!-- Template Info -->
+                  <div class="px-2 pb-2">
+                    <div class="flex items-center justify-between mb-1">
+                      <p class="text-sm font-bold text-slate-800">{{ template.name }}</p>
+                      <i v-if="selectedTemplate === template.id" class="fa-solid fa-circle-check text-indigo-600 text-base"></i>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-2">
+                      <span v-for="tag in template.tags" :key="tag" class="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-semibold">{{ tag }}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-relaxed">{{ template.description }}</p>
                   </div>
                 </div>
               </div>
@@ -288,38 +310,11 @@
         <!-- Preview (Right) - Desktop -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar">
           <div class="sticky top-0 w-full max-w-[800px]">
-            <div id="resume-sheet" class="bg-white shadow-2xl w-full min-h-[1000px] p-8 lg:p-16 origin-top transform" :style="{ boxShadow: `0 25px 50px -12px ${currentAccentColor}20` }">
-              <div class="border-b-4 border-slate-900 pb-8 mb-8">
-                <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase transition-colors duration-500">
-                  {{ formData.fullName || 'Jonathan Doe' }}
-                </h1>
-                <p :style="{ color: currentAccentColor }" class="text-lg font-bold mt-1 transition-colors duration-500">
-                  {{ formData.title || 'Senior Software Engineer' }}
-                </p>
-                <div class="flex gap-4 mt-4 text-[11px] font-bold text-slate-400">
-                  <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1.5"></i>{{ formData.email }}</span>
-                  <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1.5"></i>{{ formData.phone }}</span>
-                </div>
-              </div>
-
-              <!-- Mock Body Content -->
-              <div class="space-y-8">
-                <div>
-                  <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">
-                    Experience
-                  </h3>
-                  <div class="space-y-4">
-                    <div>
-                      <div class="flex justify-between items-baseline">
-                        <h4 class="font-bold text-slate-800">Principal Engineer at TechCorp</h4>
-                        <span class="text-[10px] font-bold text-slate-400 italic">2021 — PRESENT</span>
-                      </div>
-                      <p class="text-xs text-slate-500 mt-1 leading-relaxed">Led the migration of legacy infrastructure to a modern microservices architecture, improving system uptime by 40%.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ResumePreview 
+              :templateId="selectedTemplate" 
+              :formData="formData" 
+              :accentColor="currentAccentColor"
+            />
           </div>
         </section>
       </main>
@@ -337,37 +332,12 @@
         </div>
         <!-- Preview Content -->
         <div class="preview-container p-6">
-          <div class="bg-white shadow-2xl w-full min-h-[1000px] p-6 mx-auto max-w-2xl">
-            <div class="border-b-4 border-slate-900 pb-8 mb-8">
-              <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase transition-colors duration-500">
-                {{ formData.fullName || 'Jonathan Doe' }}
-              </h1>
-              <p :style="{ color: currentAccentColor }" class="text-base font-bold mt-1 transition-colors duration-500">
-                {{ formData.title || 'Senior Software Engineer' }}
-              </p>
-              <div class="flex flex-wrap gap-3 mt-4 text-[10px] font-bold text-slate-400">
-                <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1.5"></i>{{ formData.email }}</span>
-                <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1.5"></i>{{ formData.phone }}</span>
-              </div>
-            </div>
-
-            <!-- Mock Body Content -->
-            <div class="space-y-8">
-              <div>
-                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">
-                  Experience
-                </h3>
-                <div class="space-y-4">
-                  <div>
-                    <div class="flex justify-between items-baseline flex-wrap gap-2">
-                      <h4 class="font-bold text-slate-800">Principal Engineer at TechCorp</h4>
-                      <span class="text-[10px] font-bold text-slate-400 italic">2021 — PRESENT</span>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Led the migration of legacy infrastructure to a modern microservices architecture, improving system uptime by 40%.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="mx-auto max-w-2xl">
+            <ResumePreview 
+              :templateId="selectedTemplate" 
+              :formData="formData" 
+              :accentColor="currentAccentColor"
+            />
           </div>
         </div>
       </div>
@@ -385,6 +355,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import templatesData from '../data/templates.json'
+import TemplateRenderer from '../components/TemplateRenderer.vue'
+import ResumePreview from '../components/ResumePreview.vue'
 
 // State
 const activeTab = ref('colors')
@@ -412,34 +385,9 @@ const atsScore = ref(72)
 const selectedTone = ref('Professional')
 const tones = ['Professional', 'Creative', 'Direct']
 
-// Templates
-const selectedTemplate = ref('modern')
-const templatesList = ref([
-  {
-    id: 'modern',
-    name: 'Modern Executive',
-    category: 'Best for Tech & SaaS',
-    preview: '<div class="space-y-2"><div class="h-4 bg-slate-900 w-2/3 rounded-sm mb-4"></div><div class="h-2 bg-indigo-200 w-full rounded-full"></div><div class="h-2 bg-slate-200 w-full rounded-full"></div><div class="h-2 bg-slate-200 w-3/4 rounded-full"></div><div class="pt-2 grid grid-cols-2 gap-2"><div class="h-10 bg-slate-100 rounded-md"></div><div class="h-10 bg-slate-100 rounded-md"></div></div></div>'
-  },
-  {
-    id: 'creative',
-    name: 'Creative Sidebar',
-    category: 'Design & Marketing',
-    preview: '<div class="flex h-full"><div class="w-1/3 bg-slate-800 p-2 space-y-2"><div class="w-6 h-6 bg-slate-600 rounded-full mx-auto"></div><div class="h-1 bg-slate-600 w-full rounded-full"></div><div class="h-1 bg-slate-600 w-full rounded-full"></div></div><div class="flex-1 p-3 space-y-3"><div class="h-3 bg-slate-300 w-1/2 rounded-sm"></div><div class="space-y-1"><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-2/3"></div></div></div></div>'
-  },
-  {
-    id: 'academic',
-    name: 'Academic Elite',
-    category: 'Formal & Corporate',
-    preview: '<div class="flex flex-col items-center"><div class="h-2 bg-slate-900 w-1/2 rounded-full mb-1"></div><div class="h-1 bg-slate-400 w-1/3 rounded-full mb-6"></div><div class="w-full space-y-3"><div class="flex justify-between border-b border-slate-200 pb-1"><div class="h-2 bg-slate-800 w-1/4 rounded-full"></div><div class="h-2 bg-slate-200 w-1/6 rounded-full"></div></div><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-4/5"></div></div></div>'
-  },
-  {
-    id: 'minimal',
-    name: 'Minimalist Bold',
-    category: 'Clean & Functional',
-    preview: '<div class="space-y-4"><div class="h-8 bg-slate-900 w-full rounded-sm"></div><div class="space-y-2"><div class="h-2 bg-slate-300 w-1/4"></div><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-full"></div></div><div class="space-y-2 pt-2"><div class="h-2 bg-slate-300 w-1/4"></div><div class="h-1 bg-slate-200 w-full"></div><div class="h-1 bg-slate-200 w-5/6"></div></div></div>'
-  }
-])
+// Templates from JSON
+const templatesFromJSON = ref(templatesData)
+const selectedTemplate = ref(templatesData[0]?.id || 'modernist')
 
 // Colors
 const selectedColor = ref('indigo')
@@ -516,6 +464,9 @@ const closeMobilePreview = () => {
 
 const selectTemplate = (templateId) => {
   selectedTemplate.value = templateId
+  const template = templatesFromJSON.value.find(t => t.id === templateId)
+  console.log('Template selected:', template?.name || templateId)
+  // TODO: Update preview with selected template layout
 }
 
 const selectColor = (color) => {
