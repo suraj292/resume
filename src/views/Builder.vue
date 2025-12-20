@@ -481,7 +481,11 @@ const currentAccentColor = computed(() => {
 // Methods
 const switchTab = (tabId) => {
   activeTab.value = tabId
-  closeMobileSidebarIfNeeded()
+  // Close sidebar on mobile when a tab is clicked
+  if (window.innerWidth < 1024) {
+    sidebarOpen.value = false
+    document.body.style.overflow = ''
+  }
 }
 
 const toggleMobileSidebar = () => {
