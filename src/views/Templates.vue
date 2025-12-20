@@ -69,7 +69,7 @@ const getTypeTags = (type) => {
         <!-- 3. FILTER BAR -->
         <section class="sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 py-4 mb-12 animate-fade-in">
             <div class="container mx-auto px-6 overflow-x-auto no-scrollbar">
-                <div class="flex gap-3 md:justify-center min-w-max">
+                <div class="flex flex-wrap gap-2 justify-center">
                     <button 
                         v-for="filter in filters" 
                         :key="filter.id"
@@ -85,7 +85,7 @@ const getTypeTags = (type) => {
 
         <!-- 4. TEMPLATE GRID -->
         <section class="container mx-auto px-6 pb-24">
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-8">
                 
                 <transition-group name="list">
                 <div 

@@ -284,7 +284,7 @@ const formattingChecks = [
         <!-- Quick Stats & Issues -->
         <div class="lg:col-span-2 flex flex-col gap-6">
           <!-- Quick Stats -->
-          <div class="grid grid-cols-3 gap-4 h-full">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-md hover:shadow-lg transition-shadow flex flex-col justify-center animate-slide-up" style="animation-delay: 0.2s;">
               <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-lg mb-3">
                 <i class="fa-solid fa-check"></i>

@@ -236,7 +236,7 @@
                 <p class="text-slate-400 text-xs mt-1 font-medium">Select a design that matches your industry and seniority level.</p>
               </header>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div class="grid grid-cols-2 gap-4 sm:gap-6">
                 <div 
                   v-for="template in templatesFromJSON" 
                   :key="template.id" 
@@ -246,7 +246,7 @@
                     selectedTemplate === template.id ? 'template-card-active border-indigo-500 shadow-lg ring-2 ring-indigo-100' : 'border-slate-200'
                   ]">
                   <!-- Template Thumbnail -->
-                  <div :class="['aspect-[3/4] rounded-xl mb-3 overflow-hidden relative', template.thumbnail.bg]">
+                  <div :class="['aspect-[4/5] rounded-xl mb-3 overflow-hidden relative', template.thumbnail.bg]">
                     <TemplateRenderer :elements="template.thumbnail.elements" :mainClass="template.thumbnail.mainClass" />
                     
                     <!-- Hover Overlay -->
@@ -266,7 +266,7 @@
                     <div class="flex flex-wrap gap-1 mb-2">
                       <span v-for="tag in template.tags" :key="tag" class="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-semibold">{{ tag }}</span>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-relaxed">{{ template.description }}</p>
+                    <p class="text-[10px] text-slate-500 leading-relaxed truncate sm:whitespace-normal sm:overflow-visible sm:text-overflow-clip">{{ template.description }}</p>
                   </div>
                 </div>
               </div>
@@ -360,7 +360,7 @@ import TemplateRenderer from '../components/TemplateRenderer.vue'
 import ResumePreview from '../components/ResumePreview.vue'
 
 // State
-const activeTab = ref('colors')
+const activeTab = ref('upload')
 const sidebarOpen = ref(false)
 const previewModalOpen = ref(false)
 const lastSaved = ref('2m ago')

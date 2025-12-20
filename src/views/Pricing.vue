@@ -25,7 +25,7 @@ const toggleBilling = () => {
                 <span class="text-sm font-medium text-slate-600" id="monthly-label">Monthly</span>
                 
                 <div class="relative inline-block w-14 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" name="toggle" id="billing-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-all duration-300 left-0" :checked="isYearly" @change="toggleBilling"/>
+                    <input type="checkbox" name="toggle" id="billing-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-all duration-300" :checked="isYearly" @change="toggleBilling"/>
                     <label for="billing-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300"></label>
                 </div>
                 
@@ -269,7 +269,7 @@ const toggleBilling = () => {
 
 <style scoped>
 .toggle-checkbox:checked {
-    right: 0;
+    transform: translateX(32px);
     border-color: #4f46e5;
 }
 .toggle-checkbox:checked + .toggle-label {

@@ -140,7 +140,7 @@ onMounted(() => {
   <div class="flex-grow">
 
     <!-- BLOG HEADER -->
-    <section class="bg-white pt-10 pb-12 border-b border-slate-100">
+    <section class="bg-white pt-20 pb-12 border-b border-slate-100">
       <div class="container mx-auto px-6 max-w-5xl animate-fade-in">
         <div class="text-center mb-8">
           <router-link to="/blog" class="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wide mb-4 hover:bg-indigo-100 transition-colors">
