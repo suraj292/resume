@@ -31,16 +31,83 @@ const analysisSteps = [
 
 const switchTab = (tab) => {
   activeTab.value = tab
+  // Reset uploaded file when switching tabs
+  if (tab === 'paste') {
+    uploadedFile.value = null
+  }
 }
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a valid file (PDF, DOCX, or TXT)')
+      return
+    }
+    
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB')
+      return
+    }
+    
     uploadedFile.value = {
       name: file.name,
       size: file.size,
       file: file  // Store the actual file object for upload
     }
+  }
+}
+
+const handleDragOver = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+const handleDrop = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  const file = event.dataTransfer.files[0]
+  if (file) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a valid file (PDF, DOCX, or TXT)')
+      return
+    }
+    
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB')
+      return
+    }
+    
+    uploadedFile.value = {
+      name: file.name,
+      size: file.size,
+      file: file
+    }
+  }
+}
+
+const triggerFileInput = () => {
+  const input = document.querySelector('input[type="file"]')
+  if (input) {
+    input.click()
+  }
+}
+
+const removeFile = () => {
+  uploadedFile.value = null
+  // Reset the file input
+  const input = document.querySelector('input[type="file"]')
+  if (input) {
+    input.value = ''
   }
 }
 
@@ -208,11 +275,22 @@ const criticalIssues = ref([])
           <div class="p-8">
             <!-- Tab A: Upload -->
             <div v-show="activeTab === 'upload'" class="tab-content">
-              <div class="border-2 border-dashed border-slate-300 rounded-xl h-64 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-indigo-50/20 hover:border-indigo-400 transition-all cursor-pointer group relative">
-                <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="handleFileUpload" accept=".pdf,.docx,.txt">
+              <div 
+                @click="triggerFileInput"
+                @dragover="handleDragOver"
+                @drop="handleDrop"
+                class="border-2 border-dashed border-slate-300 rounded-xl h-64 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-indigo-50/20 hover:border-indigo-400 transition-all cursor-pointer group relative"
+              >
+                <input 
+                  type="file" 
+                  class="hidden" 
+                  @change="handleFileUpload" 
+                  accept=".pdf,.docx,.txt"
+                  id="file-upload-input"
+                >
 
                 <!-- Default State -->
-                <div v-if="!uploadedFile" class="text-center group-hover:-translate-y-1 transition-transform duration-300">
+                <div v-if="!uploadedFile" class="text-center group-hover:-translate-y-1 transition-transform duration-300 pointer-events-none">
                   <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 text-indigo-600 text-2xl group-hover:scale-110 transition-transform">
                     <i class="fa-solid fa-file-arrow-up"></i>
                   </div>
@@ -221,12 +299,18 @@ const criticalIssues = ref([])
                 </div>
 
                 <!-- Success State -->
-                <div v-else class="text-center">
-                  <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl animate-bounce">
+                <div v-else class="text-center pointer-events-none">
+                  <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl">
                     <i class="fa-solid fa-check"></i>
                   </div>
                   <h3 class="text-lg font-bold text-slate-800">{{ uploadedFile.name }}</h3>
                   <p class="text-green-600 text-sm mt-1 font-medium">Ready for analysis</p>
+                  <button 
+                    @click.stop="removeFile"
+                    class="mt-3 px-4 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors pointer-events-auto"
+                  >
+                    <i class="fa-solid fa-xmark mr-1"></i> Remove File
+                  </button>
                 </div>
               </div>
             </div>
