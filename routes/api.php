@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PlansController;
+use App\Http\Controllers\Api\ResumeAnalysisController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,12 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'
 
 // Plans routes
 Route::get('/plans', [PlansController::class, 'index']);
+
+// Resume Analysis routes (available for both authenticated and guest users)
+Route::post('/resume-analysis', [ResumeAnalysisController::class, 'store']);
+Route::get('/resume-analysis', [ResumeAnalysisController::class, 'index']);
+Route::get('/resume-analysis/{id}', [ResumeAnalysisController::class, 'show']);
+Route::delete('/resume-analysis/{id}', [ResumeAnalysisController::class, 'destroy']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

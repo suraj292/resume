@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 import gsap from 'gsap'
 
 const activeTab = ref('upload')
@@ -9,6 +10,17 @@ const isAnalyzing = ref(false)
 const showResults = ref(false)
 const score = ref(0)
 const currentStep = ref('')
+const experienceLevel = ref('Mid-Level')
+const scoreGrade = ref('Needs Improvement')
+const keywordMatchPercentage = ref(0)
+const wordCount = ref(0)
+const criticalIssuesCount = ref(0)
+const contentAnalysis = ref({
+  action_verbs_percentage: 0,
+  quantifiable_results_percentage: 0,
+  avg_bullet_length: 0,
+  reading_level: 'Unknown'
+})
 
 const analysisSteps = [
   'Parsing keywords and formatting...',
@@ -26,12 +38,13 @@ const handleFileUpload = (event) => {
   if (file) {
     uploadedFile.value = {
       name: file.name,
-      size: file.size
+      size: file.size,
+      file: file  // Store the actual file object for upload
     }
   }
 }
 
-const startAnalysis = () => {
+const startAnalysis = async () => {
   if (!uploadedFile.value && !pastedText.value.trim()) {
     alert('Please upload a resume or paste text first!')
     return
@@ -47,14 +60,67 @@ const startAnalysis = () => {
       currentStep.value = analysisSteps[stepIndex]
       stepIndex++
     }
-  }, 1000)
+  }, 1500)
 
-  setTimeout(() => {
+  try {
+    const formData = new FormData()
+    
+    if (uploadedFile.value && uploadedFile.value.file) {
+      formData.append('input_type', 'upload')
+      formData.append('file', uploadedFile.value.file)
+    } else {
+      formData.append('input_type', 'paste')
+      formData.append('content', pastedText.value)
+    }
+
+    const response = await axios.post('/api/resume-analysis', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
     clearInterval(stepInterval)
+    
+    // Update all reactive data with API response
+    const data = response.data.data
+    
+    score.value = data.ats_score
+    scoreGrade.value = data.score_grade
+    experienceLevel.value = data.experience_level
+    keywordMatchPercentage.value = data.keyword_match_percentage
+    wordCount.value = data.word_count
+    
+    // Update keywords
+    matchedKeywords.value = data.matched_keywords || []
+    missingKeywords.value = data.missing_keywords || []
+    
+    // Update formatting checks
+    formattingChecks.value = data.formatting_checks || []
+    
+    // Update critical issues
+    criticalIssues.value = data.critical_issues || []
+    criticalIssuesCount.value = (data.critical_issues || []).length
+    
+    // Update content analysis
+    if (data.content_analysis) {
+      contentAnalysis.value = data.content_analysis
+    }
+    
     isAnalyzing.value = false
     showResults.value = true
-    animateScore(72)
-  }, 4000)
+    animateScore(data.ats_score)
+
+  } catch (error) {
+    clearInterval(stepInterval)
+    isAnalyzing.value = false
+    console.error('Analysis error:', error)
+    
+    const errorMessage = error.response?.data?.error 
+      || error.response?.data?.message 
+      || 'Failed to analyze resume. Please try again.'
+    
+    alert(errorMessage)
+  }
 }
 
 const animateScore = (targetScore) => {
@@ -79,22 +145,16 @@ const resetAnalysis = () => {
   showResults.value = false
   score.value = 0
   activeTab.value = 'upload'
+  matchedKeywords.value = []
+  missingKeywords.value = []
+  formattingChecks.value = []
+  criticalIssues.value = []
 }
 
-const matchedKeywords = [
-  'Project Management', 'Agile', 'Scrum', 'Team Leadership', 'Communication'
-]
-
-const missingKeywords = [
-  'Python', 'Data Analysis', 'SQL', 'JIRA'
-]
-
-const formattingChecks = [
-  { name: 'File Format', detail: 'PDF (Text-based)', status: 'pass', icon: 'fa-file-pdf' },
-  { name: 'Section Headers', detail: 'Standard naming conventions', status: 'pass', icon: 'fa-heading' },
-  { name: 'Graphics/Images', detail: 'Headshot detected', status: 'fail', icon: 'fa-image' },
-  { name: 'Date Formatting', detail: 'Inconsistent formats used', status: 'warn', icon: 'fa-calendar' }
-]
+const matchedKeywords = ref([])
+const missingKeywords = ref([])
+const formattingChecks = ref([])
+const criticalIssues = ref([])
 </script>
 
 <template>
@@ -273,11 +333,18 @@ const formattingChecks = [
             </div>
           </div>
 
-          <div class="inline-block px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-800 font-bold text-sm mb-4">
-            Needs Improvement
+          <div 
+            :class="{
+              'bg-green-100 text-green-800': score >= 80,
+              'bg-yellow-100 text-yellow-800': score >= 60 && score < 80,
+              'bg-orange-100 text-orange-800': score >= 40 && score < 60,
+              'bg-red-100 text-red-800': score < 40
+            }"
+            class="inline-block px-4 py-1.5 rounded-full font-bold text-sm mb-4">
+            {{ scoreGrade }}
           </div>
           <p class="text-sm text-slate-500 leading-relaxed">
-            Your resume is parseable but lacks specific keywords from the job description.
+            {{ score >= 80 ? 'Excellent! Your resume is highly ATS-compatible.' : score >= 60 ? 'Good resume, but there\'s room for improvement.' : 'Your resume needs significant improvements to pass ATS screening.' }}
           </p>
         </div>
 
@@ -289,21 +356,21 @@ const formattingChecks = [
               <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-lg mb-3">
                 <i class="fa-solid fa-check"></i>
               </div>
-              <span class="text-2xl font-bold text-slate-900">12/18</span>
+              <span class="text-2xl font-bold text-slate-900">{{ matchedKeywords.length }}/{{ matchedKeywords.length + missingKeywords.length }}</span>
               <span class="text-xs text-slate-500 font-medium uppercase mt-1">Keywords Matched</span>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-md hover:shadow-lg transition-shadow flex flex-col justify-center animate-slide-up" style="animation-delay: 0.3s;">
               <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg mb-3">
                 <i class="fa-solid fa-briefcase"></i>
               </div>
-              <span class="text-2xl font-bold text-slate-900">Mid-Level</span>
+              <span class="text-2xl font-bold text-slate-900">{{ experienceLevel }}</span>
               <span class="text-xs text-slate-500 font-medium uppercase mt-1">Experience Detected</span>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-md hover:shadow-lg transition-shadow flex flex-col justify-center animate-slide-up" style="animation-delay: 0.4s;">
               <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg mb-3">
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </div>
-              <span class="text-2xl font-bold text-slate-900">3 Errors</span>
+              <span class="text-2xl font-bold text-slate-900">{{ criticalIssuesCount }}</span>
               <span class="text-xs text-slate-500 font-medium uppercase mt-1">Critical Issues</span>
             </div>
           </div>
@@ -313,22 +380,16 @@ const formattingChecks = [
             <h4 class="font-bold text-red-800 mb-4 flex items-center gap-2">
               <i class="fa-solid fa-circle-exclamation"></i> Top Priorities to Fix
             </h4>
-            <ul class="space-y-3">
-              <li class="flex items-start gap-3 bg-white p-3 rounded-lg border border-red-100 shadow-sm">
+            <ul v-if="criticalIssues.length > 0" class="space-y-3">
+              <li v-for="(issue, index) in criticalIssues" :key="index" class="flex items-start gap-3 bg-white p-3 rounded-lg border border-red-100 shadow-sm">
                 <i class="fa-solid fa-xmark text-red-500 mt-1"></i>
                 <div>
-                  <span class="block text-sm font-bold text-slate-800">Missing Hard Skills</span>
-                  <span class="text-xs text-slate-600">You are missing 'Python', 'AWS', and 'Docker' which are critical for this role.</span>
-                </div>
-              </li>
-              <li class="flex items-start gap-3 bg-white p-3 rounded-lg border border-red-100 shadow-sm">
-                <i class="fa-solid fa-xmark text-red-500 mt-1"></i>
-                <div>
-                  <span class="block text-sm font-bold text-slate-800">Contact Info Parsing Error</span>
-                  <span class="text-xs text-slate-600">Your email address is inside a header/footer which some ATS cannot read.</span>
+                  <span class="block text-sm font-bold text-slate-800">{{ issue.title }}</span>
+                  <span class="text-xs text-slate-600">{{ issue.description }}</span>
                 </div>
               </li>
             </ul>
+            <p v-else class="text-sm text-slate-600 italic">No critical issues found. Great job!</p>
           </div>
         </div>
       </div>
@@ -340,7 +401,7 @@ const formattingChecks = [
         <div class="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow border border-slate-100 animate-slide-up" style="animation-delay: 0.6s;">
           <div class="flex justify-between items-center mb-6">
             <h3 class="font-bold text-lg text-slate-900">Skills Gap Analysis</h3>
-            <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">65% Match</span>
+            <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{{ keywordMatchPercentage }}% Match</span>
           </div>
 
           <div class="space-y-6">
@@ -432,21 +493,47 @@ const formattingChecks = [
               <div>
                 <div class="flex justify-between text-sm mb-1">
                   <span class="text-slate-300">Action Verbs Usage</span>
-                  <span class="font-bold text-green-400">Strong (85%)</span>
+                  <span 
+                    :class="{
+                      'text-green-400': contentAnalysis.action_verbs_percentage >= 70,
+                      'text-yellow-400': contentAnalysis.action_verbs_percentage >= 50 && contentAnalysis.action_verbs_percentage < 70,
+                      'text-red-400': contentAnalysis.action_verbs_percentage < 50
+                    }"
+                    class="font-bold">{{ contentAnalysis.action_verbs_percentage >= 70 ? 'Strong' : contentAnalysis.action_verbs_percentage >= 50 ? 'Moderate' : 'Weak' }} ({{ contentAnalysis.action_verbs_percentage }}%)</span>
                 </div>
                 <div class="w-full bg-slate-700 rounded-full h-2">
-                  <div class="bg-green-500 h-2 rounded-full w-[85%]"></div>
+                  <div 
+                    :class="{
+                      'bg-green-500': contentAnalysis.action_verbs_percentage >= 70,
+                      'bg-yellow-500': contentAnalysis.action_verbs_percentage >= 50 && contentAnalysis.action_verbs_percentage < 70,
+                      'bg-red-500': contentAnalysis.action_verbs_percentage < 50
+                    }"
+                    :style="{ width: contentAnalysis.action_verbs_percentage + '%' }"
+                    class="h-2 rounded-full"></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between text-sm mb-1">
                   <span class="text-slate-300">Quantifiable Results (Numbers/%)</span>
-                  <span class="font-bold text-red-400">Weak (20%)</span>
+                  <span 
+                    :class="{
+                      'text-green-400': contentAnalysis.quantifiable_results_percentage >= 50,
+                      'text-yellow-400': contentAnalysis.quantifiable_results_percentage >= 30 && contentAnalysis.quantifiable_results_percentage < 50,
+                      'text-red-400': contentAnalysis.quantifiable_results_percentage < 30
+                    }"
+                    class="font-bold">{{ contentAnalysis.quantifiable_results_percentage >= 50 ? 'Strong' : contentAnalysis.quantifiable_results_percentage >= 30 ? 'Moderate' : 'Weak' }} ({{ contentAnalysis.quantifiable_results_percentage }}%)</span>
                 </div>
                 <div class="w-full bg-slate-700 rounded-full h-2">
-                  <div class="bg-red-500 h-2 rounded-full w-[20%]"></div>
+                  <div 
+                    :class="{
+                      'bg-green-500': contentAnalysis.quantifiable_results_percentage >= 50,
+                      'bg-yellow-500': contentAnalysis.quantifiable_results_percentage >= 30 && contentAnalysis.quantifiable_results_percentage < 50,
+                      'bg-red-500': contentAnalysis.quantifiable_results_percentage < 30
+                    }"
+                    :style="{ width: contentAnalysis.quantifiable_results_percentage + '%' }"
+                    class="h-2 rounded-full"></div>
                 </div>
-                <p class="text-xs text-slate-500 mt-1">Try adding metrics like "Increased revenue by 20%"</p>
+                <p v-if="contentAnalysis.quantifiable_results_percentage < 50" class="text-xs text-slate-500 mt-1">Try adding metrics like "Increased revenue by 20%"</p>
               </div>
             </div>
           </div>
@@ -456,15 +543,15 @@ const formattingChecks = [
             <div class="space-y-3">
               <div class="flex justify-between text-sm border-b border-slate-700 pb-2">
                 <span class="text-slate-400">Word Count</span>
-                <span class="font-mono">642 (Good)</span>
+                <span class="font-mono">{{ wordCount }} {{ wordCount >= 400 && wordCount <= 800 ? '(Good)' : wordCount < 400 ? '(Too Short)' : '(Too Long)' }}</span>
               </div>
               <div class="flex justify-between text-sm border-b border-slate-700 pb-2">
                 <span class="text-slate-400">Avg Bullet Length</span>
-                <span class="font-mono">14 words</span>
+                <span class="font-mono">{{ contentAnalysis.avg_bullet_length }} words</span>
               </div>
               <div class="flex justify-between text-sm pb-2">
                 <span class="text-slate-400">Reading Level</span>
-                <span class="font-mono">Grade 10</span>
+                <span class="font-mono">{{ contentAnalysis.reading_level }}</span>
               </div>
             </div>
           </div>
