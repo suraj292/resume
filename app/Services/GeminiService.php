@@ -200,29 +200,44 @@ class GeminiService
                 throw new \Exception('File not found');
             }
 
-            // Use Spatie PDF to Text for better extraction
-            $text = \Spatie\PdfToText\Pdf::getText($filePath);
-            
-            return $text;
-        } catch (\Exception $e) {
-            Log::error('PDF extraction failed', ['error' => $e->getMessage()]);
-            
-            // Fallback to smalot/pdfparser if spatie fails
+            // Try smalot/pdfparser first (works locally without external dependencies)
             try {
                 $parser = new \Smalot\PdfParser\Parser();
                 $pdf = $parser->parseFile($filePath);
-                return $pdf->getText();
-            } catch (\Exception $fallbackError) {
-                Log::error('Fallback PDF extraction also failed', ['error' => $fallbackError->getMessage()]);
-                return '';
+                $text = $pdf->getText();
+                
+                if (!empty(trim($text))) {
+                    Log::info('PDF extracted successfully using smalot/pdfparser');
+                    return $text;
+                }
+            } catch (\Exception $smalotError) {
+                Log::warning('Smalot PDF parser failed, trying Spatie', ['error' => $smalotError->getMessage()]);
             }
+
+            // Fallback to Spatie PDF to Text (requires pdftotext binary)
+            try {
+                $text = \Spatie\PdfToText\Pdf::getText($filePath);
+                
+                if (!empty(trim($text))) {
+                    Log::info('PDF extracted successfully using Spatie PDF to Text');
+                    return $text;
+                }
+            } catch (\Exception $spatieError) {
+                Log::warning('Spatie PDF extraction failed', ['error' => $spatieError->getMessage()]);
+            }
+            
+            // If both methods failed or returned empty text
+            Log::error('All PDF extraction methods failed or returned empty text');
+            return '';
+            
+        } catch (\Exception $e) {
+            Log::error('PDF extraction failed', ['error' => $e->getMessage()]);
+            return '';
         }
     }
 
     public function extractTextFromDocx(string $filePath): string
     {
-        // For DOCX files, use PhpOffice/PhpWord
-        // Install: composer require phpoffice/phpword
         try {
             if (!file_exists($filePath)) {
                 throw new \Exception('File not found');
@@ -230,16 +245,57 @@ class GeminiService
 
             $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
             $text = '';
+            $elementCount = 0;
 
             foreach ($phpWord->getSections() as $section) {
                 foreach ($section->getElements() as $element) {
-                    if (method_exists($element, 'getText')) {
+                    $elementCount++;
+                    
+                    // Handle TextRun elements
+                    if ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+                        foreach ($element->getElements() as $textElement) {
+                            if (method_exists($textElement, 'getText')) {
+                                $text .= $textElement->getText() . ' ';
+                            }
+                        }
+                        $text .= "\n";
+                    }
+                    // Handle Text elements
+                    elseif ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+                        $text .= $element->getText() . "\n";
+                    }
+                    // Handle Table elements
+                    elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+                        foreach ($element->getRows() as $row) {
+                            foreach ($row->getCells() as $cell) {
+                                foreach ($cell->getElements() as $cellElement) {
+                                    if (method_exists($cellElement, 'getText')) {
+                                        $text .= $cellElement->getText() . ' ';
+                                    }
+                                }
+                            }
+                            $text .= "\n";
+                        }
+                    }
+                    // Handle ListItem elements
+                    elseif ($element instanceof \PhpOffice\PhpWord\Element\ListItem) {
+                        if (method_exists($element, 'getText')) {
+                            $text .= '• ' . $element->getText() . "\n";
+                        }
+                    }
+                    // Generic fallback for any element with getText method
+                    elseif (method_exists($element, 'getText')) {
                         $text .= $element->getText() . "\n";
                     }
                 }
             }
 
-            return $text;
+            Log::info('DOCX extracted successfully', [
+                'elements_processed' => $elementCount,
+                'text_length' => strlen($text)
+            ]);
+
+            return trim($text);
         } catch (\Exception $e) {
             Log::error('DOCX extraction failed', ['error' => $e->getMessage()]);
             return '';

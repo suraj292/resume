@@ -48,6 +48,8 @@ class ResumeAnalysisController extends Controller
                         $resumeContent = $this->geminiService->extractTextFromPdf($fullPath);
                         break;
                     case 'docx':
+                        $resumeContent = $this->geminiService->extractTextFromDocx($fullPath);
+                        break;
                     case 'doc':
                         $resumeContent = $this->geminiService->extractTextFromDocx($fullPath);
                         break;
