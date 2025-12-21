@@ -1,7 +1,16 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import AuthRequiredModal from '../components/AuthRequiredModal.vue'
+
+const showAuthModal = ref(false)
 
 onMounted(() => {
+  // Check if user was redirected from a protected route
+  if (sessionStorage.getItem('show_auth_modal') === 'true') {
+    showAuthModal.value = true
+    sessionStorage.removeItem('show_auth_modal')
+  }
+
   const observerOptions = {
     threshold: 0.1,
     rootMargin: "0px 0px -50px 0px"
@@ -30,10 +39,16 @@ onMounted(() => {
     observer.observe(el);
   });
 })
+
+const closeAuthModal = () => {
+  showAuthModal.value = false
+}
 </script>
 
 <template>
   <div>
+    <!-- Auth Required Modal -->
+    <AuthRequiredModal v-if="showAuthModal" @close="closeAuthModal" />
     <!-- 2. HERO SECTION -->
     <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
         <!-- Background Blobs -->
