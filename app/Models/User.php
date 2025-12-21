@@ -26,6 +26,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'provider',
         'provider_id',
         'avatar',
+        'currency',
+        'plan_id',
+        'plan_started_at',
+        'resumes_created',
+        'ats_scans_used',
     ];
 
     /**
@@ -51,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'plan_started_at' => 'datetime',
         ];
     }
 
@@ -60,6 +66,76 @@ class User extends Authenticatable implements MustVerifyEmail
     public function socialAccounts()
     {
         return $this->hasMany(SocialAccount::class);
+    }
+
+    /**
+     * Get the user's current plan.
+     */
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    /**
+     * Check if user can create a resume.
+     */
+    public function canCreateResume(): bool
+    {
+        if (!$this->plan) {
+            return false;
+        }
+        
+        $limit = $this->plan->resume_limit;
+        return $limit === -1 || $this->resumes_created < $limit;
+    }
+
+    /**
+     * Check if user can use ATS checker.
+     */
+    public function canUseATS(): bool
+    {
+        if (!$this->plan) {
+            return false;
+        }
+        
+        $limit = $this->plan->ats_scan_limit;
+        return $limit === -1 || $this->ats_scans_used < $limit;
+    }
+
+    /**
+     * Check if user has access to a specific template.
+     */
+    public function hasAccessToTemplate(int $templateId): bool
+    {
+        if (!$this->plan) {
+            return false;
+        }
+        
+        return $this->plan->templates()->where('template_id', $templateId)->exists();
+    }
+
+    /**
+     * Get remaining resume count.
+     */
+    public function getResumesRemainingAttribute(): int|string
+    {
+        if (!$this->plan || $this->plan->resume_limit === -1) {
+            return 'unlimited';
+        }
+        
+        return max(0, $this->plan->resume_limit - $this->resumes_created);
+    }
+
+    /**
+     * Get remaining ATS scans count.
+     */
+    public function getAtsScansRemainingAttribute(): int|string
+    {
+        if (!$this->plan || $this->plan->ats_scan_limit === -1) {
+            return 'unlimited';
+        }
+        
+        return max(0, $this->plan->ats_scan_limit - $this->ats_scans_used);
     }
 
     /**

@@ -22,6 +22,10 @@ class Plan extends Model
         'sort_order',
         'currency',
         'currency_code',
+        'resume_limit',
+        'ats_scan_limit',
+        'ai_optimization',
+        'cover_letter',
     ];
 
     protected $casts = [
@@ -34,12 +38,30 @@ class Plan extends Model
         'yearly_price_usd' => 'decimal:2',
         'monthly_price_inr' => 'decimal:2',
         'yearly_price_inr' => 'decimal:2',
+        'ai_optimization' => 'boolean',
+        'cover_letter' => 'boolean',
     ];
 
     protected $appends = [
         'formatted_monthly_price',
         'formatted_yearly_price',
     ];
+
+    /**
+     * Get the templates associated with this plan.
+     */
+    public function templates()
+    {
+        return $this->belongsToMany(Template::class);
+    }
+
+    /**
+     * Get the users subscribed to this plan.
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 
     /**
      * Get the formatted monthly price based on currency.

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Plans\Tables;
+namespace App\Filament\Resources\Templates\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -9,7 +9,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class PlansTable
+class TemplatesTable
 {
     public static function configure(Table $table): Table
     {
@@ -19,45 +19,15 @@ class PlansTable
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
-                TextColumn::make('monthly_price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('yearly_price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('monthly_price_usd')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('yearly_price_usd')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('monthly_price_inr')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('yearly_price_inr')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_popular')
+                TextColumn::make('thumbnail')
+                    ->searchable(),
+                IconColumn::make('is_premium')
                     ->boolean(),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('sort_order')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('resume_limit')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('ats_scan_limit')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('ai_optimization')
-                    ->boolean(),
-                IconColumn::make('cover_letter')
-                    ->boolean(),
-                TextColumn::make('currency')
-                    ->searchable(),
-                TextColumn::make('currency_code')
-                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

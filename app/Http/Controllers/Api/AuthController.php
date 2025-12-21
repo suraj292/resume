@@ -25,11 +25,23 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
+        // Detect currency from IP
+        $geoService = app(\App\Services\GeoLocationService::class);
+        $country = $geoService->getCountryFromIP($request->ip());
+        $currency = $geoService->getCurrencyForCountry($country);
+
+        // Get free plan for this currency
+        $freePlan = \App\Models\Plan::where('slug', 'like', 'free-%')
+            ->where('currency_code', $currency)
+            ->first();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'email_verification_token' => Str::random(60),
+            'currency' => $currency,
+            'plan_id' => $freePlan?->id,
+            'plan_started_at' => now(),
         ]);
 
         event(new Registered($user));
@@ -38,7 +50,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registration successful',
-            'user' => $user,
+            'user' => $user->load('plan'),
             'token' => $token,
         ], 201);
     }
@@ -68,7 +80,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful',
-            'user' => $user,
+            'user' => $user->load('plan'),
             'token' => $token,
         ]);
     }
@@ -86,12 +98,20 @@ class AuthController extends Controller
     }
 
     /**
-     * Get authenticated user
+     * Get authenticated user with capabilities
      */
     public function me(Request $request)
     {
+        $user = $request->user()->load(['socialAccounts', 'plan']);
+
         return response()->json([
-            'user' => $request->user()->load('socialAccounts'),
+            'user' => $user,
+            'capabilities' => [
+                'can_create_resume' => $user->canCreateResume(),
+                'can_use_ats' => $user->canUseATS(),
+                'resumes_remaining' => $user->resumes_remaining,
+                'ats_scans_remaining' => $user->ats_scans_remaining,
+            ],
         ]);
     }
 

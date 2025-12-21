@@ -19,29 +19,26 @@ class UserForm
                     ->label('Email address')
                     ->email()
                     ->required(),
-                DateTimePicker::make('email_verified_at')
-                    ->label('Email Verified At'),
-
-                TextInput::make('provider')
-                    ->disabled(),
-                TextInput::make('provider_id')
-                    ->label('Provider ID')
-                    ->disabled(),
-                TextInput::make('avatar')
-                    ->disabled(),
-
+                TextInput::make('currency')
+                    ->required()
+                    ->default('USD'),
+                TextInput::make('plan_id')
+                    ->numeric(),
+                DateTimePicker::make('plan_started_at'),
+                TextInput::make('resumes_created')
+                    ->required()
+                    ->numeric()
+                    ->default(0),
+                TextInput::make('ats_scans_used')
+                    ->required()
+                    ->numeric()
+                    ->default(0),
+                TextInput::make('provider'),
+                TextInput::make('provider_id'),
+                TextInput::make('avatar'),
+                DateTimePicker::make('email_verified_at'),
                 TextInput::make('password')
-                    ->password()
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->required(fn (string $context): bool => $context === 'create')
-                    ->label('New Password (leave empty to keep current)'),
-                TextInput::make('password_confirmation')
-                    ->password()
-                    ->same('password')
-                    ->requiredWith('password')
-                    ->label('Confirm New Password'),
-
+                    ->password(),
                 Textarea::make('two_factor_secret')
                     ->columnSpanFull(),
                 Textarea::make('two_factor_recovery_codes')
