@@ -68,28 +68,62 @@
         <div class="flex-1 space-y-6">
           <!-- Header -->
           <div>
-            <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Your Name' }}</h1>
-            <p class="text-xl font-bold mt-2" :style="{ color: accentColor }">{{ formData.title || 'Your Professional Title' }}</p>
+            <h1 
+              class="text-4xl font-black text-slate-900 tracking-tight uppercase outline-none"
+              :contenteditable="editable"
+              @blur="editable && handleEdit('fullName', $event)"
+              suppressContentEditableWarning>
+              {{ formData.fullName || 'Your Name' }}
+            </h1>
+            <p 
+              class="text-xl font-bold mt-2 outline-none" 
+              :style="{ color: accentColor }"
+              :contenteditable="editable"
+              @blur="editable && handleEdit('title', $event)"
+              suppressContentEditableWarning>
+              {{ formData.title || 'Your Professional Title' }}
+            </p>
           </div>
 
           <!-- Summary -->
-          <div v-if="formData.summary">
+          <div v-if="formData.summary || editable">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Summary</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">{{ formData.summary }}</p>
+            <p 
+              class="text-xs text-slate-600 leading-relaxed outline-none"
+              :contenteditable="editable"
+              @blur="editable && handleEdit('summary', $event)"
+              suppressContentEditableWarning>
+              {{ formData.summary || 'Click to add professional summary...' }}
+            </p>
           </div>
 
           <!-- Experience -->
           <div v-if="hasExperience">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">Experience</h3>
             <div class="space-y-4">
-              <div v-for="exp in formData.experience" :key="exp.id" v-show="exp.position || exp.company">
+              <div v-for="(exp, idx) in formData.experience" :key="exp.id" v-show="exp.position || exp.company">
                 <div class="flex justify-between items-baseline">
-                  <h4 class="font-bold text-slate-800">{{ exp.position }}{{ exp.company ? ' at ' + exp.company : '' }}</h4>
+                  <h4 
+                    class="font-bold text-slate-800 outline-none"
+                    :contenteditable="editable"
+                    @blur="editable && handleEdit(`experience.${idx}.position`, $event)"
+                    suppressContentEditableWarning>
+                    {{ exp.position }}{{ exp.company ? ' at ' + exp.company : '' }}
+                  </h4>
                   <span class="text-[10px] font-bold text-slate-400 italic">{{ exp.startDate }}{{ exp.endDate ? ' — ' + exp.endDate : '' }}</span>
                 </div>
                 <p v-if="exp.location" class="text-[10px] text-slate-400 mt-0.5">{{ exp.location }}</p>
                 <ul class="text-xs text-slate-500 mt-2 space-y-1">
-                  <li v-for="(resp, idx) in exp.responsibilities" :key="idx" v-show="resp" class="leading-relaxed">• {{ resp }}</li>
+                  <li 
+                    v-for="(resp, respIdx) in exp.responsibilities" 
+                    :key="respIdx" 
+                    v-show="resp" 
+                    class="leading-relaxed outline-none"
+                    :contenteditable="editable"
+                    @blur="editable && handleEdit(`experience.${idx}.responsibilities.${respIdx}`, $event)"
+                    suppressContentEditableWarning>
+                    • {{ resp }}
+                  </li>
                 </ul>
               </div>
             </div>
@@ -99,7 +133,16 @@
           <div v-if="hasAchievements">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Achievements</h3>
             <ul class="text-xs text-slate-600 space-y-1">
-              <li v-for="(achievement, idx) in formData.achievements" :key="idx" v-show="achievement">• {{ achievement }}</li>
+              <li 
+                v-for="(achievement, idx) in formData.achievements" 
+                :key="idx" 
+                v-show="achievement"
+                class="outline-none"
+                :contenteditable="editable"
+                @blur="editable && handleEdit(`achievements.${idx}`, $event)"
+                suppressContentEditableWarning>
+                • {{ achievement }}
+              </li>
             </ul>
           </div>
         </div>
@@ -354,8 +397,20 @@ const props = defineProps({
   accentColor: {
     type: String,
     default: '#4f46e5'
+  },
+  editable: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['update:formData'])
+
+// Handle contenteditable changes
+const handleEdit = (field, event) => {
+  const value = event.target.innerText.trim()
+  emit('update:formData', field, value)
+}
 
 // Computed helpers for conditional rendering
 const hasSkills = computed(() => {

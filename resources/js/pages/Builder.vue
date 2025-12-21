@@ -482,6 +482,8 @@
               :templateId="selectedTemplate" 
               :formData="formData" 
               :accentColor="currentAccentColor"
+              :editable="true"
+              @update:formData="(field, value) => updateFormData(field, value)"
             />
           </div>
         </section>
@@ -506,6 +508,8 @@
               :templateId="selectedTemplate" 
               :formData="formData" 
               :accentColor="currentAccentColor"
+              :editable="true"
+              @update:formData="(field, value) => updateFormData(field, value)"
             />
           </div>
         </div>
@@ -1147,6 +1151,28 @@ const hasEducation = computed(() => {
 const hasAchievements = computed(() => {
   return formData.value.achievements.length > 0 && formData.value.achievements[0]
 })
+
+// Update formData from editable preview
+const updateFormData = (field, value) => {
+  console.log('📝 Preview edit:', field, '=', value)
+  
+  // Handle nested field updates (e.g., "experience.0.position")
+  if (field.includes('.')) {
+    const parts = field.split('.')
+    let target = formData.value
+    
+    // Navigate to the parent object
+    for (let i = 0; i < parts.length - 1; i++) {
+      target = target[parts[i]]
+    }
+    
+    // Set the final value
+    target[parts[parts.length - 1]] = value
+  } else {
+    // Simple field update
+    formData.value[field] = value
+  }
+}
 
 const exportPDF = () => {
   console.log('Exporting PDF...')
