@@ -68,6 +68,18 @@
                 <p class="text-slate-400 text-xs mt-1 font-medium italic">Provide background for the AI to tailor your resume specifically to the role.</p>
               </header>
 
+              <!-- Success Message -->
+              <div v-if="successMessage" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3 animate-slide-up">
+                <i class="fa-solid fa-circle-check text-green-600 mt-0.5"></i>
+                <p class="text-sm text-green-800">{{ successMessage }}</p>
+              </div>
+
+              <!-- Error Message -->
+              <div v-if="uploadError" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 animate-slide-up">
+                <i class="fa-solid fa-circle-exclamation text-red-600 mt-0.5"></i>
+                <p class="text-sm text-red-800">{{ uploadError }}</p>
+              </div>
+
               <div class="space-y-10">
                 <!-- Resume Context Section -->
                 <div class="space-y-4">
@@ -79,17 +91,21 @@
                     </div>
                   </div>
                   
-                  <div v-if="resumeInputMode === 'upload'" class="group relative border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                    <input type="file" @change="handleResumeUpload" class="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.doc,.docx">
+                  <div v-if="resumeInputMode === 'upload'" :class="['group relative border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer', isProcessing ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30']">
+                    <input type="file" @change="handleResumeUpload" :disabled="isProcessing" class="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.doc,.docx">
                     <div class="flex flex-col items-center">
-                      <i class="fa-solid fa-file-pdf text-indigo-400 text-2xl mb-3"></i>
-                      <p class="text-sm font-bold text-slate-700">Drop your current resume</p>
-                      <p class="text-[9px] text-slate-400 mt-1">PDF or Word</p>
+                      <i v-if="!isProcessing" class="fa-solid fa-file-pdf text-indigo-400 text-2xl mb-3"></i>
+                      <i v-else class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl mb-3"></i>
+                      <p class="text-sm font-bold text-slate-700">{{ isProcessing ? 'Processing resume...' : 'Drop your current resume' }}</p>
+                      <p class="text-[9px] text-slate-400 mt-1">{{ isProcessing ? 'Extracting text...' : 'PDF or Word' }}</p>
                     </div>
                   </div>
                   
                   <div v-else class="bg-white border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 transition-all">
                     <textarea v-model="resumeText" rows="4" class="w-full p-4 text-xs outline-none resize-none placeholder:text-slate-300" placeholder="Paste your existing resume text here..."></textarea>
+                    <div v-if="resumeText" class="px-4 pb-2 text-[10px] text-slate-400">
+                      {{ resumeText.length }} characters
+                    </div>
                   </div>
                 </div>
 
@@ -105,20 +121,25 @@
                   
                   <div v-if="jobInputMode === 'paste'" class="bg-white border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 transition-all">
                     <textarea v-model="jobDescription" rows="6" class="w-full p-4 text-xs outline-none resize-none placeholder:text-slate-300" placeholder="Paste the job requirements..."></textarea>
+                    <div v-if="jobDescription" class="px-4 pb-2 text-[10px] text-slate-400">
+                      {{ jobDescription.length }} characters
+                    </div>
                   </div>
                   
-                  <div v-else class="group relative border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                    <input type="file" @change="handleJobUpload" class="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.doc,.docx,.txt">
+                  <div v-else :class="['group relative border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer', isProcessing ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30']">
+                    <input type="file" @change="handleJobUpload" :disabled="isProcessing" class="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.doc,.docx,.txt">
                     <div class="flex flex-col items-center">
-                      <i class="fa-solid fa-briefcase text-slate-300 text-2xl mb-3"></i>
-                      <p class="text-sm font-bold text-slate-700">Upload Job Ad / PDF</p>
+                      <i v-if="!isProcessing" class="fa-solid fa-briefcase text-slate-300 text-2xl mb-3"></i>
+                      <i v-else class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl mb-3"></i>
+                      <p class="text-sm font-bold text-slate-700">{{ isProcessing ? 'Processing file...' : 'Upload Job Ad / PDF' }}</p>
                     </div>
                   </div>
                 </div>
 
-                <button @click="saveContext" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3">
-                  <i class="fa-solid fa-bolt-lightning text-amber-400"></i>
-                  Save Context for AI
+                <button @click="saveContext" :disabled="isProcessing || (!resumeText && !jobDescription)" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i v-if="!isProcessing" class="fa-solid fa-bolt-lightning text-amber-400"></i>
+                  <i v-else class="fa-solid fa-spinner fa-spin"></i>
+                  {{ isProcessing ? 'Processing...' : 'Save Context for AI' }}
                 </button>
               </div>
             </div>
@@ -356,6 +377,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Sortable from 'sortablejs'
+import axios from 'axios'
 import templatesData from '../data/templates.json'
 import TemplateRenderer from '../components/TemplateRenderer.vue'
 import ResumePreview from '../components/ResumePreview.vue'
@@ -375,6 +397,11 @@ const formData = ref({
   phone: '',
   location: ''
 })
+
+// Loading States
+const isProcessing = ref(false)
+const uploadError = ref('')
+const successMessage = ref('')
 
 // Input Modes
 const resumeInputMode = ref('upload')
@@ -480,25 +507,150 @@ const handleCustomColor = () => {
   selectedColor.value = 'custom'
 }
 
-const handleResumeUpload = (event) => {
+const handleResumeUpload = async (event) => {
   const file = event.target.files[0]
-  if (file) {
-    console.log('Resume uploaded:', file.name)
-    // TODO: Implement file upload logic
+  if (!file) return
+
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const formDataObj = new FormData()
+    formDataObj.append('file', file)
+
+    // Extract text from file using backend API
+    const response = await axios.post(`${apiUrl}/api/extract-text`, formDataObj, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    if (response.data.text) {
+      resumeText.value = response.data.text
+      parseResumeContent(response.data.text)
+      successMessage.value = 'Resume uploaded and content extracted successfully!'
+      setTimeout(() => successMessage.value = '', 3000)
+    }
+  } catch (error) {
+    console.error('Resume upload error:', error)
+    uploadError.value = error.response?.data?.error || 'Failed to extract text from resume'
+  } finally {
+    isProcessing.value = false
   }
 }
 
-const handleJobUpload = (event) => {
+const handleJobUpload = async (event) => {
   const file = event.target.files[0]
-  if (file) {
-    console.log('Job description uploaded:', file.name)
-    // TODO: Implement file upload logic
+  if (!file) return
+
+  isProcessing.value = true
+  uploadError.value = ''
+
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const formDataObj = new FormData()
+    formDataObj.append('file', file)
+
+    const response = await axios.post(`${apiUrl}/api/extract-text`, formDataObj, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    if (response.data.text) {
+      jobDescription.value = response.data.text
+      successMessage.value = 'Job description extracted successfully!'
+      setTimeout(() => successMessage.value = '', 3000)
+    }
+  } catch (error) {
+    console.error('Job upload error:', error)
+    uploadError.value = error.response?.data?.error || 'Failed to extract text from file'
+  } finally {
+    isProcessing.value = false
   }
 }
 
-const saveContext = () => {
-  console.log('Saving context...', { resumeText: resumeText.value, jobDescription: jobDescription.value })
-  // TODO: Implement save context logic
+const parseResumeContent = (text) => {
+  if (!text) return
+
+  // Extract email
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
+  if (emailMatch) {
+    formData.value.email = emailMatch[0]
+  }
+
+  // Extract phone
+  const phoneMatch = text.match(/(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}/)
+  if (phoneMatch) {
+    formData.value.phone = phoneMatch[0]
+  }
+
+  // Extract name (first 2-3 capitalized words at the beginning)
+  const nameMatch = text.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/m)
+  if (nameMatch) {
+    formData.value.fullName = nameMatch[1]
+  }
+
+  // Extract location (look for city, state patterns)
+  const locationMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2}(?:\s+\d{5})?)/)
+  if (locationMatch) {
+    formData.value.location = locationMatch[1]
+  }
+
+  // Extract title (look for common job titles)
+  const titlePatterns = [
+    /(?:Senior|Junior|Lead|Principal)?\s*(?:Software|Full[\s-]?Stack|Front[\s-]?End|Back[\s-]?End|Web|Mobile)\s*(?:Engineer|Developer|Architect)/i,
+    /(?:Product|Project|Program)\s*Manager/i,
+    /(?:Data|ML|AI)\s*(?:Scientist|Engineer|Analyst)/i,
+    /(?:UX|UI)\s*(?:Designer|Developer)/i,
+    /(?:DevOps|Cloud|Systems)\s*Engineer/i
+  ]
+  
+  for (const pattern of titlePatterns) {
+    const titleMatch = text.match(pattern)
+    if (titleMatch) {
+      formData.value.title = titleMatch[0]
+      break
+    }
+  }
+
+  console.log('Parsed resume data:', formData.value)
+}
+
+const saveContext = async () => {
+  if (!resumeText.value && !jobDescription.value) {
+    uploadError.value = 'Please provide resume content or job description'
+    return
+  }
+
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+
+  try {
+    // Parse resume text if available and not already parsed
+    if (resumeText.value && !formData.value.email) {
+      parseResumeContent(resumeText.value)
+    }
+
+    // Store context in localStorage for AI to use
+    localStorage.setItem('resumeContext', JSON.stringify({
+      resumeText: resumeText.value,
+      jobDescription: jobDescription.value,
+      savedAt: new Date().toISOString()
+    }))
+
+    successMessage.value = 'Context saved! Personal details have been populated. Switch to "Manual Info" tab to review.'
+    setTimeout(() => {
+      successMessage.value = ''
+      // Auto-switch to manual tab to show populated data
+      activeTab.value = 'manual'
+    }, 2000)
+
+  } catch (error) {
+    console.error('Save context error:', error)
+    uploadError.value = 'Failed to save context'
+  } finally {
+    isProcessing.value = false
+  }
 }
 
 const generateResume = () => {

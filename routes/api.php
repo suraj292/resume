@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PlansController;
 use App\Http\Controllers\Api\ResumeAnalysisController;
 use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\TextExtractionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,9 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'
 
 // Plans routes
 Route::get('/plans', [PlansController::class, 'index']);
+
+// Text extraction for Builder (resume/job upload)
+Route::post('/extract-text', [TextExtractionController::class, 'extract']);
 
 // Resume Analysis routes (available for both authenticated and guest users)
 Route::post('/resume-analysis', [ResumeAnalysisController::class, 'store']);
