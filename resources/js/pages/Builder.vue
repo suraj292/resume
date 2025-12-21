@@ -312,86 +312,282 @@
 
             <!-- Tab: AI Assistant -->
             <div v-show="activeTab === 'ai'" class="tab-content">
-              <header class="mb-8">
+              <header class="mb-6">
                 <h2 class="text-xl font-display font-bold text-slate-800 flex items-center gap-2">
                   <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
                   AI Resume Engine
                 </h2>
-                <p class="text-slate-400 text-xs mt-1 font-medium italic">Transform your draft into a job-winning resume with one click.</p>
+                <p class="text-slate-400 text-xs mt-1 font-medium italic">Analyze and optimize your resume for ATS compatibility</p>
               </header>
 
-              <div class="space-y-6">
-                <!-- Primary Actions -->
-                <div class="grid grid-cols-1 gap-4">
-                  <button @click="generateResume" class="group relative bg-indigo-600 hover:bg-indigo-700 text-white p-5 rounded-3xl transition-all shadow-xl shadow-indigo-100 overflow-hidden text-left">
-                    <div class="relative z-10">
-                      <i class="fa-solid fa-sparkles mb-3 block text-indigo-200"></i>
-                      <span class="block text-sm font-bold leading-tight">Generate Entire Resume</span>
-                      <span class="block text-[10px] text-indigo-100 mt-1">Based on Job Context</span>
+              <!-- ATS Analysis Button -->
+              <div class="mb-6">
+                <button 
+                  @click="analyzeATS" 
+                  :disabled="isProcessing"
+                  class="w-full group relative bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:from-slate-400 disabled:to-slate-500 text-white p-5 rounded-2xl transition-all shadow-lg hover:shadow-xl overflow-hidden text-left"
+                >
+                  <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                      <i class="fa-solid fa-chart-line mb-2 block text-indigo-200"></i>
+                      <span class="block text-sm font-bold leading-tight">{{ atsAnalysisCompleted ? 'Re-analyze Resume' : 'Analyze Resume for ATS' }}</span>
+                      <span class="block text-[10px] text-indigo-100 mt-1">{{ isProcessing ? 'Analyzing...' : 'Get detailed ATS compatibility score' }}</span>
                     </div>
-                    <i class="fa-solid fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
-                  </button>
-                  
-                  <button @click="optimizeForATS" class="group relative bg-white border border-slate-200 hover:border-indigo-400 p-5 rounded-3xl transition-all shadow-sm text-left">
-                    <div class="relative z-10">
-                      <i class="fa-solid fa-arrows-spin mb-3 block text-indigo-500"></i>
-                      <span class="block text-sm font-bold text-slate-800 leading-tight">Optimize for ATS</span>
-                      <span class="block text-[10px] text-slate-400 mt-1">Match keywords & format</span>
+                    <i class="fa-solid fa-arrow-right text-2xl text-indigo-300"></i>
+                  </div>
+                  <i class="fa-solid fa-sparkles absolute -right-2 -bottom-2 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
+                </button>
+              </div>
+
+              <!-- ATS Analysis Dashboard -->
+              <div v-if="atsAnalysisCompleted" class="space-y-6">
+                <!-- Score Card -->
+                <div class="bg-white rounded-2xl p-6 shadow-md border border-slate-100 text-center">
+                  <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-t-2xl"></div>
+                  <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4">Overall ATS Score</h3>
+
+                  <div class="relative w-40 h-40 mx-auto mb-4">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle class="text-slate-100" stroke-width="8" stroke="currentColor" fill="transparent" r="42" cx="50" cy="50" />
+                      <circle 
+                        class="text-indigo-600 transition-all duration-1000 ease-out" 
+                        stroke-width="8"
+                        stroke-linecap="round" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="42" 
+                        cx="50" 
+                        cy="50"
+                        :stroke-dasharray="264"
+                        :stroke-dashoffset="scoreCircleDashoffset"
+                      />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                      <span class="text-5xl font-display font-bold text-slate-900 tracking-tighter">{{ atsScore }}</span>
+                      <span class="text-xs font-medium text-slate-400">/100</span>
                     </div>
-                  </button>
+                  </div>
+
+                  <div 
+                    :class="{
+                      'bg-green-100 text-green-800': atsScore >= 80,
+                      'bg-yellow-100 text-yellow-800': atsScore >= 60 && atsScore < 80,
+                      'bg-orange-100 text-orange-800': atsScore >= 40 && atsScore < 60,
+                      'bg-red-100 text-red-800': atsScore < 40
+                    }"
+                    class="inline-block px-3 py-1 rounded-full font-bold text-xs mb-3"
+                  >
+                    {{ scoreGrade }}
+                  </div>
+                  <p class="text-xs text-slate-500 leading-relaxed">
+                    {{ atsScore >= 80 ? 'Excellent! Your resume is highly ATS-compatible.' : atsScore >= 60 ? 'Good resume, but there\'s room for improvement.' : 'Your resume needs significant improvements to pass ATS screening.' }}
+                  </p>
                 </div>
 
-                <!-- Smart Suggestions -->
-                <div class="pt-4 border-t border-slate-100">
-                  <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Smart Suggestions</h3>
-                  <div class="space-y-3">
-                    <!-- ATS Score -->
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xs font-bold">{{ atsScore }}</div>
-                        <div>
-                          <p class="text-xs font-bold text-slate-700">ATS Match Score</p>
-                          <p class="text-[10px] text-slate-400">Improve by adding "Kubernetes"</p>
-                        </div>
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm mx-auto mb-2">
+                      <i class="fa-solid fa-check"></i>
+                    </div>
+                    <span class="block text-lg font-bold text-slate-900">{{ matchedKeywords.length }}</span>
+                    <span class="text-[10px] text-slate-500 font-medium">Keywords</span>
+                  </div>
+                  <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm mx-auto mb-2">
+                      <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <span class="block text-lg font-bold text-slate-900 text-[10px]">{{ experienceLevel }}</span>
+                    <span class="text-[10px] text-slate-500 font-medium">Experience</span>
+                  </div>
+                  <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-sm mx-auto mb-2">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <span class="block text-lg font-bold text-slate-900">{{ criticalIssuesCount }}</span>
+                    <span class="text-[10px] text-slate-500 font-medium">Issues</span>
+                  </div>
+                </div>
+
+                <!-- Critical Issues -->
+                <div v-if="criticalIssues.length > 0" class="bg-red-50 border border-red-100 rounded-xl p-4">
+                  <h4 class="font-bold text-red-800 text-xs mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i> Critical Issues to Fix
+                  </h4>
+                  <ul class="space-y-2">
+                    <li v-for="(issue, index) in criticalIssues.slice(0, 3)" :key="index" class="flex items-start gap-2 bg-white p-2 rounded-lg border border-red-100">
+                      <i class="fa-solid fa-xmark text-red-500 text-xs mt-0.5"></i>
+                      <div>
+                        <span class="block text-xs font-bold text-slate-800">{{ issue.title }}</span>
+                        <span class="text-[10px] text-slate-600">{{ issue.description }}</span>
                       </div>
-                      <button class="text-[10px] font-bold text-indigo-600 hover:underline">Details</button>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Skills Gap -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-xs text-slate-900">Skills Gap Analysis</h3>
+                    <span class="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">{{ keywordMatchPercentage }}% Match</span>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div v-if="matchedKeywords.length > 0">
+                      <h4 class="text-[10px] font-bold text-green-600 uppercase mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-check"></i> Found ({{ matchedKeywords.length }})
+                      </h4>
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="skill in matchedKeywords.slice(0, 8)" :key="skill" class="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded border border-green-100">{{ skill }}</span>
+                        <span v-if="matchedKeywords.length > 8" class="px-2 py-0.5 bg-slate-50 text-slate-500 text-[10px] font-medium rounded">+{{ matchedKeywords.length - 8 }} more</span>
+                      </div>
                     </div>
 
-                    <!-- AI Features -->
-                    <div @click="improveBulletPoints" class="group flex items-center justify-between p-4 hover:bg-indigo-50/50 rounded-2xl border border-transparent hover:border-indigo-100 transition-all cursor-pointer">
+                    <div v-if="missingKeywords.length > 0" class="border-t border-slate-100 pt-3">
+                      <h4 class="text-[10px] font-bold text-red-500 uppercase mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-xmark"></i> Missing ({{ missingKeywords.length }})
+                      </h4>
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="skill in missingKeywords.slice(0, 8)" :key="skill" class="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-medium rounded border border-red-100 border-dashed">{{ skill }}</span>
+                        <span v-if="missingKeywords.length > 8" class="px-2 py-0.5 bg-slate-50 text-slate-500 text-[10px] font-medium rounded">+{{ missingKeywords.length - 8 }} more</span>
+                      </div>
+                      <p class="text-[10px] text-slate-400 mt-2 italic">
+                        <i class="fa-solid fa-lightbulb text-yellow-400 mr-1"></i> Add these keywords to improve your score
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Content Impact -->
+                <div class="bg-slate-900 rounded-xl p-4 text-white">
+                  <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> Content Impact
+                  </h3>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between text-[10px] mb-1">
+                        <span class="text-slate-300">Action Verbs</span>
+                        <span 
+                          :class="{
+                            'text-green-400': contentAnalysis.action_verbs_percentage >= 70,
+                            'text-yellow-400': contentAnalysis.action_verbs_percentage >= 50 && contentAnalysis.action_verbs_percentage < 70,
+                            'text-red-400': contentAnalysis.action_verbs_percentage < 50
+                          }"
+                          class="font-bold"
+                        >{{ contentAnalysis.action_verbs_percentage }}%</span>
+                      </div>
+                      <div class="w-full bg-slate-700 rounded-full h-1.5">
+                        <div 
+                          :class="{
+                            'bg-green-500': contentAnalysis.action_verbs_percentage >= 70,
+                            'bg-yellow-500': contentAnalysis.action_verbs_percentage >= 50 && contentAnalysis.action_verbs_percentage < 70,
+                            'bg-red-500': contentAnalysis.action_verbs_percentage < 50
+                          }"
+                          :style="{ width: contentAnalysis.action_verbs_percentage + '%' }"
+                          class="h-1.5 rounded-full transition-all duration-500"
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-[10px] mb-1">
+                        <span class="text-slate-300">Quantifiable Results</span>
+                        <span 
+                          :class="{
+                            'text-green-400': contentAnalysis.quantifiable_results_percentage >= 50,
+                            'text-yellow-400': contentAnalysis.quantifiable_results_percentage >= 30 && contentAnalysis.quantifiable_results_percentage < 50,
+                            'text-red-400': contentAnalysis.quantifiable_results_percentage < 30
+                          }"
+                          class="font-bold"
+                        >{{ contentAnalysis.quantifiable_results_percentage }}%</span>
+                      </div>
+                      <div class="w-full bg-slate-700 rounded-full h-1.5">
+                        <div 
+                          :class="{
+                            'bg-green-500': contentAnalysis.quantifiable_results_percentage >= 50,
+                            'bg-yellow-500': contentAnalysis.quantifiable_results_percentage >= 30 && contentAnalysis.quantifiable_results_percentage < 50,
+                            'bg-red-500': contentAnalysis.quantifiable_results_percentage < 30
+                          }"
+                          :style="{ width: contentAnalysis.quantifiable_results_percentage + '%' }"
+                          class="h-1.5 rounded-full transition-all duration-500"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700">
+                      <div class="text-[10px]">
+                        <span class="text-slate-400">Words:</span>
+                        <span class="font-mono font-bold ml-1">{{ wordCount }}</span>
+                      </div>
+                      <div class="text-[10px]">
+                        <span class="text-slate-400">Reading:</span>
+                        <span class="font-mono font-bold ml-1">{{ contentAnalysis.reading_level }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Tools (Always visible) -->
+              <div class="mt-6 space-y-4">
+                <div class="border-t border-slate-200 pt-6">
+                  <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">AI Enhancement Tools</h3>
+                  <div class="space-y-3">
+                    <button @click="improveBulletPoints" class="w-full group flex items-center justify-between p-4 hover:bg-indigo-50 rounded-xl border border-slate-200 hover:border-indigo-200 transition-all">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
                           <i class="fa-solid fa-list-check text-xs"></i>
                         </div>
-                        <div>
-                          <p class="text-xs font-bold text-slate-700">Bullet Point Improver</p>
-                          <p class="text-[10px] text-slate-400">Rewrite with impact verbs</p>
+                        <div class="text-left">
+                          <p class="text-xs font-bold text-slate-700">Improve Bullet Points</p>
+                          <p class="text-[10px] text-slate-400">Rewrite with action verbs</p>
                         </div>
                       </div>
-                      <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 group-hover:text-indigo-400 transition-colors"></i>
-                    </div>
+                      <i class="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-indigo-400 transition-colors"></i>
+                    </button>
 
-                    <div @click="analyzeSkillGap" class="group flex items-center justify-between p-4 hover:bg-indigo-50/50 rounded-2xl border border-transparent hover:border-indigo-100 transition-all cursor-pointer">
+                    <button @click="analyzeSkillGap" class="w-full group flex items-center justify-between p-4 hover:bg-indigo-50 rounded-xl border border-slate-200 hover:border-indigo-200 transition-all">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
                           <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
                         </div>
-                        <div>
+                        <div class="text-left">
                           <p class="text-xs font-bold text-slate-700">Skill Gap Analysis</p>
-                          <p class="text-[10px] text-slate-400">Find what keywords are missing</p>
+                          <p class="text-[10px] text-slate-400">Compare with job requirements</p>
                         </div>
                       </div>
-                      <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 group-hover:text-indigo-400 transition-colors"></i>
-                    </div>
+                      <i class="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-indigo-400 transition-colors"></i>
+                    </button>
                   </div>
                 </div>
 
-                <!-- Tone Selection -->
-                <div class="p-5 bg-indigo-50/30 rounded-3xl border border-indigo-100">
-                  <label class="text-[10px] font-bold text-indigo-900 uppercase tracking-widest block mb-3">AI Writing Tone</label>
-                  <div class="flex gap-2">
-                    <button v-for="tone in tones" :key="tone" @click="selectedTone = tone" :class="['flex-1 py-2 px-3 text-[10px] font-bold rounded-xl transition-all', selectedTone === tone ? 'bg-white text-indigo-600 shadow-sm border border-indigo-200' : 'text-slate-500 hover:bg-white']">{{ tone }}</button>
-                  </div>
+                <!-- Generate Entire Resume Button -->
+                <div class="border-t border-slate-200 pt-6">
+                  <button 
+                    @click="generateResume" 
+                    :disabled="isProcessing"
+                    class="w-full group relative bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-400 disabled:to-slate-500 text-white p-6 rounded-2xl transition-all shadow-xl hover:shadow-2xl overflow-hidden"
+                  >
+                    <div class="relative z-10">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-sparkles text-xl"></i>
+                          </div>
+                          <div class="text-left">
+                            <span class="block text-base font-bold leading-tight">Generate Entire Resume</span>
+                            <span class="block text-[10px] text-emerald-100 mt-1">{{ isProcessing ? 'Processing...' : 'AI-powered complete resume generation' }}</span>
+                          </div>
+                        </div>
+                        <i class="fa-solid fa-wand-magic-sparkles text-2xl text-emerald-200 group-hover:rotate-12 transition-transform"></i>
+                      </div>
+                      <p class="text-[10px] text-emerald-50 leading-relaxed">
+                        Let AI create your complete resume based on job description and your context. All sections will be filled automatically.
+                      </p>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                  </button>
+                  <p class="text-[9px] text-slate-400 mt-2 text-center italic">
+                    <i class="fa-solid fa-info-circle mr-1"></i> Make sure to add job description in "Import & Job" tab first
+                  </p>
                 </div>
               </div>
             </div>
@@ -475,14 +671,56 @@
         </section>
 
         <!-- Preview (Right) - Desktop -->
-        <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar">
-          <div class="sticky top-0 w-full max-w-[800px]">
+        <section class="hidden lg:flex flex-[1.5] preview-container flex-col items-start justify-start p-12 overflow-y-auto custom-scrollbar">
+          <!-- Page Controls -->
+          <div class="w-full max-w-[800px] mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button 
+                @click="currentPage > 1 && currentPage--"
+                :disabled="currentPage === 1"
+                class="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+                <i class="fa-solid fa-chevron-left text-xs text-slate-600"></i>
+              </button>
+              
+              <div class="px-4 py-2 bg-white border border-slate-200 rounded-lg">
+                <span class="text-xs font-bold text-slate-700">Page {{ currentPage }} of {{ totalPages }}</span>
+              </div>
+              
+              <button 
+                @click="currentPage < totalPages && currentPage++"
+                :disabled="currentPage === totalPages"
+                class="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+                <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button 
+                @click="addPage"
+                class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                Add Page
+              </button>
+              
+              <button 
+                v-if="totalPages > 1"
+                @click="removePage"
+                class="px-3 py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-lg transition-all flex items-center gap-2">
+                <i class="fa-solid fa-trash text-[10px]"></i>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview Content -->
+          <div class="w-full max-w-[800px]">
             <ResumePreview 
               :key="previewKey"
               :templateId="selectedTemplate" 
               :formData="formData" 
               :accentColor="currentAccentColor"
               :editable="true"
+              :currentPage="currentPage"
               @update:formData="(field, value) => updateFormData(field, value)"
             />
           </div>
@@ -605,9 +843,31 @@ const resumeText = ref('')
 const jobDescription = ref('')
 
 // AI Settings
-const atsScore = ref(72)
+const atsScore = ref(0)
 const selectedTone = ref('Professional')
 const tones = ['Professional', 'Creative', 'Direct']
+
+// ATS Analysis Results
+const atsAnalysisCompleted = ref(false)
+const scoreGrade = ref('Not Analyzed')
+const experienceLevel = ref('Not Detected')
+const keywordMatchPercentage = ref(0)
+const wordCount = ref(0)
+const criticalIssuesCount = ref(0)
+const matchedKeywords = ref([])
+const missingKeywords = ref([])
+const formattingChecks = ref([])
+const criticalIssues = ref([])
+const contentAnalysis = ref({
+  action_verbs_percentage: 0,
+  quantifiable_results_percentage: 0,
+  avg_bullet_length: 0,
+  reading_level: 'Unknown'
+})
+
+// Page management
+const currentPage = ref(1)
+const totalPages = ref(1)
 
 // Templates from JSON
 const templatesFromJSON = ref(templatesData)
@@ -651,6 +911,11 @@ const currentAccentColor = computed(() => {
   if (customColor.value) return customColor.value
   const palette = colorPalettes.value.find(p => p.id === selectedColor.value)
   return palette ? palette.hex : '#4f46e5'
+})
+
+const scoreCircleDashoffset = computed(() => {
+  const circumference = 264
+  return circumference - (atsScore.value / 100) * circumference
 })
 
 // Preview key to force re-render when formData changes
@@ -1250,6 +1515,85 @@ const analyzeSkillGap = async () => {
   }
 }
 
+const analyzeATS = async () => {
+  if (isProcessing.value) return
+  
+  // Build resume content from formData
+  let resumeContent = `${formData.value.fullName}\n${formData.value.title}\n`
+  resumeContent += `${formData.value.email} | ${formData.value.phone} | ${formData.value.location}\n\n`
+  
+  if (formData.value.summary) {
+    resumeContent += `SUMMARY\n${formData.value.summary}\n\n`
+  }
+  
+  if (Object.values(formData.value.skills).some(arr => arr.length > 0)) {
+    resumeContent += `SKILLS\n`
+    if (formData.value.skills.backend.length) resumeContent += `Backend: ${formData.value.skills.backend.join(', ')}\n`
+    if (formData.value.skills.frontend.length) resumeContent += `Frontend: ${formData.value.skills.frontend.join(', ')}\n`
+    if (formData.value.skills.devops.length) resumeContent += `DevOps: ${formData.value.skills.devops.join(', ')}\n`
+    if (formData.value.skills.other.length) resumeContent += `Other: ${formData.value.skills.other.join(', ')}\n`
+    resumeContent += `\n`
+  }
+  
+  if (formData.value.experience.length > 0 && formData.value.experience[0].position) {
+    resumeContent += `EXPERIENCE\n`
+    formData.value.experience.forEach(exp => {
+      resumeContent += `${exp.position} - ${exp.company} (${exp.startDate} - ${exp.current ? 'Present' : exp.endDate})\n`
+      exp.responsibilities.forEach(resp => {
+        if (resp.trim()) resumeContent += `• ${resp}\n`
+      })
+      resumeContent += `\n`
+    })
+  }
+  
+  if (!resumeContent.trim() || resumeContent.length < 100) {
+    uploadError.value = 'Please fill in your resume information first (at least name, title, and some experience)'
+    return
+  }
+  
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+  
+  try {
+    const formDataObj = new FormData()
+    formDataObj.append('input_type', 'paste')
+    formDataObj.append('content', resumeContent)
+    
+    const response = await axios.post('/api/resume-analysis', formDataObj, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    
+    const data = response.data.data
+    
+    // Update all ATS analysis data
+    atsScore.value = data.ats_score
+    scoreGrade.value = data.score_grade
+    experienceLevel.value = data.experience_level
+    keywordMatchPercentage.value = data.keyword_match_percentage
+    wordCount.value = data.word_count
+    matchedKeywords.value = data.matched_keywords || []
+    missingKeywords.value = data.missing_keywords || []
+    formattingChecks.value = data.formatting_checks || []
+    criticalIssues.value = data.critical_issues || []
+    criticalIssuesCount.value = (data.critical_issues || []).length
+    
+    if (data.content_analysis) {
+      contentAnalysis.value = data.content_analysis
+    }
+    
+    atsAnalysisCompleted.value = true
+    successMessage.value = `✓ ATS Analysis Complete! Score: ${data.ats_score}/100`
+    setTimeout(() => successMessage.value = '', 5000)
+    
+  } catch (error) {
+    console.error('ATS analysis error:', error)
+    uploadError.value = error.response?.data?.error || error.response?.data?.message || 'Failed to analyze resume for ATS'
+  } finally {
+    isProcessing.value = false
+  }
+}
+
 const removeExperience = (index) => {
   if (formData.value.experience.length > 1) {
     formData.value.experience.splice(index, 1)
@@ -1348,6 +1692,23 @@ const updateFormData = (field, value) => {
   } else {
     // Simple field update
     formData.value[field] = value
+  }
+}
+
+// Page management functions
+const addPage = () => {
+  totalPages.value++
+  currentPage.value = totalPages.value
+  console.log(`➕ Added page ${totalPages.value}`)
+}
+
+const removePage = () => {
+  if (totalPages.value > 1) {
+    totalPages.value--
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+    }
+    console.log(`➖ Removed page, now ${totalPages.value} pages`)
   }
 }
 
