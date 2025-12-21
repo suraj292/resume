@@ -17,6 +17,77 @@ class GeminiService
         $this->model = config('services.gemini.model', 'gemini-pro');
     }
 
+    /**
+     * Generic method to generate content from Gemini API
+     */
+    public function generateContent(string $prompt, array $config = []): string
+    {
+        try {
+            $defaultConfig = [
+                'temperature' => 0.7,
+                'topK' => 40,
+                'topP' => 0.95,
+                'maxOutputTokens' => 8192,
+            ];
+
+            $generationConfig = array_merge($defaultConfig, $config);
+
+            $response = Http::timeout(60)
+                ->post("{$this->baseUrl}{$this->model}:generateContent?key={$this->apiKey}", [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => $generationConfig,
+                    'safetySettings' => [
+                        [
+                            'category' => 'HARM_CATEGORY_HARASSMENT',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_HATE_SPEECH',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                            'threshold' => 'BLOCK_NONE'
+                        ]
+                    ]
+                ]);
+
+            if ($response->failed()) {
+                Log::error('Gemini API Error', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                throw new \Exception('Gemini API request failed: ' . $response->body());
+            }
+
+            $data = $response->json();
+            
+            if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                Log::error('Unexpected Gemini API response structure', ['data' => $data]);
+                throw new \Exception('Unexpected API response structure');
+            }
+
+            return $data['candidates'][0]['content']['parts'][0]['text'];
+
+        } catch (\Exception $e) {
+            Log::error('Gemini generateContent error', [
+                'message' => $e->getMessage(),
+                'prompt_length' => strlen($prompt)
+            ]);
+            throw $e;
+        }
+    }
+
     public function analyzeResume(string $resumeContent, ?string $jobDescription = null): array
     {
         $prompt = $this->buildResumeAnalysisPrompt($resumeContent, $jobDescription);

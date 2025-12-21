@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AIResumeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PlansController;
 use App\Http\Controllers\Api\ResumeAnalysisController;
@@ -28,6 +29,12 @@ Route::get('/plans', [PlansController::class, 'index']);
 
 // Text extraction for Builder (resume/job upload)
 Route::post('/extract-text', [TextExtractionController::class, 'extract']);
+
+// AI Resume Assistant routes
+Route::post('/ai/generate-resume', [AIResumeController::class, 'generateResume']);
+Route::post('/ai/optimize-ats', [AIResumeController::class, 'optimizeForATS']);
+Route::post('/ai/improve-bullets', [AIResumeController::class, 'improveBulletPoints']);
+Route::post('/ai/skill-gap', [AIResumeController::class, 'analyzeSkillGap']);
 
 // Resume Analysis routes (available for both authenticated and guest users)
 Route::post('/resume-analysis', [ResumeAnalysisController::class, 'store']);

@@ -1038,39 +1038,216 @@ const saveContext = async () => {
   }
 }
 
-const generateResume = () => {
-  console.log('Generating resume...')
-  // TODO: Implement AI resume generation
+const generateResume = async () => {
+  if (isProcessing.value) return
+  
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+  
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    
+    // Get context from localStorage
+    const context = localStorage.getItem('resumeContext')
+    const parsed = context ? JSON.parse(context) : {}
+    
+    const response = await axios.post(`${apiUrl}/api/ai/generate-resume`, {
+      resumeContext: parsed.resumeText || resumeText.value || '',
+      jobDescription: parsed.jobDescription || jobDescription.value || '',
+      tone: selectedTone.value,
+      currentData: formData.value
+    })
+    
+    if (response.data.success && response.data.data) {
+      const aiData = response.data.data
+      
+      // Update formData with AI-generated content
+      if (aiData.summary) formData.value.summary = aiData.summary
+      
+      if (aiData.skills) {
+        Object.keys(aiData.skills).forEach(category => {
+          if (formData.value.skills[category]) {
+            formData.value.skills[category] = aiData.skills[category]
+          }
+        })
+      }
+      
+      if (aiData.experience && Array.isArray(aiData.experience)) {
+        formData.value.experience = aiData.experience.map((exp, idx) => ({
+          id: Date.now() + idx,
+          ...exp
+        }))
+      }
+      
+      successMessage.value = '✨ AI generated your resume! Check the Manual Info tab to review and edit.'
+      setTimeout(() => {
+        successMessage.value = ''
+        activeTab.value = 'manual'
+      }, 3000)
+      
+      console.log('✅ AI Resume Generated:', aiData)
+    }
+  } catch (error) {
+    console.error('AI Generation Error:', error)
+    uploadError.value = error.response?.data?.message || 'Failed to generate resume with AI'
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-const optimizeForATS = () => {
-  console.log('Optimizing for ATS...')
-  // TODO: Implement ATS optimization
+const optimizeForATS = async () => {
+  if (isProcessing.value) return
+  
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+  
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    
+    const context = localStorage.getItem('resumeContext')
+    const parsed = context ? JSON.parse(context) : {}
+    
+    const response = await axios.post(`${apiUrl}/api/ai/optimize-ats`, {
+      currentResume: formData.value,
+      jobDescription: parsed.jobDescription || jobDescription.value || ''
+    })
+    
+    if (response.data.success) {
+      const suggestions = response.data.suggestions
+      
+      // Update ATS score if available
+      if (suggestions.atsScore) {
+        atsScore.value = suggestions.atsScore
+      }
+      
+      // Show suggestions to user
+      let message = `ATS Score: ${suggestions.atsScore || 'N/A'}\n\n`
+      
+      if (suggestions.missingKeywords && suggestions.missingKeywords.length > 0) {
+        message += `Missing Keywords: ${suggestions.missingKeywords.join(', ')}\n\n`
+      }
+      
+      if (suggestions.priorityChanges && suggestions.priorityChanges.length > 0) {
+        message += `Priority Changes:\n${suggestions.priorityChanges.slice(0, 3).join('\n')}`
+      }
+      
+      alert(message)
+      successMessage.value = '✓ ATS analysis complete! See suggestions above.'
+      console.log('📊 ATS Optimization:', suggestions)
+    }
+  } catch (error) {
+    console.error('ATS Optimization Error:', error)
+    uploadError.value = error.response?.data?.message || 'Failed to optimize for ATS'
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-const improveBulletPoints = () => {
-  console.log('Improving bullet points...')
-  // TODO: Implement bullet point improvement
-}
-
-const analyzeSkillGap = () => {
-  console.log('Analyzing skill gap...')
-  // TODO: Implement skill gap analysis
-}
-
-// Helper Functions for Dynamic Fields
-const addExperience = () => {
-  formData.value.experience.push({
-    id: Date.now(),
-    position: '',
-    company: '',
-    location: '',
-    startDate: '',
-    endDate: '',
-    current: false,
-    responsibilities: ['']
+const improveBulletPoints = async () => {
+  if (isProcessing.value) return
+  
+  // Collect all responsibility bullets from experience
+  const allBullets = []
+  formData.value.experience.forEach(exp => {
+    exp.responsibilities.forEach(resp => {
+      if (resp && resp.trim()) allBullets.push(resp)
+    })
   })
-  console.log('➕ Added new experience entry')
+  
+  if (allBullets.length === 0) {
+    uploadError.value = 'No bullet points found. Add some experience first!'
+    return
+  }
+  
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+  
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    
+    const response = await axios.post(`${apiUrl}/api/ai/improve-bullets`, {
+      bulletPoints: allBullets,
+      tone: selectedTone.value
+    })
+    
+    if (response.data.success && response.data.improvedBullets) {
+      const improved = response.data.improvedBullets
+      
+      // Update formData with improved bullets
+      let bulletIndex = 0
+      formData.value.experience.forEach(exp => {
+        exp.responsibilities = exp.responsibilities.map(resp => {
+          if (resp && resp.trim() && bulletIndex < improved.length) {
+            return improved[bulletIndex++]
+          }
+          return resp
+        })
+      })
+      
+      successMessage.value = '✨ Bullet points improved with AI! Check your experience section.'
+      console.log('✅ Improved Bullets:', improved)
+    }
+  } catch (error) {
+    console.error('Bullet Points Error:', error)
+    uploadError.value = error.response?.data?.message || 'Failed to improve bullet points'
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+const analyzeSkillGap = async () => {
+  if (isProcessing.value) return
+  
+  const context = localStorage.getItem('resumeContext')
+  const parsed = context ? JSON.parse(context) : {}
+  
+  if (!parsed.jobDescription && !jobDescription.value) {
+    uploadError.value = 'Please provide a job description first (Import & Context tab)'
+    return
+  }
+  
+  isProcessing.value = true
+  uploadError.value = ''
+  successMessage.value = ''
+  
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    
+    const response = await axios.post(`${apiUrl}/api/ai/skill-gap`, {
+      currentSkills: formData.value.skills,
+      jobDescription: parsed.jobDescription || jobDescription.value
+    })
+    
+    if (response.data.success) {
+      const analysis = response.data.analysis
+      
+      let message = `Skill Match: ${analysis.matchPercentage || 'N/A'}%\n\n`
+      
+      if (analysis.matchingSkills && analysis.matchingSkills.length > 0) {
+        message += `✓ You have: ${analysis.matchingSkills.join(', ')}\n\n`
+      }
+      
+      if (analysis.missingSkills && analysis.missingSkills.length > 0) {
+        message += `✗ Missing: ${analysis.missingSkills.join(', ')}\n\n`
+      }
+      
+      if (analysis.suggestions && analysis.suggestions.length > 0) {
+        message += `Suggestions:\n${analysis.suggestions.join('\n')}`
+      }
+      
+      alert(message)
+      successMessage.value = '✓ Skill gap analysis complete!'
+      console.log('📈 Skill Gap Analysis:', analysis)
+    }
+  } catch (error) {
+    console.error('Skill Gap Error:', error)
+    uploadError.value = error.response?.data?.message || 'Failed to analyze skill gap'
+  } finally {
+    isProcessing.value = false
+  }
 }
 
 const removeExperience = (index) => {
