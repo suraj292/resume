@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useAuth } from '../composables/useAuth'
+import { useAuthStore } from '../stores/auth'
 
-const { register: registerUser, login: loginUser, socialLogin } = useAuth()
+const authStore = useAuthStore()
 
 const activeTab = ref('login')
 const showLoginPassword = ref(false)
@@ -82,7 +82,7 @@ const handleSignup = async () => {
 }
 
 const handleSocialLogin = (provider) => {
-  socialLogin(provider)
+  authStore.socialLogin(provider)
 }
 </script>
 

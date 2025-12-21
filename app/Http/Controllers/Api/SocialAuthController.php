@@ -32,10 +32,8 @@ class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to authenticate with ' . $provider,
-                'error' => $e->getMessage(),
-            ], 400);
+            // Redirect to auth page with error
+            return redirect('/auth?error=oauth_failed');
         }
 
         // Check if social account exists
@@ -73,16 +71,15 @@ class SocialAuthController extends Controller
             ]);
         }
 
-        // Create token
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Log the user in with session
+        auth()->login($user, true);
 
-        // Return response with token
-        // In production, you might want to redirect to frontend with token in URL
-        return response()->json([
-            'message' => 'Authentication successful',
-            'user' => $user->load('socialAccounts'),
-            'token' => $token,
-        ]);
+        // Store auth token in session for frontend
+        $token = $user->createToken('auth_token')->plainTextToken;
+        session(['auth_token' => $token]);
+
+        // Redirect to frontend builder or intended route
+        return redirect('/builder');
     }
 
     /**

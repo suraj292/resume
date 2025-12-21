@@ -22,11 +22,20 @@
 
                 <div class="flex items-center gap-4">
                     <div class="hidden md:block text-right">
-                        <p class="text-xs font-bold text-slate-900">{{ user.name }}</p>
-                        <p class="text-[10px] text-slate-500">{{ user.plan }}</p>
+                        <p class="text-xs font-bold text-slate-900">{{ currentUser?.name || 'Guest' }}</p>
+                        <p class="text-[10px] text-slate-500">{{ currentUser?.plan || 'Free Plan' }}</p>
                     </div>
-                    <div class="relative group cursor-pointer">
-                        <img :src="user.avatar" class="w-9 h-9 rounded-full border-2 border-white shadow-sm hover:border-indigo-200 transition-all">
+                    <div class="relative group">
+                        <img :src="currentUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=128'" class="w-9 h-9 rounded-full border-2 border-white shadow-sm hover:border-indigo-200 transition-all cursor-pointer">
+                        <!-- Dropdown -->
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                            <div class="p-2">
+                                <button @click="handleLogout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -336,101 +345,131 @@
     </div>
 </template>
 
-<script>
-export default {
-    name: 'Profile',
-    data() {
-        return {
-            activeTab: 'personal',
-            saving: false,
-            saved: false,
-            user: {
-                name: 'Alex Morgan',
-                email: 'alex.morgan@example.com',
-                plan: 'Pro Plan',
-                avatar: 'https://ui-avatars.com/api/?name=Alex+Morgan&background=6366f1&color=fff&size=128'
-            },
-            formData: {
-                name: 'Alex Morgan',
-                jobTitle: 'Product Designer',
-                email: 'alex.morgan@example.com',
-                phone: '+1 (555) 123-4567',
-                location: 'San Francisco, CA'
-            },
-            securityData: {
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            },
-            preferences: {
-                jobAlerts: true,
-                productUpdates: false,
-                narrativeTone: 'Professional',
-                dateFormat: 'MM/YYYY'
-            },
-            subscription: {
-                plan: 'Pro Plan',
-                status: 'Active',
-                nextBilling: 'Nov 24, 2023',
-                paymentMethod: 'Visa ending in •••• 4242'
-            },
-            billingHistory: [
-                { id: 1, date: 'Oct 24, 2023', amount: '$19.00', status: 'Paid' },
-                { id: 2, date: 'Sep 24, 2023', amount: '$19.00', status: 'Paid' }
-            ],
-            stats: {
-                resumesCreated: 12,
-                atsScans: 48,
-                memberSince: 'Oct 2023'
-            },
-            tabs: [
-                { id: 'personal', label: 'Personal Info', icon: 'fa-regular fa-user' },
-                { id: 'security', label: 'Security', icon: 'fa-solid fa-shield-halved' },
-                { id: 'preferences', label: 'Preferences', icon: 'fa-solid fa-sliders' },
-                { id: 'subscription', label: 'Subscription', icon: 'fa-regular fa-credit-card' }
-            ]
-        }
-    },
-    computed: {
-        saveButtonText() {
-            if (this.saving) return 'Saving...';
-            if (this.saved) return 'Saved!';
-            return 'Save Changes';
-        },
-        saveButtonClass() {
-            if (this.saving) return 'bg-slate-900 opacity-75 cursor-not-allowed';
-            if (this.saved) return 'bg-green-600';
-            return this.activeTab === 'security' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-indigo-600 hover:bg-indigo-500';
-        }
-    },
-    methods: {
-        previewAvatar(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.user.avatar = e.target.result;
-                };
-                reader.readAsDataURL(file);
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../stores/auth'
+
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.currentUser)
+
+const activeTab = ref('personal')
+const saving = ref(false)
+const saved = ref(false)
+
+// User data - will be populated from currentUser
+const user = computed(() => currentUser.value || {
+    name: 'Loading...',
+    email: '',
+    plan: 'Free Plan',
+    avatar: 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=128'
+})
+
+const formData = ref({
+    name: '',
+    jobTitle: '',
+    email: '',
+    phone: '',
+    location: ''
+})
+
+const securityData = ref({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+})
+
+const preferences = ref({
+    jobAlerts: true,
+    productUpdates: false,
+    narrativeTone: 'Professional',
+    dateFormat: 'MM/YYYY'
+})
+
+const subscription = ref({
+    plan: 'Pro Plan',
+    status: 'Active',
+    nextBilling: 'Nov 24, 2023',
+    paymentMethod: 'Visa ending in •••• 4242'
+})
+
+const billingHistory = ref([
+    { id: 1, date: 'Oct 24, 2023', amount: '$19.00', status: 'Paid' },
+    { id: 2, date: 'Sep 24, 2023', amount: '$19.00', status: 'Paid' }
+])
+
+const stats = ref({
+    resumesCreated: 12,
+    atsScans: 48,
+    memberSince: 'Oct 2023'
+})
+
+const tabs = [
+    { id: 'personal', label: 'Personal Info', icon: 'fa-regular fa-user' },
+    { id: 'security', label: 'Security', icon: 'fa-solid fa-shield-halved' },
+    { id: 'preferences', label: 'Preferences', icon: 'fa-solid fa-sliders' },
+    { id: 'subscription', label: 'Subscription', icon: 'fa-regular fa-credit-card' }
+]
+
+const saveButtonText = computed(() => {
+    if (saving.value) return 'Saving...'
+    if (saved.value) return 'Saved!'
+    return 'Save Changes'
+})
+
+const saveButtonClass = computed(() => {
+    if (saving.value) return 'bg-slate-900 opacity-75 cursor-not-allowed'
+    if (saved.value) return 'bg-green-600'
+    return activeTab.value === 'security' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-indigo-600 hover:bg-indigo-500'
+})
+
+const previewAvatar = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            if (currentUser.value) {
+                currentUser.value.avatar = e.target.result
             }
-        },
-        async handleSave() {
-            this.saving = true;
-            this.saved = false;
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            this.saving = false;
-            this.saved = true;
-
-            // Reset saved state after 2 seconds
-            setTimeout(() => {
-                this.saved = false;
-            }, 2000);
         }
+        reader.readAsDataURL(file)
     }
 }
+
+const handleSave = async () => {
+    saving.value = true
+    saved.value = false
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    saving.value = false
+    saved.value = true
+
+    // Reset saved state after 2 seconds
+    setTimeout(() => {
+        saved.value = false
+    }, 2000)
+}
+
+const handleLogout = async () => {
+  await authStore.logout()
+}
+
+// Load user on mount
+onMounted(async () => {
+  await authStore.fetchUser()
+  
+  // Populate form with user data
+  if (currentUser.value) {
+    formData.value = {
+      name: currentUser.value.name || '',
+      jobTitle: currentUser.value.job_title || '',
+      email: currentUser.value.email || '',
+      phone: currentUser.value.phone || '',
+      location: currentUser.value.location || ''
+    }
+  }
+})
 </script>
 
 <style scoped>
