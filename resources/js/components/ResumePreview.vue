@@ -8,41 +8,99 @@
         <div class="w-1/3 space-y-6">
           <div class="w-32 h-32 bg-slate-200 rounded-full mx-auto mb-6"></div>
           
+          <!-- Contact -->
           <div>
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Contact</h3>
             <div class="space-y-2 text-xs text-slate-600">
               <p v-if="formData.email"><i class="fa-solid fa-envelope mr-2" :style="{ color: accentColor }"></i>{{ formData.email }}</p>
               <p v-if="formData.phone"><i class="fa-solid fa-phone mr-2" :style="{ color: accentColor }"></i>{{ formData.phone }}</p>
               <p v-if="formData.location"><i class="fa-solid fa-location-dot mr-2" :style="{ color: accentColor }"></i>{{ formData.location }}</p>
+              <p v-if="formData.linkedin" class="break-all"><i class="fa-brands fa-linkedin mr-2" :style="{ color: accentColor }"></i>{{ formData.linkedin }}</p>
+              <p v-if="formData.github" class="break-all"><i class="fa-brands fa-github mr-2" :style="{ color: accentColor }"></i>{{ formData.github }}</p>
             </div>
           </div>
 
-          <div>
+          <!-- Skills -->
+          <div v-if="hasSkills">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Skills</h3>
-            <div class="flex flex-wrap gap-2">
-              <span v-for="skill in ['JavaScript', 'Vue.js', 'React', 'Node.js']" :key="skill" class="text-[10px] px-2 py-1 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+            <div class="space-y-3">
+              <div v-if="formData.skills.backend.length">
+                <p class="text-[9px] font-bold text-slate-400 mb-1">Backend</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.backend" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                </div>
+              </div>
+              <div v-if="formData.skills.frontend.length">
+                <p class="text-[9px] font-bold text-slate-400 mb-1">Frontend</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.frontend" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                </div>
+              </div>
+              <div v-if="formData.skills.devops.length">
+                <p class="text-[9px] font-bold text-slate-400 mb-1">DevOps</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.devops" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                </div>
+              </div>
+              <div v-if="formData.skills.other.length">
+                <p class="text-[9px] font-bold text-slate-400 mb-1">Other</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.other" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div v-if="hasEducation">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Education</h3>
+            <div class="space-y-3">
+              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree">
+                <h4 class="font-bold text-[10px] text-slate-800">{{ edu.degree }}</h4>
+                <p class="text-[9px] text-slate-500">{{ edu.institution }}</p>
+                <p class="text-[9px] text-slate-400">{{ edu.year }}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Right Column -->
         <div class="flex-1 space-y-6">
+          <!-- Header -->
           <div>
-            <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Jonathan Doe' }}</h1>
-            <p class="text-xl font-bold mt-2" :style="{ color: accentColor }">{{ formData.title || 'Senior Software Engineer' }}</p>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Your Name' }}</h1>
+            <p class="text-xl font-bold mt-2" :style="{ color: accentColor }">{{ formData.title || 'Your Professional Title' }}</p>
           </div>
 
-          <div>
+          <!-- Summary -->
+          <div v-if="formData.summary">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Summary</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">{{ formData.summary }}</p>
+          </div>
+
+          <!-- Experience -->
+          <div v-if="hasExperience">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">Experience</h3>
             <div class="space-y-4">
-              <div>
+              <div v-for="exp in formData.experience" :key="exp.id" v-show="exp.position || exp.company">
                 <div class="flex justify-between items-baseline">
-                  <h4 class="font-bold text-slate-800">Principal Engineer at TechCorp</h4>
-                  <span class="text-[10px] font-bold text-slate-400 italic">2021 — PRESENT</span>
+                  <h4 class="font-bold text-slate-800">{{ exp.position }}{{ exp.company ? ' at ' + exp.company : '' }}</h4>
+                  <span class="text-[10px] font-bold text-slate-400 italic">{{ exp.startDate }}{{ exp.endDate ? ' — ' + exp.endDate : '' }}</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1 leading-relaxed">Led the migration of legacy infrastructure to a modern microservices architecture, improving system uptime by 40%.</p>
+                <p v-if="exp.location" class="text-[10px] text-slate-400 mt-0.5">{{ exp.location }}</p>
+                <ul class="text-xs text-slate-500 mt-2 space-y-1">
+                  <li v-for="(resp, idx) in exp.responsibilities" :key="idx" v-show="resp" class="leading-relaxed">• {{ resp }}</li>
+                </ul>
               </div>
             </div>
+          </div>
+
+          <!-- Achievements -->
+          <div v-if="hasAchievements">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Achievements</h3>
+            <ul class="text-xs text-slate-600 space-y-1">
+              <li v-for="(achievement, idx) in formData.achievements" :key="idx" v-show="achievement">• {{ achievement }}</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -264,7 +322,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   templateId: {
     type: String,
     default: 'modernist'
@@ -276,12 +336,44 @@ defineProps({
       title: '',
       email: '',
       phone: '',
-      location: ''
+      location: '',
+      linkedin: '',
+      github: '',
+      summary: '',
+      skills: {
+        backend: [],
+        frontend: [],
+        devops: [],
+        other: []
+      },
+      experience: [],
+      education: [],
+      achievements: []
     })
   },
   accentColor: {
     type: String,
     default: '#4f46e5'
   }
+})
+
+// Computed helpers for conditional rendering
+const hasSkills = computed(() => {
+  return Object.values(props.formData?.skills || {}).some(arr => arr && arr.length > 0)
+})
+
+const hasExperience = computed(() => {
+  const exp = props.formData?.experience || []
+  return exp.length > 0 && (exp[0].position || exp[0].company)
+})
+
+const hasEducation = computed(() => {
+  const edu = props.formData?.education || []
+  return edu.length > 0 && edu[0].degree
+})
+
+const hasAchievements = computed(() => {
+  const ach = props.formData?.achievements || []
+  return ach.length > 0 && ach[0]
 })
 </script>

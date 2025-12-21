@@ -144,24 +144,170 @@
               </div>
             </div>
 
-            <!-- Tab: Manual Content -->
-            <div v-show="activeTab === 'manual'" class="tab-content">
-              <header class="mb-8">
-                <h2 class="text-xl font-display font-bold text-slate-800">Personal Details</h2>
-                <p class="text-slate-400 text-xs mt-1 font-medium">Reorder your information blocks by dragging the handles <i class="fa-solid fa-grip-vertical mx-1"></i>.</p>
+            <!-- Tab: Manual Content - Comprehensive Resume Builder -->
+            <div v-show="activeTab === 'manual'" class="tab-content space-y-6">
+              <header class="mb-6">
+                <h2 class="text-xl font-display font-bold text-slate-800">Resume Content</h2>
+                <p class="text-slate-400 text-xs mt-1 font-medium">Build your complete resume section by section</p>
               </header>
 
-              <div class="space-y-4" ref="personalFieldsContainer">
-                <div v-for="field in personalFields" :key="field.id" class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{{ field.label }}</label>
-                    <input v-model="formData[field.id]" :type="field.type" :placeholder="field.placeholder" class="w-full bg-transparent font-bold text-slate-800 outline-none text-base">
+              <!-- Personal Information -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <i class="fa-solid fa-user text-indigo-600"></i>
+                  Personal Information
+                </h3>
+                <div class="space-y-4">
+                  <div v-for="field in personalFields" :key="field.id" class="group">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{{ field.label }}</label>
+                    <input v-model="formData[field.id]" :type="field.type" :placeholder="field.placeholder" 
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
                   </div>
                 </div>
-              </div>
+              </section>
+
+              <!-- Professional Summary -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <i class="fa-solid fa-file-lines text-indigo-600"></i>
+                  Professional Summary
+                </h3>
+                <textarea v-model="formData.summary" rows="4" 
+                          class="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none transition-all" 
+                          placeholder="e.g. Senior Full-Stack Developer with 4+ years of experience building scalable applications..."></textarea>
+                <p class="text-[10px] text-slate-400 mt-2">{{ formData.summary.length }} characters</p>
+              </section>
+
+              <!-- Skills -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <i class="fa-solid fa-code text-indigo-600"></i>
+                  Skills
+                </h3>
+                <div class="space-y-5">
+                  <div v-for="category in ['backend', 'frontend', 'devops', 'other']" :key="category">
+                    <div class="flex items-center justify-between mb-2">
+                      <label class="text-xs font-bold text-slate-600 capitalize">{{ category }}</label>
+                      <button @click="addSkill(category)" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                      </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, idx) in formData.skills[category]" :key="idx"
+                            class="group inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
+                        {{ skill }}
+                        <button @click="removeSkill(category, idx)" class="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <i class="fa-solid fa-times text-[10px] hover:text-red-600"></i>
+                        </button>
+                      </span>
+                      <span v-if="formData.skills[category].length === 0" class="text-xs text-slate-400 italic">No {{ category }} skills added yet</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Work Experience -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-briefcase text-indigo-600"></i>
+                    Work Experience
+                  </h3>
+                  <button @click="addExperience" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Add Position
+                  </button>
+                </div>
+                <div class="space-y-4">
+                  <div v-for="(exp, idx) in formData.experience" :key="exp.id" class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="flex items-start justify-between mb-3">
+                      <span class="text-xs font-bold text-slate-400">Position {{ idx + 1 }}</span>
+                      <button @click="removeExperience(idx)" v-if="formData.experience.length > 1" 
+                              class="text-xs text-red-600 hover:text-red-700 font-semibold">
+                        <i class="fa-solid fa-trash text-[10px]"></i> Remove
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                      <input v-model="exp.position" placeholder="Position Title" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="exp.company" placeholder="Company Name" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="exp.startDate" placeholder="Start Date (e.g. Jun 2023)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="exp.endDate" placeholder="End Date / Present" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="exp.location" placeholder="Location (optional)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 md:col-span-2">
+                    </div>
+                    <div>
+                      <label class="text-xs font-bold text-slate-600 mb-2 block">Responsibilities</label>
+                      <div class="space-y-2">
+                        <div v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" class="flex gap-2">
+                          <textarea v-model="exp.responsibilities[respIdx]" rows="2" 
+                                    class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none" 
+                                    placeholder="• Describe your responsibility or achievement..."></textarea>
+                          <button @click="removeResponsibility(idx, respIdx)" v-if="exp.responsibilities.length > 1"
+                                  class="text-red-600 hover:text-red-700 px-2">
+                            <i class="fa-solid fa-times"></i>
+                          </button>
+                        </div>
+                        <button @click="addResponsibility(idx)" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
+                          <i class="fa-solid fa-plus text-[10px]"></i> Add Responsibility
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Education -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-indigo-600"></i>
+                    Education
+                  </h3>
+                  <button @click="addEducation" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Add Education
+                  </button>
+                </div>
+                <div class="space-y-4">
+                  <div v-for="(edu, idx) in formData.education" :key="edu.id" class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="flex items-start justify-between mb-3">
+                      <span class="text-xs font-bold text-slate-400">Education {{ idx + 1 }}</span>
+                      <button @click="removeEducation(idx)" v-if="formData.education.length > 1"
+                              class="text-xs text-red-600 hover:text-red-700 font-semibold">
+                        <i class="fa-solid fa-trash text-[10px]"></i> Remove
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input v-model="edu.degree" placeholder="Degree (e.g. BCA, B.Tech)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 md:col-span-2">
+                      <input v-model="edu.institution" placeholder="Institution Name" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="edu.year" placeholder="Year (e.g. 2019-2022)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      <input v-model="edu.percentage" placeholder="Percentage / GPA (optional)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 md:col-span-2">
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Achievements -->
+              <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-indigo-600"></i>
+                    Achievements & Certifications
+                  </h3>
+                  <button @click="addAchievement" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Add Achievement
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  <div v-for="(achievement, idx) in formData.achievements" :key="idx" class="flex gap-2">
+                    <i class="fa-solid fa-circle text-[6px] text-indigo-600 mt-2"></i>
+                    <input v-model="formData.achievements[idx]" 
+                           class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" 
+                           placeholder="e.g. Reduced MySQL query time by 80%">
+                    <button @click="removeAchievement(idx)" v-if="formData.achievements.length > 1"
+                            class="text-red-600 hover:text-red-700 px-2">
+                      <i class="fa-solid fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </section>
             </div>
 
             <!-- Tab: AI Assistant -->
@@ -332,6 +478,7 @@
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar">
           <div class="sticky top-0 w-full max-w-[800px]">
             <ResumePreview 
+              :key="previewKey"
               :templateId="selectedTemplate" 
               :formData="formData" 
               :accentColor="currentAccentColor"
@@ -355,6 +502,7 @@
         <div class="preview-container p-6">
           <div class="mx-auto max-w-2xl">
             <ResumePreview 
+              :key="previewKey"
               :templateId="selectedTemplate" 
               :formData="formData" 
               :accentColor="currentAccentColor"
@@ -389,13 +537,56 @@ const previewModalOpen = ref(false)
 const lastSaved = ref('2m ago')
 const personalFieldsContainer = ref(null)
 
-// Form Data
+// Form Data - Comprehensive Resume Structure
 const formData = ref({
+  // Personal Information
   fullName: '',
   title: '',
   email: '',
   phone: '',
-  location: ''
+  location: '',
+  linkedin: '',
+  github: '',
+  portfolio: '',
+  
+  // Professional Summary
+  summary: '',
+  
+  // Skills (categorized)
+  skills: {
+    backend: [],
+    frontend: [],
+    devops: [],
+    other: []
+  },
+  
+  // Work Experience
+  experience: [
+    {
+      id: 1,
+      position: '',
+      company: '',
+      location: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      responsibilities: ['']
+    }
+  ],
+  
+  // Education
+  education: [
+    {
+      id: 1,
+      degree: '',
+      institution: '',
+      year: '',
+      percentage: ''
+    }
+  ],
+  
+  // Achievements
+  achievements: ['']
 })
 
 // Loading States
@@ -432,11 +623,14 @@ const colorPalettes = ref([
 
 // Personal Fields
 const personalFields = ref([
-  { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'e.g. John Doe' },
-  { id: 'title', label: 'Professional Title', type: 'text', placeholder: 'e.g. Software Engineer' },
-  { id: 'email', label: 'Email Address', type: 'email', placeholder: 'john@example.com' },
-  { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+1 (555) 000-0000' },
-  { id: 'location', label: 'Location / Address', type: 'text', placeholder: 'New York, NY' }
+  { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'e.g. Suraj Sharma' },
+  { id: 'title', label: 'Professional Title', type: 'text', placeholder: 'e.g. Senior Full-Stack Developer' },
+  { id: 'email', label: 'Email Address', type: 'email', placeholder: 'surajkumarsharma123@gmail.com' },
+  { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+91 7042611736' },
+  { id: 'location', label: 'Location / Address', type: 'text', placeholder: 'Sahibabad, Ghaziabad' },
+  { id: 'linkedin', label: 'LinkedIn Profile', type: 'url', placeholder: 'linkedin.com/in/yourprofile' },
+  { id: 'github', label: 'GitHub Profile', type: 'url', placeholder: 'github.com/yourusername' },
+  { id: 'portfolio', label: 'Portfolio Website', type: 'url', placeholder: 'yourwebsite.com' }
 ])
 
 // Tabs
@@ -453,6 +647,25 @@ const currentAccentColor = computed(() => {
   if (customColor.value) return customColor.value
   const palette = colorPalettes.value.find(p => p.id === selectedColor.value)
   return palette ? palette.hex : '#4f46e5'
+})
+
+// Preview key to force re-render when formData changes
+const previewKey = computed(() => {
+  return JSON.stringify({
+    fullName: formData.value.fullName,
+    title: formData.value.title,
+    email: formData.value.email,
+    phone: formData.value.phone,
+    location: formData.value.location,
+    linkedin: formData.value.linkedin,
+    github: formData.value.github,
+    summary: formData.value.summary,
+    skillsCount: Object.values(formData.value.skills).flat().length,
+    experienceCount: formData.value.experience.length,
+    educationCount: formData.value.education.length,
+    achievementsCount: formData.value.achievements.length,
+    template: selectedTemplate.value
+  })
 })
 
 // Methods
@@ -571,48 +784,216 @@ const handleJobUpload = async (event) => {
 const parseResumeContent = (text) => {
   if (!text) return
 
-  // Extract email
+  console.log('📄 Parsing comprehensive resume content...', { textLength: text.length })
+
+  // Extract basic contact info
   const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
   if (emailMatch) {
     formData.value.email = emailMatch[0]
+    console.log('✉️ Found email:', emailMatch[0])
   }
 
-  // Extract phone
-  const phoneMatch = text.match(/(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}/)
+  const phoneMatch = text.match(/(?:\+?91[-\s]?)?[6-9]\d{9}|(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}/)
   if (phoneMatch) {
     formData.value.phone = phoneMatch[0]
+    console.log('📞 Found phone:', phoneMatch[0])
   }
 
-  // Extract name (first 2-3 capitalized words at the beginning)
-  const nameMatch = text.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/m)
-  if (nameMatch) {
-    formData.value.fullName = nameMatch[1]
+  // Extract LinkedIn
+  const linkedinMatch = text.match(/linkedin\.com\/in\/([\w-]+)/)
+  if (linkedinMatch) {
+    formData.value.linkedin = linkedinMatch[0]
+    console.log('🔗 Found LinkedIn:', linkedinMatch[0])
   }
 
-  // Extract location (look for city, state patterns)
-  const locationMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2}(?:\s+\d{5})?)/)
-  if (locationMatch) {
-    formData.value.location = locationMatch[1]
+  // Extract GitHub
+  const githubMatch = text.match(/github\.com\/([\w-]+)/)
+  if (githubMatch) {
+    formData.value.github = githubMatch[0]
+    console.log('🔗 Found GitHub:', githubMatch[0])
   }
 
-  // Extract title (look for common job titles)
-  const titlePatterns = [
-    /(?:Senior|Junior|Lead|Principal)?\s*(?:Software|Full[\s-]?Stack|Front[\s-]?End|Back[\s-]?End|Web|Mobile)\s*(?:Engineer|Developer|Architect)/i,
-    /(?:Product|Project|Program)\s*Manager/i,
-    /(?:Data|ML|AI)\s*(?:Scientist|Engineer|Analyst)/i,
-    /(?:UX|UI)\s*(?:Designer|Developer)/i,
-    /(?:DevOps|Cloud|Systems)\s*Engineer/i
-  ]
-  
-  for (const pattern of titlePatterns) {
-    const titleMatch = text.match(pattern)
-    if (titleMatch) {
-      formData.value.title = titleMatch[0]
+  // Extract name (first line, usually all caps or title case)
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l)
+  if (lines.length > 0) {
+    const firstLine = lines[0]
+    if (firstLine.length < 50 && /[A-Z]/.test(firstLine)) {
+      formData.value.fullName = firstLine
+      console.log('👤 Found name:', firstLine)
+    }
+  }
+
+  // Extract title (second line with keywords)
+  for (let i = 1; i < Math.min(lines.length, 5); i++) {
+    if (/(Developer|Engineer|Designer|Manager|Analyst|Architect|Specialist)/i.test(lines[i]) && 
+        !/(PROFILE|SUMMARY|SKILLS|EXPERIENCE|EDUCATION)/i.test(lines[i])) {
+      formData.value.title = lines[i]
+      console.log('💼 Found title:', lines[i])
       break
     }
   }
 
-  console.log('Parsed resume data:', formData.value)
+  // Extract location
+  const locationMatch = text.match(/([A-Z][a-z]+(?:abad|pur|garh|ganj)?(?:,\s*)?[A-Z][a-z]+)/i)
+  if (locationMatch) {
+    formData.value.location = locationMatch[1]
+    console.log('📍 Found location:', locationMatch[1])
+  }
+
+  // Extract Professional Summary
+  const summaryMatch = text.match(/(?:PROFILE\s+SUMMARY|SUMMARY|OBJECTIVE|ABOUT)\s*\n([\s\S]*?)\n(?:SKILLS|TECHNICAL|EXPERIENCE|EDUCATION)/i)
+  if (summaryMatch) {
+    formData.value.summary = summaryMatch[1].trim().replace(/\n+/g, ' ')
+    console.log('📝 Found summary:', formData.value.summary.substring(0, 100) + '...')
+  }
+
+  // Extract Skills (categorized)
+  const skillsMatch = text.match(/SKILLS?\s*\n([\s\S]*?)\n(?:PROFESSIONAL|EXPERIENCE|PROJECTS|EDUCATION)/i)
+  if (skillsMatch) {
+    const skillsText = skillsMatch[1]
+    
+    const backendMatch = skillsText.match(/Backend:\s*([^\n]+)/i)
+    if (backendMatch) {
+      formData.value.skills.backend = backendMatch[1].split(/[,،]/).map(s => s.trim()).filter(s => s)
+      console.log('🔧 Found backend skills:', formData.value.skills.backend.length)
+    }
+
+    const frontendMatch = skillsText.match(/Frontend:\s*([^\n]+)/i)
+    if (frontendMatch) {
+      formData.value.skills.frontend = frontendMatch[1].split(/[,،]/).map(s => s.trim()).filter(s => s)
+      console.log('🎨 Found frontend skills:', formData.value.skills.frontend.length)
+    }
+
+    const devopsMatch = skillsText.match(/DevOps:\s*([^\n]+)/i)
+    if (devopsMatch) {
+      formData.value.skills.devops = devopsMatch[1].split(/[,،]/).map(s => s.trim()).filter(s => s)
+      console.log('⚙️ Found devops skills:', formData.value.skills.devops.length)
+    }
+
+    const otherMatch = skillsText.match(/Other:\s*([^\n]+)/i)
+    if (otherMatch) {
+      formData.value.skills.other = otherMatch[1].split(/[,،]/).map(s => s.trim()).filter(s => s)
+      console.log('🔩 Found other skills:', formData.value.skills.other.length)
+    }
+  }
+
+  // Extract Work Experience
+  const expSection = text.match(/(?:PROFESSIONAL\s+)?EXPERIENCE\s*\n([\s\S]*?)\n(?:EDUCATION|PROJECTS|ACHIEVEMENTS|CERTIFICATIONS|$)/i)
+  if (expSection) {
+    const expText = expSection[1]
+    const jobPattern = /([^\n—]+?)\s*[—–-]\s*([^\n(]+?)\s*\(([^)]+)\)/g
+    let match
+    let id = 1
+    const experiences = []
+
+    while ((match = jobPattern.exec(expText)) !== null) {
+      const position = match[1].trim()
+      const company = match[2].trim()
+      const dateLocation = match[3].trim()
+      
+      // Parse dates and location
+      const dateParts = dateLocation.split(',')
+      let dates = dateParts[0].trim()
+      let location = dateParts.length > 1 ? dateParts.slice(1).join(',').trim() : ''
+      
+      // Extract start and end dates
+      const [startDate, endDate] = dates.includes('–') || dates.includes('-') 
+        ? dates.split(/[–-]/).map(d => d.trim())
+        : [dates, 'Present']
+
+      // Extract responsibilities
+      const responsibilities = []
+      const startIndex = match.index + match[0].length
+      const restOfText = expText.substring(startIndex)
+      const nextJobIndex = restOfText.search(/[^\n]+\s*[—–-]\s*[^\n]+\s*\([^)]+\)/)
+      const jobContent = nextJobIndex > 0 ? restOfText.substring(0, nextJobIndex) : restOfText.substring(0, 500)
+      
+      const bulletPoints = jobContent.match(/[•▪●⇨➢➤→✓-]\s*([^\n]+)/g)
+      if (bulletPoints) {
+        bulletPoints.forEach(bp => {
+          const clean = bp.replace(/^[•▪●⇨➢➤→✓-]\s*/, '').trim()
+          if (clean && clean.length > 10) responsibilities.push(clean)
+        })
+      }
+
+      experiences.push({
+        id: id++,
+        position,
+        company,
+        location,
+        startDate,
+        endDate,
+        current: endDate.toLowerCase().includes('present'),
+        responsibilities: responsibilities.length ? responsibilities : ['']
+      })
+    }
+
+    if (experiences.length > 0) {
+      formData.value.experience = experiences
+      console.log('💼 Found experience entries:', experiences.length)
+    }
+  }
+
+  // Extract Education
+  const eduSection = text.match(/EDUCATION\s*\n([\s\S]*?)\n(?:ACHIEVEMENTS|CERTIFICATIONS|PROJECTS|$)/i)
+  if (eduSection) {
+    const eduText = eduSection[1]
+    const eduPattern = /([^—\n]+?)\s*[—–-]\s*([^(]+?)\s*\(([^)]+)\)/g
+    let match
+    let id = 1
+    const education = []
+
+    while ((match = eduPattern.exec(eduText)) !== null) {
+      education.push({
+        id: id++,
+        degree: match[1].trim(),
+        institution: match[2].trim(),
+        year: match[3].trim(),
+        percentage: ''
+      })
+    }
+
+    if (education.length > 0) {
+      formData.value.education = education
+      console.log('🎓 Found education entries:', education.length)
+    }
+  }
+
+  // Extract Achievements
+  const achievementsSection = text.match(/ACHIEVEMENTS?\s*\n([\s\S]*?)(?:\n[A-Z]{3,}|$)/i)
+  if (achievementsSection) {
+    const achievements = achievementsSection[1].match(/[•▪●⇨➢➤→✓-]\s*([^\n]+)/g)
+    if (achievements) {
+      formData.value.achievements = achievements
+        .map(a => a.replace(/^[•▪●⇨➢➤→✓-]\s*/, '').trim())
+        .filter(a => a && a.length > 10)
+      console.log('🏆 Found achievements:', formData.value.achievements.length)
+    }
+  }
+
+  console.log('✅ Comprehensive parsing complete:', {
+    name: !!formData.value.fullName,
+    title: !!formData.value.title,
+    email: !!formData.value.email,
+    summary: !!formData.value.summary,
+    skills: Object.values(formData.value.skills).some(arr => arr.length > 0),
+    experience: formData.value.experience.length,
+    education: formData.value.education.length,
+    achievements: formData.value.achievements.length
+  })
+  
+  // Show success message
+  if (formData.value.email || formData.value.fullName || formData.value.title) {
+    const sections = []
+    if (formData.value.summary) sections.push('Summary')
+    if (Object.values(formData.value.skills).some(arr => arr.length > 0)) sections.push('Skills')
+    if (formData.value.experience.length > 0) sections.push(`${formData.value.experience.length} Experience`)
+    if (formData.value.education.length > 0) sections.push(`${formData.value.education.length} Education`)
+    if (formData.value.achievements.length > 0) sections.push(`${formData.value.achievements.length} Achievements`)
+    
+    successMessage.value = `✓ Extracted: ${sections.join(', ')}. Check Manual Info tab!`
+    setTimeout(() => successMessage.value = '', 5000)
+  }
 }
 
 const saveContext = async () => {
@@ -672,6 +1053,100 @@ const analyzeSkillGap = () => {
   console.log('Analyzing skill gap...')
   // TODO: Implement skill gap analysis
 }
+
+// Helper Functions for Dynamic Fields
+const addExperience = () => {
+  formData.value.experience.push({
+    id: Date.now(),
+    position: '',
+    company: '',
+    location: '',
+    startDate: '',
+    endDate: '',
+    current: false,
+    responsibilities: ['']
+  })
+  console.log('➕ Added new experience entry')
+}
+
+const removeExperience = (index) => {
+  if (formData.value.experience.length > 1) {
+    formData.value.experience.splice(index, 1)
+    console.log('➖ Removed experience entry', index)
+  }
+}
+
+const addResponsibility = (expIndex) => {
+  formData.value.experience[expIndex].responsibilities.push('')
+  console.log('➕ Added new responsibility to experience', expIndex)
+}
+
+const removeResponsibility = (expIndex, respIndex) => {
+  if (formData.value.experience[expIndex].responsibilities.length > 1) {
+    formData.value.experience[expIndex].responsibilities.splice(respIndex, 1)
+    console.log('➖ Removed responsibility', respIndex, 'from experience', expIndex)
+  }
+}
+
+const addEducation = () => {
+  formData.value.education.push({
+    id: Date.now(),
+    degree: '',
+    institution: '',
+    year: '',
+    percentage: ''
+  })
+  console.log('➕ Added new education entry')
+}
+
+const removeEducation = (index) => {
+  if (formData.value.education.length > 1) {
+    formData.value.education.splice(index, 1)
+    console.log('➖ Removed education entry', index)
+  }
+}
+
+const addSkill = (category) => {
+  const skill = prompt(`Enter new ${category} skill:`)
+  if (skill && skill.trim()) {
+    formData.value.skills[category].push(skill.trim())
+    console.log(`➕ Added ${category} skill:`, skill)
+  }
+}
+
+const removeSkill = (category, index) => {
+  formData.value.skills[category].splice(index, 1)
+  console.log(`➖ Removed ${category} skill at index`, index)
+}
+
+const addAchievement = () => {
+  formData.value.achievements.push('')
+  console.log('➕ Added new achievement')
+}
+
+const removeAchievement = (index) => {
+  if (formData.value.achievements.length > 1) {
+    formData.value.achievements.splice(index, 1)
+    console.log('➖ Removed achievement', index)
+  }
+}
+
+// Computed helpers for conditional rendering
+const hasSkills = computed(() => {
+  return Object.values(formData.value.skills).some(arr => arr.length > 0)
+})
+
+const hasExperience = computed(() => {
+  return formData.value.experience.length > 0 && formData.value.experience[0].position
+})
+
+const hasEducation = computed(() => {
+  return formData.value.education.length > 0 && formData.value.education[0].degree
+})
+
+const hasAchievements = computed(() => {
+  return formData.value.achievements.length > 0 && formData.value.achievements[0]
+})
 
 const exportPDF = () => {
   console.log('Exporting PDF...')
