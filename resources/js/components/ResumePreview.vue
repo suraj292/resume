@@ -104,11 +104,11 @@
             </p>
           </div>
 
-          <!-- Experience - Only on Page 1 -->
+          <!-- Experience - Page 1: First 3 entries -->
           <div v-if="currentPage === 1 && hasExperience">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">Experience</h3>
             <div class="space-y-4">
-              <div v-for="(exp, idx) in formData.experience" :key="exp.id" v-show="exp.position || exp.company">
+              <div v-for="(exp, idx) in formData.experience.slice(0, 3)" :key="exp.id" v-show="exp.position || exp.company">
                 <div class="flex justify-between items-baseline">
                   <h4 
                     class="font-bold text-slate-800 outline-none"
@@ -134,10 +134,34 @@
                 </ul>
               </div>
             </div>
+            <p v-if="formData.experience.length > 3" class="text-[10px] text-slate-400 italic mt-3 text-center">
+              Continued on page 2...
+            </p>
           </div>
 
-          <!-- Page 2+ Content Placeholder -->
-          <div v-if="currentPage > 1" class="space-y-6">
+          <!-- Experience - Page 2+: Remaining entries (4 per page) -->
+          <div v-if="currentPage > 1 && getPageExperiences(currentPage).length > 0">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">Experience (continued)</h3>
+            <div class="space-y-4">
+              <div v-for="(exp, idx) in getPageExperiences(currentPage)" :key="exp.id">
+                <div class="flex justify-between items-baseline">
+                  <h4 class="font-bold text-slate-800 outline-none">
+                    {{ exp.position }}{{ exp.company ? ' at ' + exp.company : '' }}
+                  </h4>
+                  <span class="text-[10px] font-bold text-slate-400 italic">{{ exp.startDate }}{{ exp.endDate ? ' — ' + exp.endDate : '' }}</span>
+                </div>
+                <p v-if="exp.location" class="text-[10px] text-slate-400 mt-0.5">{{ exp.location }}</p>
+                <ul class="text-xs text-slate-500 mt-2 space-y-1">
+                  <li v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" v-show="resp" class="leading-relaxed">
+                    • {{ resp }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 2+ Content Placeholder (if no experiences to show) -->
+          <div v-if="currentPage > 1 && getPageExperiences(currentPage).length === 0" class="space-y-6">
             <div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-lg">
               <i class="fa-solid fa-file-circle-plus text-4xl text-slate-300 mb-4"></i>
               <h3 class="text-sm font-bold text-slate-600 mb-2">Additional Page {{ currentPage }}</h3>
@@ -768,4 +792,20 @@ const hasAchievements = computed(() => {
   const ach = props.formData?.achievements || []
   return ach.length > 0 && ach[0]
 })
+
+// Get experiences for a specific page
+const getPageExperiences = (page) => {
+  const allExperiences = props.formData?.experience || []
+  
+  if (page === 1) {
+    return [] // Page 1 shows first 3 in main section
+  }
+  
+  // Page 2 shows experiences 4-7 (indices 3-6)
+  // Page 3 shows experiences 8-11 (indices 7-10), etc.
+  const startIdx = 3 + ((page - 2) * 4)
+  const endIdx = startIdx + 4
+  
+  return allExperiences.slice(startIdx, endIdx)
+}
 </script>

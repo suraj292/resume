@@ -1263,6 +1263,34 @@ const parseResumeContent = (text) => {
     successMessage.value = `✓ Extracted: ${sections.join(', ')}. Check Manual Info tab!`
     setTimeout(() => successMessage.value = '', 5000)
   }
+  
+  // Auto-calculate pages based on content
+  calculateRequiredPages()
+}
+
+// Calculate how many pages are needed based on content
+const calculateRequiredPages = () => {
+  const expCount = formData.value.experience.filter(exp => exp.position && exp.company).length
+  const achCount = formData.value.achievements.filter(ach => ach && ach.trim()).length
+  
+  // Estimate: Page 1 can hold ~3 experience entries + summary + skills
+  // Each additional page can hold ~4-5 experience entries
+  let pagesNeeded = 1
+  
+  if (expCount > 3) {
+    const overflow = expCount - 3
+    pagesNeeded += Math.ceil(overflow / 4)
+  }
+  
+  // Add pages for achievements if there are many
+  if (achCount > 8 && pagesNeeded === 1) {
+    pagesNeeded = 2
+  }
+  
+  if (pagesNeeded > totalPages.value) {
+    totalPages.value = pagesNeeded
+    console.log(`📄 Auto-created ${pagesNeeded} pages for content distribution`)
+  }
 }
 
 const saveContext = async () => {
