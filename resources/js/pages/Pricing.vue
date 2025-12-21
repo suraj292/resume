@@ -1,11 +1,28 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
 const isYearly = ref(false)
+const plans = ref([])
 
 const toggleBilling = () => {
     isYearly.value = !isYearly.value
 }
+
+const fetchPlans = async () => {
+    try {
+        const response = await axios.get('/api/plans')
+        plans.value = response.data
+
+        console.log('Fetched plans:', plans.value)
+    } catch (error) {
+        console.error('Error fetching plans:', error)
+    }
+}
+
+onMounted(() => {
+    fetchPlans()
+})
 </script>
 
 <template>
@@ -36,85 +53,64 @@ const toggleBilling = () => {
             <!-- 3. PRICING CARDS -->
             <div class="container mx-auto max-w-6xl px-4">
                 <div class="grid md:grid-cols-3 gap-8">
-                    
-                    <!-- Free Plan -->
-                    <div class="bg-white rounded-2xl p-8 border border-slate-200 pricing-card flex flex-col animate-fade-in-up" style="animation-delay: 0.3s;">
+                    <div v-for="(plan, index) in plans" :key="plan.id" 
+                         :class="[
+                             'rounded-2xl p-8 pricing-card flex flex-col animate-fade-in-up',
+                             plan.is_popular 
+                                 ? 'bg-slate-900 border-2 border-indigo-500 relative transform md:-translate-y-4 shadow-2xl' 
+                                 : 'bg-white border border-slate-200',
+                             { 'relative': plan.is_popular }
+                         ]" 
+                         :style="{ 'animation-delay': `${0.3 + index * 0.1}s` }">
+                        
+                        <!-- Popular Badge -->
+                        <div v-if="plan.is_popular" class="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg animate-pulse">
+                            MOST POPULAR
+                        </div>
+                        
                         <div class="mb-4 text-left">
-                            <h3 class="text-xl font-bold text-slate-900">Free</h3>
-                            <p class="text-sm text-slate-500 mt-1">For getting started</p>
+                            <h3 :class="['text-xl font-bold', plan.is_popular ? 'text-white' : 'text-slate-900']">{{ plan.name }}</h3>
+                            <p :class="['text-sm mt-1', plan.is_popular ? 'text-indigo-200' : 'text-slate-500']">{{ plan.description }}</p>
                         </div>
+                        
                         <div class="mb-6 text-left">
-                            <span class="text-4xl font-bold text-slate-900">₹0</span>
-                            <span class="text-slate-400">/forever</span>
-                        </div>
-                        <router-link to="/builder" class="block w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-center rounded-xl transition-colors mb-8 transform hover:scale-105 active:scale-95">
-                            Start Free
-                        </router-link>
-                        <ul class="space-y-4 text-sm text-slate-600 flex-grow text-left">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-green-500"></i> 1 Resume</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-green-500"></i> Limited Templates</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-green-500"></i> Basic ATS Score</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-green-500"></i> Resume Upload</li>
-                            <li class="flex items-center gap-3 text-slate-400"><i class="fa-solid fa-xmark"></i> AI Optimization</li>
-                            <li class="flex items-center gap-3 text-slate-400"><i class="fa-solid fa-xmark"></i> PDF Download</li>
-                        </ul>
-                    </div>
-
-                    <!-- Pro Plan (Popular) -->
-                    <div class="bg-slate-900 rounded-2xl p-8 border-2 border-indigo-500 pricing-card flex flex-col relative transform md:-translate-y-4 shadow-2xl animate-fade-in-up" style="animation-delay: 0.4s;">
-                        <div class="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg animate-pulse">MOST POPULAR</div>
-                        <div class="mb-4 text-left">
-                            <h3 class="text-xl font-bold text-white">Pro</h3>
-                            <p class="text-sm text-indigo-200 mt-1">Best for job seekers</p>
-                        </div>
-                        <div class="mb-6 text-left">
-                            <div class="price-container">
+                            <div v-if="plan.monthly_price == 0" class="price-container">
+                                <span :class="['text-4xl font-bold', plan.is_popular ? 'text-white' : 'text-slate-900']">{{ plan.currency }}0</span>
+                                <span class="text-slate-400">/forever</span>
+                            </div>
+                            <div v-else class="price-container">
                                 <transition name="fade" mode="out-in">
-                                  <span :key="isYearly" class="text-4xl font-bold text-white price-text">{{ isYearly ? '₹4,999' : '₹499' }}</span>
+                                    <span :key="isYearly" :class="['text-4xl font-bold price-text', plan.is_popular ? 'text-white' : 'text-slate-900']">
+                                        {{ isYearly ? plan.formatted_yearly_price : plan.formatted_monthly_price }}
+                                    </span>
                                 </transition>
                                 <span class="text-slate-400 period-text">{{ isYearly ? '/year' : '/month' }}</span>
                             </div>
                         </div>
-                        <a href="#" class="block w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-center rounded-xl transition-colors mb-8 shadow-lg shadow-indigo-500/25 transform hover:scale-105 active:scale-95">
-                            Upgrade to Pro
-                        </a>
-                        <ul class="space-y-4 text-sm text-slate-300 flex-grow text-left">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> Unlimited Resumes</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> All Premium Templates</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> AI Resume Optimization</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> ATS Keyword Matching</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> PDF & DOCX Downloads</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-400"></i> Priority Support</li>
+                        
+                        <!-- Action Button -->
+                        <component :is="plan.monthly_price == 0 ? 'router-link' : 'a'" 
+                                   :to="plan.monthly_price == 0 ? '/builder' : '#'" 
+                                   :href="plan.monthly_price == 0 ? null : '#'"
+                                   :class="[
+                                       'block w-full py-3 px-4 font-bold text-center rounded-xl transition-colors mb-8 transform hover:scale-105 active:scale-95',
+                                       plan.is_popular 
+                                           ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' 
+                                           : plan.monthly_price == 0 
+                                               ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' 
+                                               : 'bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900'
+                                   ]">
+                            {{ plan.monthly_price == 0 ? 'Start Free' : `Upgrade to ${plan.name}` }}
+                        </component>
+                        
+                        <!-- Features List -->
+                        <ul :class="['space-y-4 text-sm flex-grow text-left', plan.is_popular ? 'text-slate-300' : 'text-slate-600']">
+                            <li v-for="feature in plan.features" :key="feature" class="flex items-center gap-3">
+                                <i class="fa-solid fa-check" :class="plan.is_popular ? 'text-indigo-400' : 'text-green-500'"></i> 
+                                {{ feature }}
+                            </li>
                         </ul>
                     </div>
-
-                    <!-- Premium Plan -->
-                    <div class="bg-white rounded-2xl p-8 border border-slate-200 pricing-card flex flex-col animate-fade-in-up" style="animation-delay: 0.5s;">
-                        <div class="mb-4 text-left">
-                            <h3 class="text-xl font-bold text-slate-900">Career+</h3>
-                            <p class="text-sm text-slate-500 mt-1">For serious professionals</p>
-                        </div>
-                        <div class="mb-6 text-left">
-                            <div class="price-container">
-                                <transition name="fade" mode="out-in">
-                                  <span :key="isYearly" class="text-4xl font-bold text-slate-900 price-text">{{ isYearly ? '₹9,999' : '₹999' }}</span>
-                                </transition>
-                                <span class="text-slate-400 period-text">{{ isYearly ? '/year' : '/month' }}</span>
-                            </div>
-                        </div>
-                        <a href="#" class="block w-full py-3 px-4 bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900 font-bold text-center rounded-xl transition-colors mb-8 transform hover:scale-105 active:scale-95">
-                            Go Premium
-                        </a>
-                        <ul class="space-y-4 text-sm text-slate-600 flex-grow text-left">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> <strong>Everything in Pro</strong></li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> Advanced ATS Analysis</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> Job Description Matcher</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> Cover Letter Generator</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> Personal Branding Themes</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-check text-indigo-600"></i> Early Access Features</li>
-                        </ul>
-                    </div>
-
                 </div>
             </div>
         </section>

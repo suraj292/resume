@@ -1,12 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
 
-const router = useRouter()
+const { register: registerUser, login: loginUser, socialLogin } = useAuth()
+
 const activeTab = ref('login')
 const showLoginPassword = ref(false)
 const showSignupPassword = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
+const validationErrors = ref({})
 
 // Signup Form Data
 const signupForm = ref({
@@ -44,22 +47,42 @@ const strengthBars = computed(() => {
   }))
 })
 
-const handleLogin = () => {
+const handleLogin = async () => {
   isLoading.value = true
-  // Simulate API call
-  setTimeout(() => {
-    isLoading.value = false
-    router.push('/builder')
-  }, 1500)
+  errorMessage.value = ''
+  validationErrors.value = {}
+  
+  const result = await loginUser(loginForm.value)
+  
+  if (result.success) {
+    window.location.href = '/builder'
+  } else {
+    errorMessage.value = result.error
+    validationErrors.value = result.errors || {}
+  }
+  
+  isLoading.value = false
 }
 
-const handleSignup = () => {
+const handleSignup = async () => {
   isLoading.value = true
-  // Simulate API call
-  setTimeout(() => {
-    isLoading.value = false
-    router.push('/builder')
-  }, 1500)
+  errorMessage.value = ''
+  validationErrors.value = {}
+  
+  const result = await registerUser(signupForm.value)
+  
+  if (result.success) {
+    window.location.href = '/builder'
+  } else {
+    errorMessage.value = result.error
+    validationErrors.value = result.errors || {}
+  }
+  
+  isLoading.value = false
+}
+
+const handleSocialLogin = (provider) => {
+  socialLogin(provider)
 }
 </script>
 
@@ -216,13 +239,13 @@ const handleSignup = () => {
                 </div>
 
                 <div class="flex gap-3 justify-center">
-                    <button class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-red-500 hover:bg-red-500 transition-all shadow-sm hover:shadow-red-500/30">
+                    <button @click="handleSocialLogin('google')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-red-500 hover:bg-red-500 transition-all shadow-sm hover:shadow-red-500/30">
                         <i class="fa-brands fa-google text-lg"></i>
                     </button>
-                    <button class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-blue-600 hover:bg-blue-600 transition-all shadow-sm hover:shadow-blue-600/30">
+                    <button @click="handleSocialLogin('linkedin')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-blue-600 hover:bg-blue-600 transition-all shadow-sm hover:shadow-blue-600/30">
                         <i class="fa-brands fa-linkedin-in text-lg"></i>
                     </button>
-                    <button class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-800 hover:bg-slate-800 transition-all shadow-sm hover:shadow-slate-800/30">
+                    <button @click="handleSocialLogin('github')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-800 hover:bg-slate-800 transition-all shadow-sm hover:shadow-slate-800/30">
                         <i class="fa-brands fa-github text-lg"></i>
                     </button>
                 </div>
