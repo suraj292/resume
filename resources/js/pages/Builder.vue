@@ -1,4 +1,7 @@
 <template>
+  <!-- Auth Required Modal -->
+  <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
+  
   <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased h-screen flex flex-col">
     
     <!-- Top Navigation -->
@@ -771,6 +774,12 @@ import axios from 'axios'
 import templatesData from '../data/templates.json'
 import TemplateRenderer from '../components/TemplateRenderer.vue'
 import ResumePreview from '../components/ResumePreview.vue'
+import AuthRequiredModal from '../components/AuthRequiredModal.vue'
+import { useAuthStore } from '../stores/auth'
+
+// Auth
+const authStore = useAuthStore()
+const showAuthModal = ref(false)
 
 // State
 const activeTab = ref('upload')
@@ -1747,6 +1756,11 @@ const exportPDF = () => {
 
 // Initialize drag and drop
 onMounted(() => {
+  // Check authentication on mount
+  if (!authStore.isAuthenticated) {
+    showAuthModal.value = true
+  }
+  
   if (personalFieldsContainer.value) {
     Sortable.create(personalFieldsContainer.value, {
       handle: '.drag-handle',

@@ -126,10 +126,13 @@ const isOpen = ref(false)
 const emit = defineEmits(['close'])
 
 const close = () => {
-  isOpen.value = false
-  setTimeout(() => {
-    emit('close')
-  }, 300)
+  // isOpen.value = false
+  // setTimeout(() => {
+  //   emit('close')
+  // }, 300)
+
+  // redirect to home or auth page
+  window.location.href = '/'
 }
 
 onMounted(() => {

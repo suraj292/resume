@@ -17,13 +17,13 @@ const routes = [
         path: '/builder',
         name: 'Builder',
         component: Builder,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: false }
     },
     {
         path: '/ats-checker',
         name: 'AtsChecker',
         component: AtsChecker,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: false }
     },
     { path: '/templates', name: 'Templates', component: Templates },
     { path: '/pricing', name: 'Pricing', component: Pricing },

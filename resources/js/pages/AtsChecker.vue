@@ -2,6 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import gsap from 'gsap'
+import AuthRequiredModal from '../components/AuthRequiredModal.vue'
+import { useAuthStore } from '../stores/auth'
+
+// Auth
+const authStore = useAuthStore()
+const showAuthModal = ref(false)
 
 const activeTab = ref('upload')
 const uploadedFile = ref(null)
@@ -222,9 +228,19 @@ const matchedKeywords = ref([])
 const missingKeywords = ref([])
 const formattingChecks = ref([])
 const criticalIssues = ref([])
+
+// Check authentication on mount
+onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    showAuthModal.value = true
+  }
+})
 </script>
 
 <template>
+  <!-- Auth Required Modal -->
+  <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
+  
   <div class="flex-grow">
 
     <!-- HERO SECTION (Initial View) -->
