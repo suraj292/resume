@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 
@@ -47,6 +48,58 @@ const strengthBars = computed(() => {
   }))
 })
 
+// Login function
+const loginUser = async (credentials) => {
+  try {
+    const response = await axios.post('/login', credentials, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      withCredentials: true
+    })
+    
+    if (response.data.success) {
+      await authStore.fetchUser()
+      return { success: true }
+    }
+    
+    return { success: false, error: 'Login failed' }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Login failed. Please try again.',
+      errors: error.response?.data?.errors || {}
+    }
+  }
+}
+
+// Register function
+const registerUser = async (userData) => {
+  try {
+    const response = await axios.post('/register', userData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      withCredentials: true
+    })
+    
+    if (response.data.success) {
+      await authStore.fetchUser()
+      return { success: true }
+    }
+    
+    return { success: false, error: 'Registration failed' }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Registration failed. Please try again.',
+      errors: error.response?.data?.errors || {}
+    }
+  }
+}
+
 const handleLogin = async () => {
   isLoading.value = true
   errorMessage.value = ''
@@ -55,7 +108,14 @@ const handleLogin = async () => {
   const result = await loginUser(loginForm.value)
   
   if (result.success) {
-    window.location.href = '/builder'
+    // Check for intended route
+    const intendedRoute = sessionStorage.getItem('intended_route')
+    if (intendedRoute) {
+      sessionStorage.removeItem('intended_route')
+      window.location.href = intendedRoute
+    } else {
+      window.location.href = '/builder'
+    }
   } else {
     errorMessage.value = result.error
     validationErrors.value = result.errors || {}
@@ -72,7 +132,14 @@ const handleSignup = async () => {
   const result = await registerUser(signupForm.value)
   
   if (result.success) {
-    window.location.href = '/builder'
+    // Check for intended route
+    const intendedRoute = sessionStorage.getItem('intended_route')
+    if (intendedRoute) {
+      sessionStorage.removeItem('intended_route')
+      window.location.href = intendedRoute
+    } else {
+      window.location.href = '/builder'
+    }
   } else {
     errorMessage.value = result.error
     validationErrors.value = result.errors || {}

@@ -28,10 +28,7 @@ const handleLogout = async () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  // Load user if authenticated
-  if (authStore.isAuthenticated && !authStore.currentUser) {
-    authStore.fetchUser()
-  }
+  // User data is loaded after successful login, no need to fetch here
 })
 
 onUnmounted(() => {

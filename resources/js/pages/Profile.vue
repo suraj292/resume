@@ -23,7 +23,7 @@
                 <div class="flex items-center gap-4">
                     <div class="hidden md:block text-right">
                         <p class="text-xs font-bold text-slate-900">{{ currentUser?.name || 'Guest' }}</p>
-                        <p class="text-[10px] text-slate-500">{{ currentUser?.plan || 'Free Plan' }}</p>
+                        <p class="text-[10px] text-slate-500">{{ currentUser?.plan?.name || 'Free Plan' }}</p>
                     </div>
                     <div class="relative group">
                         <img :src="currentUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=128'" class="w-9 h-9 rounded-full border-2 border-white shadow-sm hover:border-indigo-200 transition-all cursor-pointer">
@@ -60,7 +60,7 @@
                         <h2 class="text-lg font-bold text-slate-900">{{ user.name }}</h2>
                         <p class="text-xs text-slate-500 mb-4">{{ user.email }}</p>
                         
-                        <div class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full mb-4">{{ user.plan }}</div>
+                        <div class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full mb-4">{{ user.plan?.name || 'Free Plan' }}</div>
                         
                         <button class="w-full py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors">
                             Upgrade to Premium

@@ -8,7 +8,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Getters
     const isAuthenticated = computed(() => {
-        return !!(token.value || user.value || hasSessionCookie())
+        // Only consider authenticated if we have user data or a token
+        // Don't rely on session cookies alone as they might be expired
+        return !!(token.value || user.value)
     })
 
     const currentUser = computed(() => user.value)
@@ -46,9 +48,16 @@ export const useAuthStore = defineStore('auth', () => {
             })
 
             if (response.ok) {
-                const userData = await response.json()
+                const data = await response.json()
+                // API returns { user: {...}, capabilities: {...} }
+                const userData = data.user || data
                 setUser(userData)
                 return userData
+            } else {
+                console.error('Failed to fetch user:', response.status, response.statusText)
+                if (response.status === 401) {
+                    clearAuth()
+                }
             }
         } catch (e) {
             console.error('Failed to fetch user:', e)
@@ -99,6 +108,12 @@ export const useAuthStore = defineStore('auth', () => {
     // Initialize user from storage
     loadUser()
 
+    console.log('loggedInInfo', {
+        // User: User,
+        isAuthenticated: isAuthenticated.value,
+        currentUser: currentUser.value
+    })
+
     return {
         // State
         user,
@@ -106,6 +121,8 @@ export const useAuthStore = defineStore('auth', () => {
         // Getters
         isAuthenticated,
         currentUser,
+        // Helpers
+        hasSessionCookie,
         // Actions
         setUser,
         setToken,

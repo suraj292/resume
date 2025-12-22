@@ -53,19 +53,33 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
 
     // Check if route requires authentication
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        // Store intended route
+        // If there's a session cookie, try to fetch user first (for social login redirects)
+        if (authStore.hasSessionCookie() && !authStore.currentUser) {
+            const userData = await authStore.fetchUser()
+            if (userData) {
+                // User fetched successfully, proceed to route
+                return next()
+            }
+        }
+        
+        // No valid session, store intended route and redirect to auth
         sessionStorage.setItem('intended_route', to.path)
-        sessionStorage.setItem('show_auth_modal', 'true')
-        next({ name: 'Home' })
+        next({ name: 'Auth' })
     }
-    // Redirect authenticated users from auth page to profile
+    // Redirect authenticated users from auth page to builder or intended route
     else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-        next({ name: 'Profile' })
+        const intendedRoute = sessionStorage.getItem('intended_route')
+        if (intendedRoute) {
+            sessionStorage.removeItem('intended_route')
+            next(intendedRoute)
+        } else {
+            next({ name: 'Builder' })
+        }
     }
     else {
         next()

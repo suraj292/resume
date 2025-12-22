@@ -20,6 +20,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
+// User route (supports both session and token auth)
+Route::middleware(['auth:sanctum,web'])->get('/user', [AuthController::class, 'me']);
+
 // Social authentication routes
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect']);
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
