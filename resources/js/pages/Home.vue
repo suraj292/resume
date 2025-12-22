@@ -525,9 +525,9 @@ onMounted(() => {
 .text-gradient {
     background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-
 /* Card Hover Effects */
 .hover-card {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;

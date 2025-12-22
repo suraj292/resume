@@ -17,8 +17,14 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Helper to check session cookies
     function hasSessionCookie() {
-        return document.cookie.includes('XSRF-TOKEN') ||
-            document.cookie.includes('laravel_session')
+        const cookies = document.cookie
+        
+        // Check for Laravel session cookie (name based on APP_NAME)
+        const hasXSRF = cookies.includes('XSRF-TOKEN')
+        const hasLaravelSession = cookies.includes('laravel_session') || cookies.includes('laravel-session')
+        
+        // Both cookies must exist for a valid session
+        return hasXSRF && hasLaravelSession
     }
 
     // Actions
@@ -54,13 +60,16 @@ export const useAuthStore = defineStore('auth', () => {
                 setUser(userData)
                 return userData
             } else {
-                console.error('Failed to fetch user:', response.status, response.statusText)
+                // Don't log 401 errors - they're expected for unauthenticated users
                 if (response.status === 401) {
                     clearAuth()
+                } else {
+                    console.error('Failed to fetch user:', response.status, response.statusText)
                 }
             }
         } catch (e) {
-            console.error('Failed to fetch user:', e)
+            // Don't log network errors for authentication checks
+            // console.error('Failed to fetch user:', e)
         }
         return null
     }
@@ -107,9 +116,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Check if user just completed social login
     async function checkSocialLogin() {
-        // If we have a session cookie but no user data, try to fetch
-        if (hasSessionCookie() && !user.value) {
-            console.log('Detected session cookie, fetching user data...')
+        // Only fetch if we have BOTH session cookies AND no existing user data or token
+        // This prevents unnecessary 401 errors on page load for unauthenticated users
+        const hasCookies = hasSessionCookie()
+        const hasUser = !!user.value
+        const hasToken = !!token.value
+        
+        if (hasCookies && !hasUser && !hasToken) {
             await fetchUser()
         }
     }
@@ -117,14 +130,8 @@ export const useAuthStore = defineStore('auth', () => {
     // Initialize user from storage
     loadUser()
     
-    // Check for social login on initialization
+    // Check for social login on initialization (needs to be awaited in consuming components)
     checkSocialLogin()
-
-    console.log('loggedInInfo', {
-        // User: User,
-        isAuthenticated: isAuthenticated.value,
-        currentUser: currentUser.value
-    })
 
     return {
         // State

@@ -1756,20 +1756,48 @@ const exportPDF = () => {
 
 // Initialize drag and drop
 onMounted(async () => {
-  // Check authentication on mount
-  if (!authStore.isAuthenticated) {
-    // If there's a session cookie, try to fetch user (for social login redirects)
-    if (authStore.hasSessionCookie()) {
-      // Wait for user fetch to complete before deciding to show modal
-      const userData = await authStore.fetchUser()
-      if (!userData) {
-        // No valid session, show auth modal
+  // Check if redirected from social auth
+  const urlParams = new URLSearchParams(window.location.search)
+  const isSocialAuth = urlParams.get('social_auth') === 'success'
+  
+  if (isSocialAuth) {
+    console.log('🔐 Social auth redirect detected')
+    // Remove the query parameter
+    window.history.replaceState({}, document.title, window.location.pathname)
+    // Force fetch user
+    const userData = await authStore.fetchUser()
+    if (userData) {
+      console.log('✅ Builder: Social auth successful:', userData.name)
+    } else {
+      console.log('❌ Builder: Social auth failed, showing modal')
+      showAuthModal.value = true
+    }
+  } else {
+    // Give auth store time to initialize and check social login
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Check authentication on mount
+    if (!authStore.isAuthenticated) {
+      // If there's a session cookie, try to fetch user (for social login redirects)
+      if (authStore.hasSessionCookie()) {
+        console.log('🔄 Builder: Fetching user data...')
+        // Wait for user fetch to complete before deciding to show modal
+        const userData = await authStore.fetchUser()
+        if (!userData) {
+          // No valid session, show auth modal
+          console.log('❌ Builder: No user data, showing auth modal')
+          showAuthModal.value = true
+        } else {
+          console.log('✅ Builder: User authenticated:', userData.name)
+        }
+        // If userData exists, modal stays hidden (default false)
+      } else {
+        // No session cookie, show auth modal immediately
+        console.log('❌ Builder: No session cookie, showing auth modal')
         showAuthModal.value = true
       }
-      // If userData exists, modal stays hidden (default false)
     } else {
-      // No session cookie, show auth modal immediately
-      showAuthModal.value = true
+      console.log('✅ Builder: Already authenticated')
     }
   }
   

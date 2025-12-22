@@ -74,16 +74,21 @@ class SocialAuthController extends Controller
         // Log the user in with session
         auth()->login($user, true);
 
-        // Store auth token in session for frontend
+        // Create token for the user
         $token = $user->createToken('auth_token')->plainTextToken;
+        
+        // Store in session
         session([
             'auth_token' => $token,
             'user_id' => $user->id,
             'social_login' => true
         ]);
+        
+        // Force session save
+        session()->save();
 
-        // Redirect to frontend builder or intended route
-        return redirect('/builder');
+        // Redirect with a flag that frontend can detect
+        return redirect('/builder?social_auth=success');
     }
 
     /**
