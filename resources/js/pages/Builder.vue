@@ -880,7 +880,7 @@ const totalPages = ref(1)
 
 // Templates from JSON
 const templatesFromJSON = ref(templatesData)
-const selectedTemplate = ref(templatesData[0]?.id || 'modernist')
+const selectedTemplate = ref(templatesData[0]?.id || 'software-engineer')
 
 // Colors
 const selectedColor = ref('indigo')
@@ -982,12 +982,21 @@ const closeMobilePreview = () => {
   document.body.style.overflow = ''
 }
 
-const selectTemplate = (templateId) => {
+const selectTemplate = (templateId) =>{
   selectedTemplate.value = templateId
   const template = templatesFromJSON.value.find(t => t.id === templateId)
-  console.log('Template selected:', template?.name || templateId)
-  // TODO: Update preview with selected template layout
+  console.log('✅ Template selected:', template?.name || templateId)
+  
+  // Show success message
+  successMessage.value = `✓ Applied ${template?.name || 'template'}`
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 2000)
+  
+  // Close mobile sidebar after selection
+  closeMobileSidebarIfNeeded()
 }
+
 
 const selectColor = (color) => {
   selectedColor.value = color.id

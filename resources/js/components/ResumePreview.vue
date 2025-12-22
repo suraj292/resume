@@ -1,8 +1,374 @@
 <template>
   <div class="bg-white shadow-2xl w-full min-h-[1000px] origin-top transform border border-slate-100" :style="{ boxShadow: `0 25px 50px -12px ${accentColor}25` }">
     
-    <!-- Modernist Template (Two Column) -->
-    <div v-if="templateId === 'modernist'" class="p-8 lg:p-12">
+    <!-- Software Engineer Template (Two-Column, Code-Focused) -->
+    <div v-if="templateId === 'software-engineer'" class="p-8 lg:p-12 bg-gradient-to-br from-blue-50/30 to-white">
+      <div class="flex gap-10">
+        <!-- Left Column - Only show on first page -->
+        <div v-if="isFirstPage" class="w-[35%] space-y-8">
+          <!-- Header with Code Icon -->
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto rounded-lg bg-blue-600 flex items-center justify-center text-white text-2xl font-mono mb-3 shadow-lg">
+              { }
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight outline-none"
+                :contenteditable="editable"
+                @blur="editable && handleEdit('fullName', $event)"
+                suppressContentEditableWarning>
+              {{ formData.fullName || 'Your Name' }}
+            </h1>
+            <p class="text-base font-bold mt-1 text-blue-600" 
+               :contenteditable="editable"
+               @blur="editable && handleEdit('title', $event)"
+               suppressContentEditableWarning>
+              {{ formData.title || 'Software Engineer' }}
+            </p>
+          </div>
+
+          <!-- Contact -->
+          <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+            <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-3 pb-2 border-b border-blue-300">Contact</h3>
+            <div class="space-y-2 text-[11px] text-slate-700">
+              <p v-if="formData.email" class="flex items-center gap-2"><i class="fa-solid fa-envelope text-blue-600"></i>{{ formData.email }}</p>
+              <p v-if="formData.phone" class="flex items-center gap-2"><i class="fa-solid fa-phone text-blue-600"></i>{{ formData.phone }}</p>
+              <p v-if="formData.location" class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-600"></i>{{ formData.location }}</p>
+              <p v-if="formData.linkedin" class="flex items-center gap-2 break-all"><i class="fa-brands fa-linkedin text-blue-600"></i><span class="truncate">{{ formData.linkedin }}</span></p>
+              <p v-if="formData.github" class="flex items-center gap-2 break-all"><i class="fa-brands fa-github text-blue-600"></i><span class="truncate">{{ formData.github }}</span></p>
+            </div>
+          </div>
+
+          <!-- Tech Stack Grid -->
+          <div v-if="hasSkills">
+            <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-3">Tech Stack</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <div v-for="skill in [...formData.skills.backend, ...formData.skills.frontend, ...formData.skills.devops, ...formData.skills.other].slice(0, 8)" 
+                   :key="skill" 
+                   class="h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center text-[9px] font-bold shadow-md hover:shadow-lg transition-shadow">
+                {{ skill }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div v-if="hasEducation" class="bg-slate-50 rounded-xl p-4">
+            <h3 class="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-3">Education</h3>
+            <div class="space-y-3">
+              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree">
+                <h4 class="font-bold text-[11px] text-slate-800">{{ edu.degree }}</h4>
+                <p class="text-[10px] text-slate-600">{{ edu.institution }}</p>
+                <p class="text-[9px] text-blue-600 font-semibold">{{ edu.year }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div :class="isFirstPage ? 'flex-[1.2]' : 'w-full'" class="space-y-6">
+          <!-- Summary -->
+          <div v-if="isFirstPage && formData.summary" class="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-4">
+            <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-code"></i>About
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed" :contenteditable="editable" @blur="editable && handleEdit('summary', $event)" suppressContentEditableWarning>
+              {{ formData.summary }}
+            </p>
+          </div>
+
+          <!-- Experience -->
+          <div v-if="hasExperience">
+            <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b-2 border-blue-600">Professional Experience</h3>
+            <div class="space-y-4">
+              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company" class="relative pl-4 border-l-2 border-blue-300">
+                <div class="absolute left-[-5px] top-2 w-2 h-2 rounded-full bg-blue-600"></div>
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1">
+                  <h4 class="font-bold text-slate-800 text-sm">{{ exp.position }} <span class="text-blue-600">@ {{ exp.company }}</span></h4>
+                  <span class="text-[10px] font-mono bg-blue-100 text-blue-700 px-2 py-1 rounded">{{ exp.startDate }} - {{ exp.current ? 'Present' : exp.endDate }}</span>
+                </div>
+                <ul class="text-[11px] text-slate-600 mt-2 space-y-1">
+                  <li v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" v-show="resp" class="flex items-start gap-2">
+                    <span class="text-blue-600 font-bold">▸</span>
+                    <span>{{ resp }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Achievements -->
+          <div v-if="isFirstPage && hasAchievements" class="bg-gradient-to-r from-blue-50 to-transparent rounded-lg p-4">
+            <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-2">Key Achievements</h3>
+            <ul class="text-[11px] text-slate-700 space-y-1">
+              <li v-for="(achievement, idx) in formData.achievements" :key="idx" v-show="achievement" class="flex items-start gap-2">
+                <span class="text-blue-600">✓</span>
+                <span>{{ achievement }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Scientist Template (Analytics-Focused, Metrics) -->
+    <div v-else-if="templateId === 'data-scientist'" class="p-8 lg:p-12 bg-gradient-to-br from-emerald-50/30 to-white">
+      <!-- Header with Stats Badge -->
+      <div v-if="isFirstPage" class="flex items-center gap-4 pb-6 mb-6 border-b-2 border-emerald-600">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
+          <i class="fa-solid fa-chart-line text-2xl"></i>
+        </div>
+        <div class="flex-1">
+          <h1 class="text-3xl font-black text-slate-900" :contenteditable="editable" @blur="editable && handleEdit('fullName', $event)" suppressContentEditableWarning>
+            {{ formData.fullName || 'Your Name' }}
+          </h1>
+          <p class="text-lg font-bold text-emerald-600" :contenteditable="editable" @blur="editable && handleEdit('title', $event)" suppressContentEditableWarning>
+            {{ formData.title || 'Data Scientist' }}
+          </p>
+        </div>
+        <div class="flex gap-3 text-[10px]">
+          <span v-if="formData.email" class="flex items-center gap-1 text-slate-600"><i class="fa-solid fa-envelope text-emerald-600"></i>{{ formData.email }}</span>
+          <span v-if="formData.phone" class="flex items-center gap-1 text-slate-600"><i class="fa-solid fa-phone text-emerald-600"></i>{{ formData.phone }}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Left: Skills Matrix -->
+        <div v-if="isFirstPage" class="col-span-1 space-y-6">
+          <div v-if="hasSkills" class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+            <h3 class="text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-3">Technical Skills</h3>
+            <div class="space-y-3">
+              <div v-if="formData.skills.backend.length">
+                <p class="text-[9px] font-bold text-emerald-700 mb-1">Analytics & ML</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.backend" :key="skill" class="text-[8px] px-2 py-0.5 bg-emerald-600 text-white rounded-full font-semibold">{{ skill }}</span>
+                </div>
+              </div>
+              <div v-if="formData.skills.frontend.length">
+                <p class="text-[9px] font-bold text-emerald-700 mb-1">Visualization</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="skill in formData.skills.frontend" :key="skill" class="text-[8px] px-2 py-0.5 bg-teal-600 text-white rounded-full font-semibold">{{ skill }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="hasEducation" class="bg-slate-50 rounded-xl p-4">
+            <h3 class="text-[10px] font-black text-slate-700 uppercase tracking-wider mb-3">Education</h3>
+            <div class="space-y-2">
+              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree">
+                <h4 class="font-bold text-[10px] text-slate-800">{{ edu.degree }}</h4>
+                <p class="text-[9px] text-slate-600">{{ edu.institution }}</p>
+                <p class="text-[8px] text-emerald-600">{{ edu.year }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Experience & Achievements -->
+        <div class="col-span-2 space-y-6">
+          <div v-if="isFirstPage && formData.summary" class="bg-emerald-50 rounded-lg p-4 border-l-4 border-emerald-600">
+            <p class="text-xs text-slate-700 leading-relaxed">{{ formData.summary }}</p>
+          </div>
+
+          <div v-if="hasExperience">
+            <h3 class="text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-briefcase"></i>Experience & Projects
+            </h3>
+            <div class="space-y-5">
+              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company" class="border-l-3 border-emerald-500 pl-4 hover:bg-emerald-50/50 rounded-r py-2">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 class="font-bold text-sm text-slate-900">{{ exp.position }}</h4>
+                    <p class="text-xs text-emerald-700 font-semibold">{{ exp.company }}</p>
+                  </div>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">{{ exp.startDate }} - {{ exp.current ? 'Now' : exp.endDate }}</span>
+                </div>
+                <ul class="text-[10px] text-slate-600 space-y-1">
+                  <li v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" v-show="resp" class="flex gap-2">
+                    <span class="text-emerald-600">●</span>
+                    <span>{{ resp }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DevOps Engineer Template (Pipeline/Terminal Style) -->
+    <div v-else-if="templateId === 'devops-engineer'" class="p-8 lg:p-12 bg-slate-900 text-slate-100">
+      <!-- Terminal Header -->
+      <div v-if="isFirstPage" class="bg-slate-800 rounded-lg p-4 mb-6 border border-orange-500/30 shadow-lg font-mono">
+        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-700">
+          <div class="flex gap-1.5">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span class="text-[10px] text-slate-400">~/devops-resume</span>
+        </div>
+        <div class="space-y-1 text-sm">
+          <p><span class="text-orange-500">$</span> cat <span class="text-blue-400">profile.txt</span></p>
+          <h1 class="text-2xl font-bold text-orange-400 ml-4" :contenteditable="editable" @blur="editable && handleEdit('fullName', $event)" suppressContentEditableWarning>
+            {{ formData.fullName || 'Your Name' }}
+          </h1>
+          <p class="text-lg text-emerald-400 ml-4" :contenteditable="editable" @blur="editable && handleEdit('title', $event)" suppressContentEditableWarning>
+            {{ formData.title || 'DevOps Engineer' }}
+          </p>
+          <div class="flex gap-4 text-[10px] text-slate-400 ml-4 mt-2">
+            <span v-if="formData.email">📧 {{ formData.email }}</span>
+            <span v-if="formData.phone">📱 {{ formData.phone }}</span>
+            <span v-if="formData.location">📍 {{ formData.location }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-6">
+        <!-- Sidebar: Tools & Skills -->
+        <div v-if="isFirstPage" class="col-span-1 space-y-4">
+          <div v-if="hasSkills" class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+            <h3 class="text-[9px] font-bold text-orange-400 uppercase tracking-wider mb-3 font-mono">// TOOLS</h3>
+            <div class="space-y-2">
+              <div v-for="skill in [...formData.skills.backend, ...formData.skills.devops, ...formData.skills.other].slice(0, 10)" :key="skill" 
+                   class="text-[9px] py-1 px-2 bg-slate-700 text-emerald-400 rounded font-mono border-l-2 border-orange-500">
+                {{ skill }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-span-3 space-y-6">
+          <div v-if="isFirstPage && formData.summary" class="bg-slate-800 border-l-4 border-orange-500 rounded-r p-4">
+            <p class="text-xs text-slate-300 leading-relaxed font-mono">{{ formData.summary }}</p>
+          </div>
+
+          <div v-if="hasExperience">
+            <h3 class="text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-4 font-mono flex items-center gap-2">
+              <span class="text-orange-500">$</span> git log --experience
+            </h3>
+            <div class="space-y-4">
+              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company" class="bg-slate-800 rounded-lg p-4 border-l-4 border-orange-500">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 class="font-bold text-sm text-orange-400 font-mono">{{ exp.position }}</h4>
+                    <p class="text-xs text-emerald-400">{{ exp.company }}</p>
+                  </div>
+                  <span class="text-[9px] text-slate-400 font-mono bg-slate-700 px-2 py-1 rounded">{{ exp.startDate }} → {{ exp.current ? 'present' : exp.endDate }}</span>
+                </div>
+                <ul class="text-[10px] text-slate-300 space-y-1 font-mono">
+                  <li v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" v-show="resp" class="flex gap-2">
+                    <span class="text-orange-500">→</span>
+                    <span>{{ resp }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Manager Template (Strategy-Focused, Metrics) -->
+    <div v-else-if="templateId === 'product-manager'" class="p-8 lg:p-12 bg-gradient-to-br from-purple-50 to-pink-50">
+      <!-- Header with Icon -->
+      <div v-if="isFirstPage" class="flex items-center gap-4 mb-6 pb-6 border-b-2 border-purple-600">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white shadow-xl">
+          <i class="fa-solid fa-rocket text-3xl"></i>
+        </div>
+        <div class="flex-1">
+          <h1 class="text-3xl font-black text-slate-900" :contenteditable="editable" @blur="editable && handleEdit('fullName', $event)" suppressContentEditableWarning>
+            {{ formData.fullName || 'Your Name' }}
+          </h1>
+          <p class="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent" :contenteditable="editable" @blur="editable && handleEdit('title', $event)" suppressContentEditableWarning>
+            {{ formData.title || 'Product Manager' }}
+          </p>
+        </div>
+        <div class="text-right text-[10px] text-slate-600 space-y-1">
+          <p v-if="formData.email">📧 {{ formData.email }}</p>
+          <p v-if="formData.phone">📱 {{ formData.phone }}</p>
+          <p v-if="formData.location">📍 {{ formData.location }}</p>
+        </div>
+      </div>
+
+      <!-- Metrics Cards -->
+      <div v-if="isFirstPage" class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-purple-100 border-2 border-purple-300 rounded-xl p-4 text-center">
+          <div class="text-2xl font-black text-purple-700">4+</div>
+          <div class="text-[10px] text-purple-600 font-semibold uppercase">Years Exp</div>
+        </div>
+        <div class="bg-pink-100 border-2 border-pink-300 rounded-xl p-4 text-center">
+          <div class="text-2xl font-black text-pink-700">{{ formData.experience.length }}</div>
+          <div class="text-[10px] text-pink-600 font-semibold uppercase">Products</div>
+        </div>
+        <div class="bg-purple-100 border-2 border-purple-300 rounded-xl p-4 text-center">
+          <div class="text-2xl font-black text-purple-700">{{ [...formData.skills.backend, ...formData.skills.frontend].length }}</div>
+          <div class="text-[10px] text-purple-600 font-semibold uppercase">Skills</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Left: Skills & Education -->
+        <div class="col-span-1 space-y-4">
+          <div v-if="hasSkills" class="bg-white rounded-xl p-4 border-2 border-purple-200 shadow-sm">
+            <h3 class="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-star"></i>Skills
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="skill in [...formData.skills.backend, ...formData.skills.frontend, ...formData.skills.other].slice(0, 12)" :key="skill" 
+                    class="text-[9px] px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-bold">
+                {{ skill }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="hasEducation" class="bg-white rounded-xl p-4 border-2 border-pink-200 shadow-sm">
+            <h3 class="text-[10px] font-black text-pink-800 uppercase tracking-wider mb-3">Education</h3>
+            <div class="space-y-2">
+              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree">
+                <h4 class="font-bold text-[10px] text-slate-800">{{ edu.degree }}</h4>
+                <p class="text-[9px] text-slate-600">{{ edu.institution }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Experience -->
+        <div class="col-span-2 space-y-6">
+          <div v-if="isFirstPage && formData.summary" class="bg-white rounded-xl p-4 border-l-4 border-purple-600 shadow-sm">
+            <p class="text-xs text-slate-700 leading-relaxed">{{ formData.summary }}</p>
+          </div>
+
+          <div v-if="hasExperience">
+            <h3 class="text-[11px] font-black text-purple-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-briefcase"></i>Product Experience
+            </h3>
+            <div class="space-y-4">
+              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company" 
+                   class="bg-white rounded-xl p-4 border-2 border-purple-100 hover:border-purple-300 transition-colors shadow-sm">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 class="font-bold text-sm text-purple-800">{{ exp.position }}</h4>
+                    <p class="text-xs text-pink-600 font-semibold">{{ exp.company }}</p>
+                  </div>
+                  <span class="text-[9px] bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-bold">
+                    {{ exp.startDate }} - {{ exp.current ? 'Present' : exp.endDate }}
+                  </span>
+                </div>
+                <ul class="text-[10px] text-slate-600 space-y-1">
+                  <li v-for="(resp, respIdx) in exp.responsibilities" :key="respIdx" v-show="resp" class="flex gap-2">
+                    <span class="text-purple-600">▪</span>
+                    <span>{{ resp }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Analyst Template (Clean Data-Driven, Charts) -->
+    <div v-else-if="templateId === 'business-analyst'" class="p-8 lg:p-12 bg-gradient-to-br from-cyan-50 to-blue-50">
       <div class="flex gap-10">
         <!-- Left Column - Only show on first page -->
         <div v-if="isFirstPage" class="w-[35%] space-y-8">
@@ -153,8 +519,8 @@
       </div>
     </div>
 
-    <!-- Executive Template (Single Column, Centered) -->
-    <div v-else-if="templateId === 'executive'" class="p-8 lg:p-16">
+    <!-- Executive/Traditional Templates (Executive, Legal, Finance) -->
+    <div v-else-if="['executive', 'legal-professional', 'finance-professional'].includes(templateId)" class="p-8 lg:p-16">
       <div v-if="isFirstPage" class="text-center mb-8 pb-8 border-b-2 border-slate-900">
         <h1 
           class="text-5xl font-black text-slate-900 tracking-tight uppercase mb-2"
@@ -222,8 +588,8 @@
       </div>
     </div>
 
-    <!-- Creative Template (Sidebar Left) -->
-    <div v-else-if="templateId === 'creative'" class="flex h-full min-h-[1000px]">
+    <!-- Creative Templates (Designer, Marketing, Content Creator) -->
+    <div v-else-if="['creative-designer', 'marketing-professional', 'content-creator', 'creative'].includes(templateId)" class="flex h-full min-h-[1000px]">
       <!-- Dark Sidebar - Only on first page -->
       <div v-if="isFirstPage" class="w-1/3 p-8 text-white" :style="{ backgroundColor: accentColor || '#4f46e5' }">
         <div class="w-24 h-24 bg-white/20 rounded-full mx-auto mb-6"></div>
@@ -318,8 +684,8 @@
       </div>
     </div>
 
-    <!-- Tech Minimal Template -->
-    <div v-else-if="templateId === 'tech'" class="p-8 lg:p-16">
+    <!-- Healthcare Template (Clean, Trustworthy) -->
+    <div v-else-if="templateId === 'healthcare'" class="p-8 lg:p-16">
       <!-- Header - Only on first page -->
       <div v-if="isFirstPage" class="mb-8 pb-6 border-b border-slate-200">
         <h1 
@@ -407,8 +773,8 @@
       </div>
     </div>
 
-    <!-- Graduate Template (Centered Header) -->
-    <div v-else-if="templateId === 'graduate'" class="p-8 lg:p-16">
+    <!-- Sales Template (Achievement-Focused) -->
+    <div v-else-if="templateId === 'sales-professional'" class="p-8 lg:p-16">
       <!-- Header - Only on first page -->
       <div v-if="isFirstPage" class="text-center mb-8">
         <div class="w-20 h-20 rounded-full mx-auto mb-4" :style="{ backgroundColor: accentColor + '20' }"></div>

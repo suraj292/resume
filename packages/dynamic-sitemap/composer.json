@@ -1,0 +1,44 @@
+{
+    "name": "webvio/dynamic-sitemap",
+    "description": "Dynamic sitemap generator for Laravel applications with Filament admin integration",
+    "keywords": [
+        "laravel",
+        "sitemap",
+        "dynamic",
+        "seo",
+        "xml",
+        "filament",
+        "sitemap-index"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webvio",
+            "email": "info@webvio.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1|^8.2|^8.3",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/routing": "^10.0|^11.0|^12.0",
+        "illuminate/cache": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "filament/filament": "^3.0|^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Webvio\\DynamicSitemap\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webvio\\DynamicSitemap\\DynamicSitemapServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
