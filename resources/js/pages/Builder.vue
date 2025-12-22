@@ -1160,11 +1160,10 @@ const parseResumeContent = (text) => {
   if (expSection) {
     const expText = expSection[1]
     const jobPattern = /([^\n—]+?)\s*[—–-]\s*([^\n(]+?)\s*\(([^)]+)\)/g
-    let match
-    let id = 1
+    const matches = [...expText.matchAll(jobPattern)]
     const experiences = []
 
-    while ((match = jobPattern.exec(expText)) !== null) {
+    matches.forEach((match, index) => {
       const position = match[1].trim()
       const company = match[2].trim()
       const dateLocation = match[3].trim()
@@ -1179,23 +1178,37 @@ const parseResumeContent = (text) => {
         ? dates.split(/[–-]/).map(d => d.trim())
         : [dates, 'Present']
 
-      // Extract responsibilities
+      // Extract responsibilities for this job
       const responsibilities = []
       const startIndex = match.index + match[0].length
-      const restOfText = expText.substring(startIndex)
-      const nextJobIndex = restOfText.search(/[^\n]+\s*[—–-]\s*[^\n]+\s*\([^)]+\)/)
-      const jobContent = nextJobIndex > 0 ? restOfText.substring(0, nextJobIndex) : restOfText.substring(0, 500)
       
-      const bulletPoints = jobContent.match(/[•▪●⇨➢➤→✓-]\s*([^\n]+)/g)
+      // Find next job or end of section
+      const nextJobIndex = index + 1 < matches.length 
+        ? matches[index + 1].index 
+        : expText.length
+      const jobContent = expText.substring(startIndex, nextJobIndex)
+      
+      // Extract bullet points - be more flexible with patterns
+      const bulletPoints = jobContent.match(/[•▪●⇨➢➤→✓\-*]\s*([^\n•▪●⇨➢➤→✓\-*]+)/g)
       if (bulletPoints) {
         bulletPoints.forEach(bp => {
-          const clean = bp.replace(/^[•▪●⇨➢➤→✓-]\s*/, '').trim()
-          if (clean && clean.length > 10) responsibilities.push(clean)
+          const clean = bp.replace(/^[•▪●⇨➢➤→✓\-*]\s*/, '').trim()
+          if (clean && clean.length > 5) {
+            responsibilities.push(clean)
+          }
         })
+      }
+      
+      // If no bullet points found, try to get a simple text description
+      if (responsibilities.length === 0) {
+        const lines = jobContent.split('\n').map(l => l.trim()).filter(l => l && l.length > 10)
+        if (lines.length > 0) {
+          responsibilities.push(lines[0])
+        }
       }
 
       experiences.push({
-        id: id++,
+        id: index + 1,
         position,
         company,
         location,
@@ -1204,11 +1217,14 @@ const parseResumeContent = (text) => {
         current: endDate.toLowerCase().includes('present'),
         responsibilities: responsibilities.length ? responsibilities : ['']
       })
-    }
+    })
 
     if (experiences.length > 0) {
       formData.value.experience = experiences
       console.log('💼 Found experience entries:', experiences.length)
+      experiences.forEach((exp, idx) => {
+        console.log(`   ${idx + 1}. ${exp.position} at ${exp.company} - ${exp.responsibilities.length} responsibilities`)
+      })
     }
   }
 
@@ -1282,16 +1298,17 @@ const calculateRequiredPages = () => {
   const expCount = formData.value.experience.filter(exp => exp.position && exp.company).length
   const achCount = formData.value.achievements.filter(ach => ach && ach.trim()).length
   
-  // Estimate: Page 1 can hold ~3 experience entries + summary + skills
-  // Each additional page can hold ~4-5 experience entries
+  // Page 1 can hold: 4 experience entries + header + summary + skills + education + achievements
+  // Page 2+: 4 experience entries each (no header/static content)
   let pagesNeeded = 1
   
-  if (expCount > 3) {
-    const overflow = expCount - 3
+  if (expCount > 4) {
+    // Calculate overflow experiences beyond page 1
+    const overflow = expCount - 4
     pagesNeeded += Math.ceil(overflow / 4)
   }
   
-  // Add pages for achievements if there are many
+  // Add pages for achievements if there are many (and no overflow experiences)
   if (achCount > 8 && pagesNeeded === 1) {
     pagesNeeded = 2
   }
@@ -1299,6 +1316,7 @@ const calculateRequiredPages = () => {
   if (pagesNeeded > totalPages.value) {
     totalPages.value = pagesNeeded
     console.log(`📄 Auto-created ${pagesNeeded} pages for content distribution`)
+    console.log(`   → ${expCount} experiences: Page 1 shows 1-4, Page 2+ shows remaining`)
   }
 }
 
