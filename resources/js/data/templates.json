@@ -1,117 +1,84 @@
 [
     {
-        "id": "modernist",
-        "name": "The Modernist",
-        "type": "modern ats",
+        "id": "software-engineer",
+        "name": "Software Engineer",
+        "type": "tech ats",
+        "profession": "Technology",
         "tags": [
-            "Modern",
-            "2 Column",
-            "ATS Ready"
+            "Tech",
+            "ATS Ready",
+            "Modern"
         ],
-        "description": "Clean, double-column layout perfect for showcasing skills and experience side-by-side.",
+        "description": "Clean, technical layout optimized for software development roles with focus on projects and skills.",
         "thumbnail": {
-            "bg": "bg-gradient-to-br from-slate-50 to-slate-100",
+            "bg": "bg-gradient-to-br from-blue-50 to-slate-50",
             "mainClass": "flex-col p-4 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "flex gap-3 mb-2",
+                    "class": "pb-3 border-b-2 border-blue-500",
                     "children": [
                         {
-                            "class": "w-14 h-14 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full shadow-lg"
+                            "class": "h-4 w-3/5 bg-slate-900 rounded-sm mb-1"
                         },
                         {
-                            "class": "flex-1 space-y-2 pt-1",
+                            "class": "h-2.5 w-2/5 bg-blue-600 rounded-sm"
+                        }
+                    ]
+                },
+                {
+                    "type": "grid",
+                    "class": "grid grid-cols-4 gap-1.5 py-2",
+                    "children": [
+                        {
+                            "class": "h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center",
                             "children": [
                                 {
-                                    "class": "h-4 w-4/5 bg-slate-800 rounded-sm"
-                                },
+                                    "class": "h-1.5 w-6 bg-blue-500 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center",
+                            "children": [
                                 {
-                                    "class": "h-2.5 w-2/3 bg-indigo-500 rounded-sm"
+                                    "class": "h-1.5 w-5 bg-blue-500 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-7 bg-blue-500 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-4 bg-blue-500 rounded-sm"
                                 }
                             ]
                         }
                     ]
                 },
                 {
-                    "type": "divider",
-                    "class": "h-0.5 bg-gradient-to-r from-indigo-500 via-indigo-400 to-transparent rounded-full"
-                },
-                {
                     "type": "body",
-                    "class": "flex gap-4 flex-1 mt-2",
+                    "class": "space-y-2",
                     "children": [
                         {
-                            "class": "w-1/3 space-y-3",
-                            "children": [
-                                {
-                                    "class": "space-y-1.5",
-                                    "children": [
-                                        {
-                                            "class": "h-2 w-2/3 bg-indigo-200 rounded-sm"
-                                        },
-                                        {
-                                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
-                                        },
-                                        {
-                                            "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "class": "space-y-1.5",
-                                    "children": [
-                                        {
-                                            "class": "h-2 w-1/2 bg-indigo-200 rounded-sm"
-                                        },
-                                        {
-                                            "class": "flex flex-wrap gap-1",
-                                            "children": [
-                                                {
-                                                    "class": "h-2 w-8 bg-indigo-100 rounded-full"
-                                                },
-                                                {
-                                                    "class": "h-2 w-6 bg-indigo-100 rounded-full"
-                                                },
-                                                {
-                                                    "class": "h-2 w-7 bg-indigo-100 rounded-full"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
+                            "class": "h-2 w-1/4 bg-blue-600 rounded-sm"
                         },
                         {
-                            "class": "w-2/3 space-y-3",
+                            "class": "space-y-1",
                             "children": [
                                 {
-                                    "class": "h-2 w-1/3 bg-slate-400 rounded-sm"
+                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
                                 },
                                 {
-                                    "class": "space-y-1",
-                                    "children": [
-                                        {
-                                            "class": "h-1.5 w-full bg-slate-100 rounded-sm"
-                                        },
-                                        {
-                                            "class": "h-1.5 w-4/5 bg-slate-100 rounded-sm"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "class": "h-2 w-1/3 bg-slate-400 rounded-sm mt-2"
-                                },
-                                {
-                                    "class": "space-y-1",
-                                    "children": [
-                                        {
-                                            "class": "h-1.5 w-full bg-slate-100 rounded-sm"
-                                        },
-                                        {
-                                            "class": "h-1.5 w-3/4 bg-slate-100 rounded-sm"
-                                        }
-                                    ]
+                                    "class": "h-1.5 w-11/12 bg-slate-200 rounded-sm"
                                 }
                             ]
                         }
@@ -120,21 +87,228 @@
             ]
         },
         "layout": {
-            "style": "two-column",
+            "style": "minimal-tech",
             "headerAlign": "left",
-            "primaryColor": "bg-indigo-600"
+            "primaryColor": "bg-blue-600"
+        }
+    },
+    {
+        "id": "data-scientist",
+        "name": "Data Scientist",
+        "type": "tech analytics",
+        "profession": "Technology",
+        "tags": [
+            "Analytics",
+            "Tech",
+            "ATS Ready"
+        ],
+        "description": "Analytics-focused design emphasizing quantifiable results and technical expertise.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-emerald-50 to-teal-50",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex gap-2 items-center pb-2 border-b border-emerald-400",
+                    "children": [
+                        {
+                            "class": "w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded",
+                            "children": [
+                                {
+                                    "class": "w-full h-full flex items-center justify-center",
+                                    "children": [
+                                        {
+                                            "class": "w-5 h-3 border-2 border-white rounded-sm"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex-1 space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-3 w-3/4 bg-slate-800 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2 w-1/2 bg-emerald-600 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "stats",
+                    "class": "grid grid-cols-3 gap-2",
+                    "children": [
+                        {
+                            "class": "bg-emerald-100 rounded p-1.5 text-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-4 bg-emerald-600 rounded-sm mx-auto mb-1"
+                                },
+                                {
+                                    "class": "h-1 w-full bg-emerald-300 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-emerald-100 rounded p-1.5 text-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-5 bg-emerald-600 rounded-sm mx-auto mb-1"
+                                },
+                                {
+                                    "class": "h-1 w-full bg-emerald-300 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-emerald-100 rounded p-1.5 text-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-4 bg-emerald-600 rounded-sm mx-auto mb-1"
+                                },
+                                {
+                                    "class": "h-1 w-full bg-emerald-300 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-1.5",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                        },
+                        {
+                            "class": "h-1.5 w-5/6 bg-slate-200 rounded-sm"
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "analytics",
+            "headerAlign": "left",
+            "primaryColor": "bg-emerald-600"
+        }
+    },
+    {
+        "id": "devops-engineer",
+        "name": "DevOps Engineer",
+        "type": "tech infrastructure",
+        "profession": "Technology",
+        "tags": [
+            "DevOps",
+            "Technical",
+            "ATS Ready"
+        ],
+        "description": "Infrastructure-focused layout highlighting automation, deployment, and technical skills.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-orange-50 to-amber-50",
+            "mainClass": "flex-col p-4 gap-2",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex items-center gap-2 pb-2 border-b-2 border-orange-500",
+                    "children": [
+                        {
+                            "class": "flex gap-1",
+                            "children": [
+                                {
+                                    "class": "w-3 h-3 rounded-full bg-orange-500"
+                                },
+                                {
+                                    "class": "w-3 h-3 rounded-full bg-amber-500"
+                                },
+                                {
+                                    "class": "w-3 h-3 rounded-full bg-yellow-500"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex-1 space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-3 w-2/3 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2 w-1/2 bg-orange-600 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "pipeline",
+                    "class": "flex items-center gap-1",
+                    "children": [
+                        {
+                            "class": "h-6 flex-1 bg-orange-100 border border-orange-300 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-8 bg-orange-500 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "w-2 h-0.5 bg-orange-400"
+                        },
+                        {
+                            "class": "h-6 flex-1 bg-orange-100 border border-orange-300 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-6 bg-orange-500 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "w-2 h-0.5 bg-orange-400"
+                        },
+                        {
+                            "class": "h-6 flex-1 bg-orange-100 border border-orange-300 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-7 bg-orange-500 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-1.5",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                        },
+                        {
+                            "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "devops",
+            "headerAlign": "left",
+            "primaryColor": "bg-orange-600"
         }
     },
     {
         "id": "executive",
         "name": "Executive Suite",
-        "type": "executive ats",
+        "type": "executive business",
+        "profession": "Business",
         "tags": [
-            "Professional",
-            "Single Column",
+            "C-Level",
+            "Executive",
             "ATS Ready"
         ],
-        "description": "Traditional, text-focused layout ideal for C-level and management roles.",
+        "description": "Bold, authoritative design for senior leadership and C-level positions.",
         "thumbnail": {
             "bg": "bg-white",
             "mainClass": "flex-col p-5 gap-3",
@@ -157,9 +331,6 @@
                                 },
                                 {
                                     "class": "h-1.5 w-10 bg-slate-300 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-14 bg-slate-300 rounded-sm"
                                 }
                             ]
                         }
@@ -182,20 +353,6 @@
                                     "class": "h-1.5 w-11/12 bg-slate-100 rounded-sm"
                                 }
                             ]
-                        },
-                        {
-                            "class": "space-y-1",
-                            "children": [
-                                {
-                                    "class": "h-2 w-1/3 bg-slate-800 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-5/6 bg-slate-100 rounded-sm"
-                                }
-                            ]
                         }
                     ]
                 }
@@ -208,22 +365,166 @@
         }
     },
     {
-        "id": "creative",
-        "name": "Creative Spark",
-        "type": "creative",
+        "id": "product-manager",
+        "name": "Product Manager",
+        "type": "business strategy",
+        "profession": "Business",
         "tags": [
-            "Creative",
-            "Sidebar",
-            "Bold"
+            "Product",
+            "Strategy",
+            "Modern"
         ],
-        "description": "Bold sidebar design for designers, marketers, and creative professionals.",
+        "description": "Strategy-focused template emphasizing product launches, metrics, and cross-functional leadership.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-purple-50 to-pink-50",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex gap-3",
+                    "children": [
+                        {
+                            "class": "w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-lg"
+                        },
+                        {
+                            "class": "flex-1 space-y-1.5 pt-1",
+                            "children": [
+                                {
+                                    "class": "h-3 w-4/5 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2 w-3/5 bg-purple-600 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "divider",
+                    "class": "h-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-transparent rounded-full my-1"
+                },
+                {
+                    "type": "metrics",
+                    "class": "grid grid-cols-2 gap-2",
+                    "children": [
+                        {
+                            "class": "bg-purple-50 border border-purple-200 rounded-lg p-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-1/2 bg-purple-400 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-3 w-2/3 bg-purple-600 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-pink-50 border border-pink-200 rounded-lg p-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-2/3 bg-pink-400 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-3 w-1/2 bg-pink-600 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "product",
+            "headerAlign": "left",
+            "primaryColor": "bg-purple-600"
+        }
+    },
+    {
+        "id": "business-analyst",
+        "name": "Business Analyst",
+        "type": "business analytics",
+        "profession": "Business",
+        "tags": [
+            "Analytics",
+            "Business",
+            "Clean"
+        ],
+        "description": "Clean, data-driven design showcasing analytical skills and business impact.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-cyan-50 to-blue-50",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "pb-2 border-b border-cyan-300",
+                    "children": [
+                        {
+                            "class": "h-3.5 w-3/5 bg-slate-800 rounded-sm mb-1"
+                        },
+                        {
+                            "class": "h-2 w-2/5 bg-cyan-600 rounded-sm"
+                        }
+                    ]
+                },
+                {
+                    "type": "chart",
+                    "class": "flex items-end gap-1 h-8 px-2",
+                    "children": [
+                        {
+                            "class": "w-full h-3/4 bg-cyan-400 rounded-t"
+                        },
+                        {
+                            "class": "w-full h-full bg-cyan-500 rounded-t"
+                        },
+                        {
+                            "class": "w-full h-2/3 bg-cyan-400 rounded-t"
+                        },
+                        {
+                            "class": "w-full h-5/6 bg-cyan-500 rounded-t"
+                        },
+                        {
+                            "class": "w-full h-3/5 bg-cyan-400 rounded-t"
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-1.5",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                        },
+                        {
+                            "class": "h-1.5 w-5/6 bg-slate-200 rounded-sm"
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "analytics-clean",
+            "headerAlign": "left",
+            "primaryColor": "bg-cyan-600"
+        }
+    },
+    {
+        "id": "creative-designer",
+        "name": "Creative Designer",
+        "type": "creative design",
+        "profession": "Creative",
+        "tags": [
+            "Design",
+            "Creative",
+            "Visual"
+        ],
+        "description": "Bold, visual design perfect for designers, UX professionals, and creative roles.",
         "thumbnail": {
             "bg": "bg-slate-50",
             "mainClass": "flex h-full",
             "elements": [
                 {
                     "type": "sidebar",
-                    "class": "w-2/5 bg-gradient-to-b from-purple-700 to-purple-900 min-h-full p-3 flex flex-col gap-3",
+                    "class": "w-2/5 bg-gradient-to-b from-pink-600 via-purple-600 to-indigo-700 min-h-full p-3 flex flex-col gap-3",
                     "children": [
                         {
                             "class": "w-12 h-12 rounded-full bg-white/30 mx-auto shadow-lg"
@@ -232,33 +533,27 @@
                             "class": "h-3 w-4/5 bg-white/90 mx-auto rounded-sm"
                         },
                         {
-                            "class": "h-2 w-2/3 bg-white/50 mx-auto rounded-sm"
+                            "class": "h-2 w-2/3 bg-white/60 mx-auto rounded-sm"
                         },
                         {
                             "class": "space-y-1.5 mt-3",
                             "children": [
                                 {
-                                    "class": "h-1.5 w-1/2 bg-white/40 rounded-sm"
+                                    "class": "h-1.5 w-full bg-white/30 rounded-sm"
                                 },
                                 {
-                                    "class": "h-1.5 w-full bg-white/20 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-4/5 bg-white/20 rounded-sm"
+                                    "class": "h-1.5 w-4/5 bg-white/30 rounded-sm"
                                 }
                             ]
                         },
                         {
-                            "class": "flex flex-wrap gap-1 mt-2",
+                            "class": "grid grid-cols-2 gap-1 mt-2",
                             "children": [
                                 {
-                                    "class": "h-2 w-6 bg-white/25 rounded-full"
+                                    "class": "h-4 bg-white/20 rounded"
                                 },
                                 {
-                                    "class": "h-2 w-8 bg-white/25 rounded-full"
-                                },
-                                {
-                                    "class": "h-2 w-5 bg-white/25 rounded-full"
+                                    "class": "h-4 bg-white/20 rounded"
                                 }
                             ]
                         }
@@ -272,27 +567,10 @@
                             "class": "space-y-1",
                             "children": [
                                 {
-                                    "class": "h-2 w-1/4 bg-purple-600 rounded-sm"
+                                    "class": "h-2 w-1/3 bg-pink-600 rounded-sm"
                                 },
                                 {
                                     "class": "h-1.5 w-full bg-slate-200 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-3/4 bg-slate-200 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "space-y-1",
-                            "children": [
-                                {
-                                    "class": "h-2 w-1/3 bg-purple-600 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-5/6 bg-slate-100 rounded-sm"
                                 }
                             ]
                         }
@@ -303,95 +581,67 @@
         "layout": {
             "style": "sidebar-left",
             "headerAlign": "left",
-            "primaryColor": "bg-purple-600"
+            "primaryColor": "bg-pink-600"
         }
     },
     {
-        "id": "tech",
-        "name": "Tech Minimal",
-        "type": "tech ats",
+        "id": "marketing-professional",
+        "name": "Marketing Pro",
+        "type": "creative marketing",
+        "profession": "Creative",
         "tags": [
-            "Tech",
-            "Minimal",
-            "ATS Ready"
+            "Marketing",
+            "Creative",
+            "Modern"
         ],
-        "description": "Optimized for developers with a focus on skills, languages, and project links.",
+        "description": "Dynamic, colorful template for marketing, communications, and brand professionals.",
         "thumbnail": {
-            "bg": "bg-slate-50",
+            "bg": "bg-gradient-to-br from-rose-50 to-orange-50",
             "mainClass": "flex-col p-4 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "pb-3 border-b border-slate-200",
+                    "class": "relative pb-3",
                     "children": [
                         {
-                            "class": "h-4 w-3/5 bg-slate-800 rounded-sm mb-1"
+                            "class": "absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full opacity-50 blur-sm"
                         },
                         {
-                            "class": "h-2.5 w-2/5 bg-cyan-500 rounded-sm"
-                        },
-                        {
-                            "class": "flex gap-2 mt-2",
+                            "class": "relative z-10 space-y-1.5",
                             "children": [
                                 {
-                                    "class": "h-1.5 w-16 bg-slate-300 rounded-sm"
+                                    "class": "h-4 w-3/5 bg-slate-900 rounded-sm"
                                 },
                                 {
-                                    "class": "h-1.5 w-12 bg-slate-300 rounded-sm"
+                                    "class": "h-2.5 w-2/5 bg-gradient-to-r from-rose-600 to-orange-600 rounded-sm"
                                 }
                             ]
                         }
                     ]
                 },
                 {
-                    "type": "grid",
-                    "class": "grid grid-cols-3 gap-2 py-2",
+                    "type": "highlights",
+                    "class": "flex gap-2",
                     "children": [
                         {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "class": "flex-1 bg-rose-100 border-l-2 border-rose-500 rounded p-2",
                             "children": [
                                 {
-                                    "class": "h-2 w-8 bg-cyan-400 rounded-sm"
+                                    "class": "h-1.5 w-2/3 bg-rose-600 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-2 w-1/2 bg-rose-400 rounded-sm"
                                 }
                             ]
                         },
                         {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "class": "flex-1 bg-orange-100 border-l-2 border-orange-500 rounded p-2",
                             "children": [
                                 {
-                                    "class": "h-2 w-6 bg-cyan-400 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
-                            "children": [
+                                    "class": "h-1.5 w-1/2 bg-orange-600 rounded-sm mb-1"
+                                },
                                 {
-                                    "class": "h-2 w-7 bg-cyan-400 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
-                            "children": [
-                                {
-                                    "class": "h-2 w-5 bg-cyan-400 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
-                            "children": [
-                                {
-                                    "class": "h-2 w-9 bg-cyan-400 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
-                            "children": [
-                                {
-                                    "class": "h-2 w-6 bg-cyan-400 rounded-sm"
+                                    "class": "h-2 w-2/3 bg-orange-400 rounded-sm"
                                 }
                             ]
                         }
@@ -399,190 +649,239 @@
                 },
                 {
                     "type": "body",
-                    "class": "space-y-2",
+                    "class": "space-y-1.5",
                     "children": [
                         {
-                            "class": "h-2 w-1/4 bg-slate-700 rounded-sm"
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
                         },
                         {
-                            "class": "space-y-1",
-                            "children": [
-                                {
-                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-11/12 bg-slate-100 rounded-sm"
-                                }
-                            ]
+                            "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
                         }
                     ]
                 }
             ]
         },
         "layout": {
-            "style": "minimal",
+            "style": "marketing",
             "headerAlign": "left",
-            "primaryColor": "bg-cyan-500"
+            "primaryColor": "bg-rose-600"
         }
     },
     {
-        "id": "graduate",
-        "name": "The Graduate",
-        "type": "modern",
+        "id": "content-creator",
+        "name": "Content Creator",
+        "type": "creative media",
+        "profession": "Creative",
         "tags": [
-            "Entry Level",
-            "Clean",
-            "Fresh"
+            "Media",
+            "Modern",
+            "Creative"
         ],
-        "description": "Clean structure emphasizing education and internships for entry-level applicants.",
+        "description": "Modern, media-focused design for content creators, influencers, and digital professionals.",
         "thumbnail": {
-            "bg": "bg-gradient-to-b from-blue-50 to-white",
-            "mainClass": "flex-col p-5 gap-3",
+            "bg": "bg-gradient-to-br from-violet-50 to-fuchsia-50",
+            "mainClass": "flex-col p-4 gap-3",
             "elements": [
                 {
-                    "type": "icon",
-                    "class": "h-14 w-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto shadow-lg flex items-center justify-center",
-                    "children": [
-                        {
-                            "class": "w-6 h-6 bg-white/30 rounded-full"
-                        }
-                    ]
-                },
-                {
                     "type": "header",
-                    "class": "text-center space-y-1",
+                    "class": "flex items-center gap-3",
                     "children": [
                         {
-                            "class": "h-4 w-2/3 bg-slate-800 mx-auto rounded-sm"
-                        },
-                        {
-                            "class": "h-2 w-1/2 bg-blue-500 mx-auto rounded-sm"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider",
-                    "class": "h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent"
-                },
-                {
-                    "type": "body",
-                    "class": "space-y-2",
-                    "children": [
-                        {
-                            "class": "space-y-1",
+                            "class": "w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg flex items-center justify-center",
                             "children": [
                                 {
-                                    "class": "h-2 w-1/4 bg-blue-400 rounded-sm"
-                                },
-                                {
-                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                    "class": "w-6 h-6 bg-white/30 rounded"
                                 }
                             ]
                         },
                         {
-                            "class": "space-y-1",
+                            "class": "flex-1 space-y-1.5",
                             "children": [
                                 {
-                                    "class": "h-2 w-1/5 bg-blue-400 rounded-sm"
+                                    "class": "h-3 w-4/5 bg-slate-900 rounded-sm"
                                 },
                                 {
-                                    "class": "flex flex-wrap gap-1",
+                                    "class": "h-2 w-3/5 bg-violet-600 rounded-sm"
+                                },
+                                {
+                                    "class": "flex gap-1 mt-1",
                                     "children": [
                                         {
-                                            "class": "h-2 w-8 bg-blue-100 rounded-full"
+                                            "class": "w-4 h-4 bg-violet-200 rounded-full"
                                         },
                                         {
-                                            "class": "h-2 w-6 bg-blue-100 rounded-full"
+                                            "class": "w-4 h-4 bg-fuchsia-200 rounded-full"
                                         },
                                         {
-                                            "class": "h-2 w-10 bg-blue-100 rounded-full"
+                                            "class": "w-4 h-4 bg-purple-200 rounded-full"
                                         }
                                     ]
                                 }
                             ]
                         }
                     ]
+                },
+                {
+                    "type": "portfolio",
+                    "class": "grid grid-cols-3 gap-1.5",
+                    "children": [
+                        {
+                            "class": "h-8 bg-violet-100 rounded"
+                        },
+                        {
+                            "class": "h-8 bg-fuchsia-100 rounded"
+                        },
+                        {
+                            "class": "h-8 bg-purple-100 rounded"
+                        }
+                    ]
                 }
             ]
         },
         "layout": {
-            "style": "centered-header",
-            "headerAlign": "center",
-            "primaryColor": "bg-blue-500"
+            "style": "media",
+            "headerAlign": "left",
+            "primaryColor": "bg-violet-600"
         }
     },
     {
-        "id": "swiss",
-        "name": "Swiss Grid",
-        "type": "creative",
+        "id": "finance-professional",
+        "name": "Finance Professional",
+        "type": "professional finance",
+        "profession": "Professional Services",
         "tags": [
-            "Grid",
-            "Bold",
-            "Popular"
+            "Finance",
+            "Traditional",
+            "ATS Ready"
         ],
-        "description": "A bold, grid-based layout that organizes complex information elegantly.",
+        "description": "Conservative, precise design for finance, accounting, and banking professionals.",
         "thumbnail": {
             "bg": "bg-white",
-            "mainClass": "grid grid-cols-2 p-3 gap-2 h-full",
+            "mainClass": "flex-col p-5 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "col-span-2 bg-gradient-to-r from-red-600 to-red-700 rounded-sm p-3 flex flex-col justify-center",
+                    "class": "border-b-2 border-slate-700 pb-3",
                     "children": [
                         {
-                            "class": "h-4 w-3/4 bg-white rounded-sm"
+                            "class": "h-4 w-2/3 bg-slate-900 rounded-sm mb-2"
                         },
                         {
-                            "class": "h-2 w-1/2 bg-white/60 rounded-sm mt-1.5"
-                        }
-                    ]
-                },
-                {
-                    "type": "body1",
-                    "class": "bg-slate-50 rounded-sm p-2 space-y-2",
-                    "children": [
-                        {
-                            "class": "h-2 w-1/2 bg-slate-400 rounded-sm"
+                            "class": "h-2 w-1/2 bg-slate-600 rounded-sm"
                         },
                         {
-                            "class": "space-y-1",
+                            "class": "flex gap-3 mt-2",
                             "children": [
                                 {
-                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                                    "class": "h-1.5 w-16 bg-slate-400 rounded-sm"
                                 },
                                 {
-                                    "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
-                                }
-                            ]
-                        },
-                        {
-                            "class": "flex flex-wrap gap-1 mt-1",
-                            "children": [
-                                {
-                                    "class": "h-2 w-6 bg-red-100 rounded-sm"
-                                },
-                                {
-                                    "class": "h-2 w-8 bg-red-100 rounded-sm"
+                                    "class": "h-1.5 w-12 bg-slate-400 rounded-sm"
                                 }
                             ]
                         }
                     ]
                 },
                 {
-                    "type": "body2",
-                    "class": "bg-slate-50 rounded-sm p-2 space-y-2",
+                    "type": "table",
+                    "class": "space-y-1.5",
                     "children": [
                         {
-                            "class": "h-2 w-2/3 bg-slate-400 rounded-sm"
+                            "class": "flex gap-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-1/3 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 flex-1 bg-slate-100 rounded-sm"
+                                }
+                            ]
                         },
+                        {
+                            "class": "flex gap-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-1/3 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 flex-1 bg-slate-100 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex gap-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-1/3 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 flex-1 bg-slate-100 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "traditional",
+            "headerAlign": "left",
+            "primaryColor": "bg-slate-700"
+        }
+    },
+    {
+        "id": "legal-professional",
+        "name": "Legal Professional",
+        "type": "professional legal",
+        "profession": "Professional Services",
+        "tags": [
+            "Legal",
+            "Formal",
+            "Traditional"
+        ],
+        "description": "Formal, conservative template for attorneys, legal professionals, and law firms.",
+        "thumbnail": {
+            "bg": "bg-white",
+            "mainClass": "flex-col p-6 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "text-center border-b-4 border-slate-900 pb-3",
+                    "children": [
+                        {
+                            "class": "h-5 w-2/3 bg-slate-900 mx-auto rounded-sm mb-2"
+                        },
+                        {
+                            "class": "h-2 w-1/2 bg-slate-600 mx-auto rounded-sm"
+                        },
+                        {
+                            "class": "flex justify-center gap-2 mt-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-14 bg-slate-400 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-10 bg-slate-400 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-2.5",
+                    "children": [
                         {
                             "class": "space-y-1",
                             "children": [
                                 {
+                                    "class": "h-2 w-1/3 bg-slate-800 rounded-sm"
+                                },
+                                {
                                     "class": "h-1.5 w-full bg-slate-200 rounded-sm"
                                 },
                                 {
-                                    "class": "h-1.5 w-3/4 bg-slate-200 rounded-sm"
+                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
                                 },
                                 {
                                     "class": "h-1.5 w-5/6 bg-slate-200 rounded-sm"
@@ -594,7 +893,186 @@
             ]
         },
         "layout": {
-            "style": "grid",
+            "style": "formal",
+            "headerAlign": "center",
+            "primaryColor": "bg-slate-900"
+        }
+    },
+    {
+        "id": "healthcare",
+        "name": "Healthcare Professional",
+        "type": "specialized healthcare",
+        "profession": "Healthcare",
+        "tags": [
+            "Healthcare",
+            "Medical",
+            "Clean"
+        ],
+        "description": "Clean, trustworthy design for doctors, nurses, and healthcare professionals.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-green-50 to-teal-50",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex items-center gap-3 pb-3 border-b-2 border-green-500",
+                    "children": [
+                        {
+                            "class": "w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg",
+                            "children": [
+                                {
+                                    "class": "w-6 h-6 bg-white/40 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex-1 space-y-1.5",
+                            "children": [
+                                {
+                                    "class": "h-3.5 w-4/5 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2 w-3/5 bg-green-700 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "certifications",
+                    "class": "grid grid-cols-2 gap-2",
+                    "children": [
+                        {
+                            "class": "bg-green-100 border border-green-300 rounded-lg p-1.5 flex items-center gap-1",
+                            "children": [
+                                {
+                                    "class": "w-3 h-3 bg-green-500 rounded-full"
+                                },
+                                {
+                                    "class": "flex-1 h-1.5 bg-green-400 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-green-100 border border-green-300 rounded-lg p-1.5 flex items-center gap-1",
+                            "children": [
+                                {
+                                    "class": "w-3 h-3 bg-green-500 rounded-full"
+                                },
+                                {
+                                    "class": "flex-1 h-1.5 bg-green-400 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-1.5",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                        },
+                        {
+                            "class": "h-1.5 w-5/6 bg-slate-200 rounded-sm"
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "healthcare",
+            "headerAlign": "left",
+            "primaryColor": "bg-green-600"
+        }
+    },
+    {
+        "id": "sales-professional",
+        "name": "Sales Professional",
+        "type": "specialized sales",
+        "profession": "Sales",
+        "tags": [
+            "Sales",
+            "Results",
+            "Modern"
+        ],
+        "description": "Results-oriented design highlighting achievements, metrics, and sales performance.",
+        "thumbnail": {
+            "bg": "bg-gradient-to-br from-red-50 to-orange-50",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex items-center gap-2",
+                    "children": [
+                        {
+                            "class": "flex-1 space-y-1.5",
+                            "children": [
+                                {
+                                    "class": "h-4 w-4/5 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2.5 w-3/5 bg-red-600 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full shadow-lg"
+                        }
+                    ]
+                },
+                {
+                    "type": "achievements",
+                    "class": "grid grid-cols-3 gap-2",
+                    "children": [
+                        {
+                            "class": "bg-red-100 rounded-lg p-2 text-center",
+                            "children": [
+                                {
+                                    "class": "h-3 w-full bg-red-600 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-1.5 w-2/3 bg-red-300 rounded-sm mx-auto"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-orange-100 rounded-lg p-2 text-center",
+                            "children": [
+                                {
+                                    "class": "h-3 w-full bg-orange-600 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-1.5 w-2/3 bg-orange-300 rounded-sm mx-auto"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "bg-amber-100 rounded-lg p-2 text-center",
+                            "children": [
+                                {
+                                    "class": "h-3 w-full bg-amber-600 rounded-sm mb-1"
+                                },
+                                {
+                                    "class": "h-1.5 w-2/3 bg-amber-300 rounded-sm mx-auto"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "class": "space-y-1",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "sales",
             "headerAlign": "left",
             "primaryColor": "bg-red-600"
         }

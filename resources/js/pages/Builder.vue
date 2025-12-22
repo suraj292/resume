@@ -1,6 +1,6 @@
 <template>
   <!-- Auth Required Modal -->
-  <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
+  <!-- <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" /> -->
   
   <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased h-screen flex flex-col">
     
