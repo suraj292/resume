@@ -343,6 +343,8 @@ const handlePayment = async () => {
 
     const orderData = await response.json()
 
+    console.log(orderData)
+
     if (!orderData.success) {
       throw new Error(orderData.message || 'Failed to create order')
     }

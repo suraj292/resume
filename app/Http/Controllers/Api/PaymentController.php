@@ -140,7 +140,7 @@ class PaymentController extends Controller
                 'success' => true,
                 'message' => 'Payment verified successfully',
                 'plan' => $user->plan,
-                'expiry' => $user->plan_expiry->format('Y-m-d'),
+                'expiry' => $user->plan_expiry ? $user->plan_expiry->format('Y-m-d') : null,
             ]);
 
         } catch (\Exception $e) {

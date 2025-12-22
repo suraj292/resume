@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'currency',
         'plan_id',
         'plan_started_at',
+        'plan_expiry',
         'resumes_created',
         'ats_scans_used',
     ];
@@ -57,6 +58,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'plan_started_at' => 'datetime',
+            'plan_expiry' => 'datetime',
+            'resumes_created' => 'integer',
+            'ats_scans_used' => 'integer',
         ];
     }
 
