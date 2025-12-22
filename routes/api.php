@@ -62,4 +62,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Social account management
     Route::post('/auth/{provider}/link', [SocialAuthController::class, 'linkAccount']);
     Route::delete('/auth/{provider}/unlink', [SocialAuthController::class, 'unlinkAccount']);
+    
+    // Payment routes
+    Route::post('/payment/create-order', [\App\Http\Controllers\Api\PaymentController::class, 'createOrder']);
+    Route::post('/payment/verify', [\App\Http\Controllers\Api\PaymentController::class, 'verifyPayment']);
+    Route::get('/payment/transactions', [\App\Http\Controllers\Api\PaymentController::class, 'getTransactions']);
 });
+
+// Get single plan
+Route::get('/plans/{id}', [PlansController::class, 'show']);

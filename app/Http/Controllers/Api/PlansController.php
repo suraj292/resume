@@ -35,4 +35,13 @@ class PlansController extends Controller
         
         return $plans;
     }
+
+    /**
+     * Get a single plan by ID
+     */
+    public function show($id)
+    {
+        $plan = Plan::active()->findOrFail($id);
+        return response()->json($plan);
+    }
 }

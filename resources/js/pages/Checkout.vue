@@ -1,17 +1,27 @@
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
-    <!-- Header -->
-    <header class="glass-header sticky top-0 z-50">
-      <div class="container mx-auto px-6 h-16 flex items-center justify-between">
-        <!-- Logo -->
-        <router-link to="/" class="flex items-center gap-2.5 group">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white text-sm shadow-md">
-            <i class="fa-solid fa-file-contract"></i>
-          </div>
-          <span class="text-lg font-display font-bold text-slate-800 tracking-tight">
-            Resume<span class="text-indigo-600">AI</span>
-          </span>
-        </router-link>
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-600 mb-4"></i>
+        <p class="text-slate-600">Loading checkout...</p>
+      </div>
+    </div>
+
+    <!-- Checkout Content -->
+    <template v-else-if="selectedPlan">
+      <!-- Header -->
+      <header class="glass-header sticky top-0 z-50">
+        <div class="container mx-auto px-6 h-16 flex items-center justify-between">
+          <!-- Logo -->
+          <router-link to="/" class="flex items-center gap-2.5 group">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white text-sm shadow-md">
+              <i class="fa-solid fa-file-contract"></i>
+            </div>
+            <span class="text-lg font-display font-bold text-slate-800 tracking-tight">
+              Resume<span class="text-indigo-600">AI</span>
+            </span>
+          </router-link>
 
         <!-- Secure Indicator -->
         <div class="flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 text-xs font-bold">
@@ -224,6 +234,7 @@
         </div>
       </div>
     </footer>
+    </template>
   </div>
 </template>
 
@@ -236,13 +247,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Data
-const selectedPlan = ref({
-  name: 'Pro',
-  description: 'Unlimited resumes, AI optimization, PDF downloads',
-  monthly_price: 499,
-  yearly_price: 4999
-})
-
+const selectedPlan = ref(null)
 const billingCycle = ref('Monthly')
 const gstNumber = ref('')
 const couponCode = ref('')
@@ -253,12 +258,14 @@ const discountApplied = ref(false)
 const discountPercentage = ref(0)
 const processing = ref(false)
 const priceAnimating = ref(false)
+const loading = ref(true)
 
 // Computed
-const user = computed(() => authStore.currentUser ||  { name: 'Guest', email: '' })
-const currencySymbol = computed(() => authStore.user?.currency === 'INR' ? '₹' : '$')
+const user = computed(() => authStore.currentUser || { name: 'Guest', email: '' })
+const currencySymbol = computed(() => selectedPlan.value?.currency || '₹')
 
 const planPrice = computed(() => {
+  if (!selectedPlan.value) return 0
   return billingCycle.value === 'Monthly' 
     ? selectedPlan.value.monthly_price 
     : selectedPlan.value.yearly_price
@@ -311,28 +318,149 @@ const applyCoupon = () => {
   }
 }
 
-const handlePayment = () => {
+const handlePayment = async () => {
+  if (!selectedPlan.value) {
+    alert('Please select a plan')
+    return
+  }
+
   processing.value = true
 
-  // TODO: Integrate with Razorpay
-  setTimeout(() => {
-    alert('Payment integration coming soon!')
+  try {
+    // Step 1: Create Razorpay order on backend
+    const response = await fetch('/api/payment/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        plan_id: selectedPlan.value.id,
+        billing_cycle: billingCycle.value.toLowerCase(),
+      })
+    })
+
+    const orderData = await response.json()
+
+    if (!orderData.success) {
+      throw new Error(orderData.message || 'Failed to create order')
+    }
+
+    // Step 2: Load Razorpay script if not already loaded
+    if (!window.Razorpay) {
+      await loadRazorpayScript()
+    }
+
+    // Step 3: Initialize Razorpay checkout
+    const options = {
+      key: orderData.key,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: 'RESUMEBP',
+      description: `${selectedPlan.value.name} Plan - ${billingCycle.value}`,
+      order_id: orderData.order_id,
+      handler: async function (response) {
+        // Payment successful, verify on backend
+        await verifyPayment(response)
+      },
+      prefill: {
+        name: user.value.name,
+        email: user.value.email,
+      },
+      notes: {
+        gst_number: gstNumber.value || '',
+      },
+      theme: {
+        color: '#6366f1'
+      },
+      modal: {
+        ondismiss: function() {
+          processing.value = false
+        }
+      }
+    }
+
+    const rzp = new window.Razorpay(options)
+    rzp.open()
+
+  } catch (error) {
+    console.error('Payment error:', error)
+    alert(error.message || 'Failed to initiate payment')
     processing.value = false
-  }, 1500)
+  }
+}
+
+const verifyPayment = async (paymentData) => {
+  try {
+    const response = await fetch('/api/payment/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(paymentData)
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      // Update user data
+      await authStore.fetchUser()
+      
+      // Redirect to builder with success message
+      router.push('/builder?payment=success')
+    } else {
+      alert('Payment verification failed: ' + result.message)
+    }
+  } catch (error) {
+    console.error('Verification error:', error)
+    alert('Payment verification failed. Please contact support.')
+  } finally {
+    processing.value = false
+  }
+}
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = resolve
+    script.onerror = reject
+    document.body.appendChild(script)
+  })
 }
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+  loading.value = true
+  
   // Get plan details from URL query params
   const urlParams = new URLSearchParams(window.location.search)
+  const planId = urlParams.get('plan')
+  const billing = urlParams.get('billing')
   
-  if (urlParams.get('plan')) {
-    // Fetch plan details based on plan parameter
-    // selectedPlan.value = ...
+  if (planId) {
+    try {
+      // Fetch plan details
+      const response = await fetch(`/api/plans/${planId}`)
+      selectedPlan.value = await response.json()
+      
+      if (billing) {
+        billingCycle.value = billing === 'yearly' ? 'Yearly' : 'Monthly'
+      }
+    } catch (error) {
+      console.error('Error fetching plan:', error)
+      alert('Failed to load plan details')
+      router.push('/pricing')
+    }
+  } else {
+    // No plan selected, redirect to pricing
+    router.push('/pricing')
   }
-  if (urlParams.get('billing')) {
-    billingCycle.value = urlParams.get('billing') === 'yearly' ? 'Yearly' : 'Monthly'
-  }
+  
+  loading.value = false
 })
 </script>
 
