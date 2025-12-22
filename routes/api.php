@@ -67,6 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment/create-order', [\App\Http\Controllers\Api\PaymentController::class, 'createOrder']);
     Route::post('/payment/verify', [\App\Http\Controllers\Api\PaymentController::class, 'verifyPayment']);
     Route::get('/payment/transactions', [\App\Http\Controllers\Api\PaymentController::class, 'getTransactions']);
+    
+    // PDF Export
+    Route::post('/resume/export-pdf', [\App\Http\Controllers\Api\ResumeExportController::class, 'exportPdf']);
 });
 
 // Get single plan

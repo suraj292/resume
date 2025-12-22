@@ -1749,9 +1749,86 @@ const removePage = () => {
   }
 }
 
-const exportPDF = () => {
+const exportPDF = async () => {
   console.log('Exporting PDF...')
-  // TODO: Implement PDF export
+  
+  try {
+    // Prepare resume data from formData
+    const resumeData = {
+      personal: {
+        name: formData.value.fullName,
+        email: formData.value.email,
+        phone: formData.value.phone,
+        location: formData.value.location,
+        linkedin: formData.value.linkedin,
+        github: formData.value.github,
+        portfolio: formData.value.portfolio,
+      },
+      summary: formData.value.summary,
+      experience: formData.value.experience.map(exp => ({
+        title: exp.position,
+        company: exp.company,
+        location: exp.location,
+        startDate: exp.startDate,
+        endDate: exp.current ? 'Present' : exp.endDate,
+        description: exp.responsibilities.join('\n')
+      })),
+      education: formData.value.education.map(edu => ({
+        degree: edu.degree,
+        school: edu.institution,
+        graduationDate: edu.year,
+        gpa: edu.percentage
+      })),
+      skills: [
+        ...formData.value.skills.backend.map(s => ({ name: s, category: 'Backend' })),
+        ...formData.value.skills.frontend.map(s => ({ name: s, category: 'Frontend' })),
+        ...formData.value.skills.devops.map(s => ({ name: s, category: 'DevOps' })),
+        ...formData.value.skills.other.map(s => ({ name: s, category: 'Other' }))
+      ],
+      certifications: [],
+      totalPages: totalPages.value
+    }
+
+    // Call backend API
+    const response = await fetch('/api/resume/export-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/pdf',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        resume_data: resumeData
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Export failed')
+    }
+
+    // Create blob and download
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    
+    // Use user's name for filename or default
+    const filename = formData.value.fullName 
+      ? `${formData.value.fullName.replace(/[^A-Za-z0-9\-]/g, '_')}_Resume.pdf`
+      : 'resume.pdf'
+    
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+
+    console.log('PDF exported successfully!')
+
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('Failed to export PDF. Please try again.')
+  }
 }
 
 // Initialize drag and drop
