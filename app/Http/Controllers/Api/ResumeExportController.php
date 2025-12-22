@@ -20,12 +20,20 @@ class ResumeExportController extends Controller
 
         $resumeData = $request->resume_data;
         $template = $request->template ?? 'default';
+        $accentColor = $request->accent_color ?? '#6366f1';
+        $achievements = $request->achievements ?? [];
+
+        // Add achievements to resume data if not already included
+        if (!isset($resumeData['achievements'])) {
+            $resumeData['achievements'] = $achievements;
+        }
 
         try {
             // Generate PDF from blade template
             $pdf = Pdf::loadView('pdf.resume', [
                 'data' => $resumeData,
-                'template' => $template
+                'template' => $template,
+                'accentColor' => $accentColor
             ]);
 
             // Configure PDF settings
@@ -46,9 +54,19 @@ class ResumeExportController extends Controller
             return $pdf->download($filename);
 
         } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('PDF Export Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'resume_data_keys' => array_keys($resumeData),
+                'has_achievements' => isset($resumeData['achievements']),
+                'template' => $template
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate PDF: ' . $e->getMessage()
+                'message' => 'Failed to generate PDF: ' . $e->getMessage(),
+                'error' => config('app.debug') ? $e->getTraceAsString() : null
             ], 500);
         }
     }

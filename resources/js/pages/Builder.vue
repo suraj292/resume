@@ -1777,84 +1777,124 @@ const removePage = () => {
 }
 
 const exportPDF = async () => {
-  console.log('Exporting PDF...')
+  console.log('Exporting PDF using browser print...')
   
   try {
-    // Prepare resume data from formData
-    const resumeData = {
-      personal: {
-        name: formData.value.fullName,
-        email: formData.value.email,
-        phone: formData.value.phone,
-        location: formData.value.location,
-        linkedin: formData.value.linkedin,
-        github: formData.value.github,
-        portfolio: formData.value.portfolio,
-      },
-      summary: formData.value.summary,
-      experience: formData.value.experience.map(exp => ({
-        title: exp.position,
-        company: exp.company,
-        location: exp.location,
-        startDate: exp.startDate,
-        endDate: exp.current ? 'Present' : exp.endDate,
-        description: exp.responsibilities.join('\n')
-      })),
-      education: formData.value.education.map(edu => ({
-        degree: edu.degree,
-        school: edu.institution,
-        graduationDate: edu.year,
-        gpa: edu.percentage
-      })),
-      skills: [
-        ...formData.value.skills.backend.map(s => ({ name: s, category: 'Backend' })),
-        ...formData.value.skills.frontend.map(s => ({ name: s, category: 'Frontend' })),
-        ...formData.value.skills.devops.map(s => ({ name: s, category: 'DevOps' })),
-        ...formData.value.skills.other.map(s => ({ name: s, category: 'Other' }))
-      ],
-      certifications: [],
-      totalPages: totalPages.value
+    // Get the resume preview element
+    const previewElement = document.querySelector('.bg-white.shadow-2xl')
+    
+    if (!previewElement) {
+      throw new Error('Preview element not found')
     }
 
-    // Call backend API
-    const response = await fetch('/api/resume/export-pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/pdf',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        resume_data: resumeData
+    // Create a print window with the resume content
+    const printWindow = window.open('', '_blank')
+    
+    if (!printWindow) {
+      throw new Error('Could not open print window. Please allow popups.')
+    }
+
+    // Get all stylesheets
+    const styles = Array.from(document.styleSheets)
+      .map(styleSheet => {
+        try {
+          return Array.from(styleSheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n')
+        } catch (e) {
+          return ''
+        }
       })
+      .join('\n')
+
+    // Clone the preview element
+    const clone = previewElement.cloneNode(true)
+    
+    // Remove contenteditable attributes for PDF
+    clone.querySelectorAll('[contenteditable]').forEach(el => {
+      el.removeAttribute('contenteditable')
     })
 
-    if (!response.ok) {
-      throw new Error('Export failed')
-    }
-
-    // Create blob and download
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
+    // Build the print document
+    const htmlOpen = '<' + '!DOCTYPE html>\n<' + 'html>\n<' + 'head>'
+    const htmlClose = '<' + '/head>\n<' + '/html>'
+    const bodyOpen = '<' + 'body>'
+    const bodyClose = '<' + '/body>'
+    const scriptOpen = '<' + 'script>'
+    const scriptClose = '<' + '/script>'
     
-    // Use user's name for filename or default
-    const filename = formData.value.fullName 
-      ? `${formData.value.fullName.replace(/[^A-Za-z0-9\-]/g, '_')}_Resume.pdf`
-      : 'resume.pdf'
-    
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    const printContent = htmlOpen + `
+          <meta charset="UTF-8">
+          <title>${formData.value.fullName || 'Resume'}</title>
+          <style>
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            
+            body {
+              margin: 0;
+              padding: 0;
+              width: 210mm;
+              min-height: 297mm;
+            }
+            
+            ${styles}
+            
+            /* Print-specific overrides */
+            .bg-white {
+              background-color: white !important;
+            }
+            
+            @media print {
+              body {
+                width: 210mm;
+                height: 297mm;
+              }
+              
+              .shadow-2xl, .shadow-lg, .shadow-md {
+                box-shadow: none !important;
+              }
+              
+              button, .no-print {
+                display: none !important;
+              }
+            }
+          </style>
+        ` + htmlClose + bodyOpen + `
+          ${clone.outerHTML}
+          ` + scriptOpen + `
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() {
+                  window.close();
+                }, 100);
+              }, 500);
+            };
+          ` + scriptClose + bodyClose + '<' + '/html>'
 
-    console.log('PDF exported successfully!')
+    printWindow.document.open()
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+
+    successMessage.value = '✓ Opening print dialog...'
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
 
   } catch (error) {
     console.error('Export error:', error)
-    alert('Failed to export PDF. Please try again.')
+    uploadError.value = `Failed to export PDF: ${error.message}`
+    setTimeout(() => {
+      uploadError.value = ''
+    }, 5000)
   }
 }
 

@@ -52,7 +52,7 @@
         .header-title {
             font-size: 16px;
             font-weight: bold;
-            color: #6366f1;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
             margin-bottom: 15px;
         }
         
@@ -63,7 +63,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #94a3b8;
-            border-bottom: 1px solid #6366f1;
+            border-bottom: 2px solid <?php echo $accentColor ?? '#6366f1'; ?>;
             padding-bottom: 3px;
             margin-bottom: 10px;
             margin-top: 15px;
@@ -75,7 +75,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #94a3b8;
-            border-bottom: 1px solid #6366f1;
+            border-bottom: 2px solid <?php echo $accentColor ?? '#6366f1'; ?>;
             padding-bottom: 3px;
             margin-bottom: 8px;
             margin-top: 12px;
@@ -94,7 +94,7 @@
         }
         
         .contact-icon {
-            color: #6366f1;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
             margin-right: 5px;
         }
         
@@ -112,19 +112,22 @@
         
         .skill-tag {
             display: inline-block;
-            background: #eef2ff;
-            color: #6366f1;
+            background: <?php echo $accentColor ?? '#6366f1'; ?>20;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
             font-size: 8px;
             font-weight: 600;
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 10px;
             margin-right: 3px;
             margin-bottom: 3px;
+            border: 1px solid <?php echo $accentColor ?? '#6366f1'; ?>40;
         }
         
         /* Education */
         .education-item {
             margin-bottom: 8px;
+            padding-left: 8px;
+            border-left: 2px solid <?php echo $accentColor ?? '#6366f1'; ?>60;
         }
         
         .education-degree {
@@ -142,7 +145,8 @@
         
         .education-year {
             font-size: 8px;
-            color: #94a3b8;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
+            font-weight: 600;
         }
         
         /* Summary */
@@ -157,6 +161,20 @@
         .experience-item {
             margin-bottom: 12px;
             page-break-inside: avoid;
+            padding-left: 10px;
+            border-left: 2px solid <?php echo $accentColor ?? '#6366f1'; ?>50;
+            position: relative;
+        }
+        
+        .experience-item::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 5px;
+            width: 6px;
+            height: 6px;
+            background: <?php echo $accentColor ?? '#6366f1'; ?>;
+            border-radius: 50%;
         }
         
         .experience-title {
@@ -168,7 +186,7 @@
         
         .experience-company {
             font-size: 9px;
-            color: #6366f1;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
             font-weight: 600;
             margin-bottom: 1px;
         }
@@ -177,6 +195,12 @@
             font-size: 8px;
             color: #94a3b8;
             margin-bottom: 5px;
+            background: <?php echo $accentColor ?? '#6366f1'; ?>15;
+            color: <?php echo $accentColor ?? '#6366f1'; ?>;
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 600;
         }
         
         .experience-description {
@@ -192,6 +216,18 @@
         
         .experience-description li {
             margin-bottom: 3px;
+        }
+
+        /* Achievements */
+        .achievement-item {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .achievement-bullet {
+            color: #d97706;
+            font-weight: bold;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -308,6 +344,20 @@
                     @endif
                 </div>
                 @endforeach
+                @endif
+
+                <!-- Achievements -->
+                @if(!empty($data['achievements']) && count($data['achievements']) > 0)
+                <div class="section-title">KEY ACHIEVEMENTS</div>
+                <div class="experience-description">
+                    <ul>
+                        @foreach($data['achievements'] as $achievement)
+                            @if(is_string($achievement) && trim($achievement))
+                            <li>{{ trim($achievement) }}</li>
+                            @endif
+                        @endforeach
+                    </ul>
+                </div>
                 @endif
             </div>
         </div>
