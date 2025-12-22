@@ -105,8 +105,20 @@ export const useAuthStore = defineStore('auth', () => {
         window.location.href = `/api/auth/${provider}/redirect`
     }
 
+    // Check if user just completed social login
+    async function checkSocialLogin() {
+        // If we have a session cookie but no user data, try to fetch
+        if (hasSessionCookie() && !user.value) {
+            console.log('Detected session cookie, fetching user data...')
+            await fetchUser()
+        }
+    }
+
     // Initialize user from storage
     loadUser()
+    
+    // Check for social login on initialization
+    checkSocialLogin()
 
     console.log('loggedInInfo', {
         // User: User,
@@ -123,6 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
         currentUser,
         // Helpers
         hasSessionCookie,
+        checkSocialLogin,
         // Actions
         setUser,
         setToken,
