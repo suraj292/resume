@@ -71,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // PDF Export (open to all, but can add auth later if needed)
 Route::post('/resume/export-pdf', [\App\Http\Controllers\Api\ResumeExportController::class, 'exportPdf']);
+Route::post('/resume/export-with-template', [\App\Http\Controllers\Api\ResumeHTMLExportController::class, 'exportWithTemplate']);
 
 // Get single plan
 Route::get('/plans/{id}', [PlansController::class, 'show']);

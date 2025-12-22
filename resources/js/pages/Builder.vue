@@ -1777,25 +1777,53 @@ const removePage = () => {
 }
 
 const exportPDF = async () => {
-  console.log('Exporting PDF using browser print...')
+  console.log('Exporting PDF with exact template...')
   
   try {
-    // Get the resume preview element
-    const previewElement = document.querySelector('.bg-white.shadow-2xl')
-    
-    if (!previewElement) {
-      throw new Error('Preview element not found')
-    }
+    successMessage.value = 'Generating PDF...'
 
-    // Create a print window with the resume content
-    const printWindow = window.open('', '_blank')
+    // Save current page
+    const originalPage = currentPage.value
     
-    if (!printWindow) {
-      throw new Error('Could not open print window. Please allow popups.')
+    // Collect HTML for all pages
+    const allPagesHTML = []
+    
+    for (let page = 1; page <= totalPages.value; page++) {
+      // Switch to this page
+      currentPage.value = page
+      
+      // Wait for Vue to update
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Get the resume preview element for this page
+      const previewElement = document.querySelector('.bg-white.shadow-2xl')
+      
+      if (previewElement) {
+        const clone = previewElement.cloneNode(true)
+        clone.querySelectorAll('[contenteditable]').forEach(el => {
+          el.removeAttribute('contenteditable')
+        })
+        
+        // Remove shadow, margin, and padding that cause extra space
+        clone.style.boxShadow = 'none'
+        clone.style.margin = '0'
+        clone.style.padding = '0'
+        
+        // Add page break after each page except the last
+        if (page < totalPages.value) {
+          clone.style.pageBreakAfter = 'always'
+          clone.style.marginBottom = '0'
+        }
+        
+        allPagesHTML.push(clone.outerHTML)
+      }
     }
+    
+    // Restore original page
+    currentPage.value = originalPage
 
-    // Get all stylesheets
-    const styles = Array.from(document.styleSheets)
+    // Get all CSS rules
+    const css = Array.from(document.styleSheets)
       .map(styleSheet => {
         try {
           return Array.from(styleSheet.cssRules)
@@ -1807,84 +1835,43 @@ const exportPDF = async () => {
       })
       .join('\n')
 
-    // Clone the preview element
-    const clone = previewElement.cloneNode(true)
-    
-    // Remove contenteditable attributes for PDF
-    clone.querySelectorAll('[contenteditable]').forEach(el => {
-      el.removeAttribute('contenteditable')
+    // Combine all pages
+    const combinedHTML = allPagesHTML.join('\n')
+
+    // Send to server for PDF generation
+    const response = await fetch('/api/resume/export-with-template', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        html: combinedHTML,
+        css: css,
+        filename: formData.value.fullName 
+          ? `${formData.value.fullName.replace(/[^A-Za-z0-9\-]/g, '_')}_Resume.pdf`
+          : 'resume.pdf'
+      })
     })
 
-    // Build the print document
-    const htmlOpen = '<' + '!DOCTYPE html>\n<' + 'html>\n<' + 'head>'
-    const htmlClose = '<' + '/head>\n<' + '/html>'
-    const bodyOpen = '<' + 'body>'
-    const bodyClose = '<' + '/body>'
-    const scriptOpen = '<' + 'script>'
-    const scriptClose = '<' + '/script>'
+    if (!response.ok) {
+      throw new Error('Failed to generate PDF')
+    }
+
+    // Download the PDF
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = formData.value.fullName 
+      ? `${formData.value.fullName.replace(/[^A-Za-z0-9\-]/g, '_')}_Resume.pdf`
+      : 'resume.pdf'
     
-    const printContent = htmlOpen + `
-          <meta charset="UTF-8">
-          <title>${formData.value.fullName || 'Resume'}</title>
-          <style>
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              color-adjust: exact !important;
-            }
-            
-            @page {
-              size: A4;
-              margin: 0;
-            }
-            
-            body {
-              margin: 0;
-              padding: 0;
-              width: 210mm;
-              min-height: 297mm;
-            }
-            
-            ${styles}
-            
-            /* Print-specific overrides */
-            .bg-white {
-              background-color: white !important;
-            }
-            
-            @media print {
-              body {
-                width: 210mm;
-                height: 297mm;
-              }
-              
-              .shadow-2xl, .shadow-lg, .shadow-md {
-                box-shadow: none !important;
-              }
-              
-              button, .no-print {
-                display: none !important;
-              }
-            }
-          </style>
-        ` + htmlClose + bodyOpen + `
-          ${clone.outerHTML}
-          ` + scriptOpen + `
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-                setTimeout(function() {
-                  window.close();
-                }, 100);
-              }, 500);
-            };
-          ` + scriptClose + bodyClose + '<' + '/html>'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
 
-    printWindow.document.open()
-    printWindow.document.write(printContent)
-    printWindow.document.close()
-
-    successMessage.value = '✓ Opening print dialog...'
+    successMessage.value = '✓ PDF downloaded successfully!'
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
