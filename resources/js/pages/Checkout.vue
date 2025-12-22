@@ -229,10 +229,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 // Data
@@ -323,13 +323,15 @@ const handlePayment = () => {
 
 // Lifecycle
 onMounted(() => {
-  // Get plan details from route params or query
-  if (route.query.plan) {
-    // Fetch plan details
+  // Get plan details from URL query params
+  const urlParams = new URLSearchParams(window.location.search)
+  
+  if (urlParams.get('plan')) {
+    // Fetch plan details based on plan parameter
     // selectedPlan.value = ...
   }
-  if (route.query.billing) {
-    billingCycle.value = route.query.billing === 'yearly' ? 'Yearly' : 'Monthly'
+  if (urlParams.get('billing')) {
+    billingCycle.value = urlParams.get('billing') === 'yearly' ? 'Yearly' : 'Monthly'
   }
 })
 </script>

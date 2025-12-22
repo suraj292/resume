@@ -42,6 +42,10 @@ Route::get('/profile', function () {
     return Inertia::render('Profile');
 })->name('profile');
 
+Route::get('/checkout', function () {
+    return Inertia::render('Checkout');
+})->name('checkout');
+
 Route::get('/blog/{id}', function ($id) {
     return Inertia::render('BlogDetail', ['id' => $id]);
 })->name('blog.detail');

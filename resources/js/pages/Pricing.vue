@@ -1,20 +1,48 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const isYearly = ref(false)
 const plans = ref([])
 
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+
 const toggleBilling = () => {
     isYearly.value = !isYearly.value
+}
+
+const handlePlanSelect = (plan) => {
+    if (plan.monthly_price === 0) {
+        // Free plan - go to builder
+        router.push('/builder')
+    } else {
+        // Paid plan - check authentication
+        if (isAuthenticated.value) {
+            // User is logged in, go to checkout with plan details
+            router.push({
+                path: '/checkout',
+                query: {
+                    plan: plan.id,
+                    billing: isYearly.value ? 'yearly' : 'monthly'
+                }
+            })
+        } else {
+            // User not logged in, save intended route and go to auth
+            sessionStorage.setItem('intended_route', `/checkout?plan=${plan.id}&billing=${isYearly.value ? 'yearly' : 'monthly'}`)
+            router.push('/auth')
+        }
+    }
 }
 
 const fetchPlans = async () => {
     try {
         const response = await axios.get('/api/plans')
         plans.value = response.data
-
-        console.log('Fetched plans:', plans.value)
     } catch (error) {
         console.error('Error fetching plans:', error)
     }
@@ -89,19 +117,18 @@ onMounted(() => {
                         </div>
                         
                         <!-- Action Button -->
-                        <component :is="plan.monthly_price == 0 ? 'router-link' : 'a'" 
-                                   :to="plan.monthly_price == 0 ? '/builder' : '#'" 
-                                   :href="plan.monthly_price == 0 ? null : '#'"
-                                   :class="[
-                                       'block w-full py-3 px-4 font-bold text-center rounded-xl transition-colors mb-8 transform hover:scale-105 active:scale-95',
-                                       plan.is_popular 
-                                           ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' 
-                                           : plan.monthly_price == 0 
-                                               ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' 
-                                               : 'bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900'
-                                   ]">
+                        <button
+                            @click="handlePlanSelect(plan)"
+                            :class="[
+                                'block w-full py-3 px-4 font-bold text-center rounded-xl transition-colors mb-8 transform hover:scale-105 active:scale-95',
+                                plan.is_popular 
+                                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' 
+                                    : plan.monthly_price == 0 
+                                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' 
+                                        : 'bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900'
+                            ]">
                             {{ plan.monthly_price == 0 ? 'Start Free' : `Upgrade to ${plan.name}` }}
-                        </component>
+                        </button>
                         
                         <!-- Features List -->
                         <ul :class="['space-y-4 text-sm flex-grow text-left', plan.is_popular ? 'text-slate-300' : 'text-slate-600']">
