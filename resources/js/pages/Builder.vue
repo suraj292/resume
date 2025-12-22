@@ -788,7 +788,7 @@ const previewModalOpen = ref(false)
 const lastSaved = ref('2m ago')
 const personalFieldsContainer = ref(null)
 
-// Form Data - Comprehensive Resume Structure
+// Form Data - Comprehensive Resume Structure (starts empty, populated after upload/paste)
 const formData = ref({
   // Personal Information
   fullName: '',

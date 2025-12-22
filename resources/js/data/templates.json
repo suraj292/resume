@@ -10,24 +10,24 @@
         ],
         "description": "Clean, double-column layout perfect for showcasing skills and experience side-by-side.",
         "thumbnail": {
-            "bg": "bg-slate-50",
+            "bg": "bg-gradient-to-br from-slate-50 to-slate-100",
             "mainClass": "flex-col p-4 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "flex gap-3",
+                    "class": "flex gap-3 mb-2",
                     "children": [
                         {
-                            "class": "w-16 h-16 bg-slate-200 rounded-full"
+                            "class": "w-14 h-14 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full shadow-lg"
                         },
                         {
-                            "class": "flex-1 space-y-2",
+                            "class": "flex-1 space-y-2 pt-1",
                             "children": [
                                 {
-                                    "class": "h-4 w-3/4 bg-slate-800 rounded"
+                                    "class": "h-4 w-4/5 bg-slate-800 rounded-sm"
                                 },
                                 {
-                                    "class": "h-3 w-1/2 bg-indigo-500 rounded"
+                                    "class": "h-2.5 w-2/3 bg-indigo-500 rounded-sm"
                                 }
                             ]
                         }
@@ -35,23 +35,50 @@
                 },
                 {
                     "type": "divider",
-                    "class": "h-px bg-slate-200 my-2"
+                    "class": "h-0.5 bg-gradient-to-r from-indigo-500 via-indigo-400 to-transparent rounded-full"
                 },
                 {
                     "type": "body",
-                    "class": "flex gap-4 h-full",
+                    "class": "flex gap-4 flex-1 mt-2",
                     "children": [
                         {
-                            "class": "w-1/3 space-y-2",
+                            "class": "w-1/3 space-y-3",
                             "children": [
                                 {
-                                    "class": "h-3 w-full bg-slate-200 rounded"
+                                    "class": "space-y-1.5",
+                                    "children": [
+                                        {
+                                            "class": "h-2 w-2/3 bg-indigo-200 rounded-sm"
+                                        },
+                                        {
+                                            "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                                        },
+                                        {
+                                            "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
+                                        }
+                                    ]
                                 },
                                 {
-                                    "class": "h-3 w-full bg-slate-200 rounded"
-                                },
-                                {
-                                    "class": "h-3 w-2/3 bg-slate-200 rounded"
+                                    "class": "space-y-1.5",
+                                    "children": [
+                                        {
+                                            "class": "h-2 w-1/2 bg-indigo-200 rounded-sm"
+                                        },
+                                        {
+                                            "class": "flex flex-wrap gap-1",
+                                            "children": [
+                                                {
+                                                    "class": "h-2 w-8 bg-indigo-100 rounded-full"
+                                                },
+                                                {
+                                                    "class": "h-2 w-6 bg-indigo-100 rounded-full"
+                                                },
+                                                {
+                                                    "class": "h-2 w-7 bg-indigo-100 rounded-full"
+                                                }
+                                            ]
+                                        }
+                                    ]
                                 }
                             ]
                         },
@@ -59,13 +86,32 @@
                             "class": "w-2/3 space-y-3",
                             "children": [
                                 {
-                                    "class": "h-3 w-full bg-slate-100 rounded"
+                                    "class": "h-2 w-1/3 bg-slate-400 rounded-sm"
                                 },
                                 {
-                                    "class": "h-3 w-full bg-slate-100 rounded"
+                                    "class": "space-y-1",
+                                    "children": [
+                                        {
+                                            "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                        },
+                                        {
+                                            "class": "h-1.5 w-4/5 bg-slate-100 rounded-sm"
+                                        }
+                                    ]
                                 },
                                 {
-                                    "class": "h-3 w-3/4 bg-slate-100 rounded"
+                                    "class": "h-2 w-1/3 bg-slate-400 rounded-sm mt-2"
+                                },
+                                {
+                                    "class": "space-y-1",
+                                    "children": [
+                                        {
+                                            "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                        },
+                                        {
+                                            "class": "h-1.5 w-3/4 bg-slate-100 rounded-sm"
+                                        }
+                                    ]
                                 }
                             ]
                         }
@@ -90,37 +136,66 @@
         ],
         "description": "Traditional, text-focused layout ideal for C-level and management roles.",
         "thumbnail": {
-            "bg": "bg-slate-50",
-            "mainClass": "flex-col p-6 gap-3",
+            "bg": "bg-white",
+            "mainClass": "flex-col p-5 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "text-center space-y-2 mb-4",
+                    "class": "text-center space-y-2 pb-4 border-b-2 border-slate-900",
                     "children": [
                         {
-                            "class": "h-5 w-1/2 bg-slate-900 mx-auto rounded"
+                            "class": "h-5 w-3/5 bg-slate-900 mx-auto rounded-sm"
                         },
                         {
-                            "class": "h-3 w-1/3 bg-slate-400 mx-auto rounded"
+                            "class": "h-2.5 w-2/5 bg-slate-400 mx-auto rounded-sm"
+                        },
+                        {
+                            "class": "flex justify-center gap-2 mt-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-12 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-10 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-14 bg-slate-300 rounded-sm"
+                                }
+                            ]
                         }
                     ]
                 },
                 {
-                    "type": "divider",
-                    "class": "h-px bg-slate-900 mb-2"
-                },
-                {
                     "type": "body",
-                    "class": "space-y-3",
+                    "class": "space-y-3 mt-2",
                     "children": [
                         {
-                            "class": "h-3 w-full bg-slate-200 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/4 bg-slate-800 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-11/12 bg-slate-100 rounded-sm"
+                                }
+                            ]
                         },
                         {
-                            "class": "h-3 w-full bg-slate-200 rounded"
-                        },
-                        {
-                            "class": "h-3 w-5/6 bg-slate-200 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/3 bg-slate-800 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-5/6 bg-slate-100 rounded-sm"
+                                }
+                            ]
                         }
                     ]
                 }
@@ -138,41 +213,88 @@
         "type": "creative",
         "tags": [
             "Creative",
-            "Visual",
-            "New"
+            "Sidebar",
+            "Bold"
         ],
         "description": "Bold sidebar design for designers, marketers, and creative professionals.",
         "thumbnail": {
             "bg": "bg-slate-50",
-            "mainClass": "flex",
+            "mainClass": "flex h-full",
             "elements": [
                 {
                     "type": "sidebar",
-                    "class": "w-1/3 bg-slate-900 h-full p-2 flex flex-col gap-2",
+                    "class": "w-2/5 bg-gradient-to-b from-purple-700 to-purple-900 min-h-full p-3 flex flex-col gap-3",
                     "children": [
                         {
-                            "class": "w-10 h-10 rounded-full bg-white/20 mb-4"
+                            "class": "w-12 h-12 rounded-full bg-white/30 mx-auto shadow-lg"
                         },
                         {
-                            "class": "h-2 w-full bg-white/20 rounded"
+                            "class": "h-3 w-4/5 bg-white/90 mx-auto rounded-sm"
                         },
                         {
-                            "class": "h-2 w-full bg-white/20 rounded"
+                            "class": "h-2 w-2/3 bg-white/50 mx-auto rounded-sm"
+                        },
+                        {
+                            "class": "space-y-1.5 mt-3",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-1/2 bg-white/40 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-white/20 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-4/5 bg-white/20 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex flex-wrap gap-1 mt-2",
+                            "children": [
+                                {
+                                    "class": "h-2 w-6 bg-white/25 rounded-full"
+                                },
+                                {
+                                    "class": "h-2 w-8 bg-white/25 rounded-full"
+                                },
+                                {
+                                    "class": "h-2 w-5 bg-white/25 rounded-full"
+                                }
+                            ]
                         }
                     ]
                 },
                 {
                     "type": "body",
-                    "class": "w-2/3 p-4 flex flex-col gap-3",
+                    "class": "flex-1 p-4 flex flex-col gap-3",
                     "children": [
                         {
-                            "class": "h-6 w-3/4 bg-slate-900 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/4 bg-purple-600 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-3/4 bg-slate-200 rounded-sm"
+                                }
+                            ]
                         },
                         {
-                            "class": "h-2 w-full bg-slate-200 rounded"
-                        },
-                        {
-                            "class": "h-2 w-full bg-slate-200 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/3 bg-purple-600 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-5/6 bg-slate-100 rounded-sm"
+                                }
+                            ]
                         }
                     ]
                 }
@@ -196,39 +318,102 @@
         "description": "Optimized for developers with a focus on skills, languages, and project links.",
         "thumbnail": {
             "bg": "bg-slate-50",
-            "mainClass": "flex-col p-4 gap-2",
+            "mainClass": "flex-col p-4 gap-3",
             "elements": [
                 {
                     "type": "header",
-                    "class": "h-6 w-full bg-slate-100 rounded mb-2"
+                    "class": "pb-3 border-b border-slate-200",
+                    "children": [
+                        {
+                            "class": "h-4 w-3/5 bg-slate-800 rounded-sm mb-1"
+                        },
+                        {
+                            "class": "h-2.5 w-2/5 bg-cyan-500 rounded-sm"
+                        },
+                        {
+                            "class": "flex gap-2 mt-2",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-16 bg-slate-300 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-12 bg-slate-300 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     "type": "grid",
-                    "class": "grid grid-cols-3 gap-2 mb-2",
+                    "class": "grid grid-cols-3 gap-2 py-2",
                     "children": [
                         {
-                            "class": "h-2 bg-indigo-100 rounded"
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-8 bg-cyan-400 rounded-sm"
+                                }
+                            ]
                         },
                         {
-                            "class": "h-2 bg-indigo-100 rounded"
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-6 bg-cyan-400 rounded-sm"
+                                }
+                            ]
                         },
                         {
-                            "class": "h-2 bg-indigo-100 rounded"
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-7 bg-cyan-400 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-5 bg-cyan-400 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-9 bg-cyan-400 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "h-6 bg-cyan-50 border border-cyan-200 rounded flex items-center justify-center",
+                            "children": [
+                                {
+                                    "class": "h-2 w-6 bg-cyan-400 rounded-sm"
+                                }
+                            ]
                         }
                     ]
                 },
                 {
                     "type": "body",
-                    "class": "flex-1 space-y-2",
+                    "class": "space-y-2",
                     "children": [
                         {
-                            "class": "h-2 w-full bg-slate-100 rounded"
+                            "class": "h-2 w-1/4 bg-slate-700 rounded-sm"
                         },
                         {
-                            "class": "h-2 w-full bg-slate-100 rounded"
-                        },
-                        {
-                            "class": "h-2 w-full bg-slate-100 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-11/12 bg-slate-100 rounded-sm"
+                                }
+                            ]
                         }
                     ]
                 }
@@ -237,7 +422,7 @@
         "layout": {
             "style": "minimal",
             "headerAlign": "left",
-            "primaryColor": "bg-indigo-500"
+            "primaryColor": "bg-cyan-500"
         }
     },
     {
@@ -246,34 +431,75 @@
         "type": "modern",
         "tags": [
             "Entry Level",
-            "Clean"
+            "Clean",
+            "Fresh"
         ],
         "description": "Clean structure emphasizing education and internships for entry-level applicants.",
         "thumbnail": {
-            "bg": "bg-slate-50",
+            "bg": "bg-gradient-to-b from-blue-50 to-white",
             "mainClass": "flex-col p-5 gap-3",
             "elements": [
                 {
                     "type": "icon",
-                    "class": "h-12 w-12 bg-indigo-50 rounded-full mx-auto"
+                    "class": "h-14 w-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto shadow-lg flex items-center justify-center",
+                    "children": [
+                        {
+                            "class": "w-6 h-6 bg-white/30 rounded-full"
+                        }
+                    ]
                 },
                 {
                     "type": "header",
-                    "class": "h-4 w-1/2 bg-slate-800 mx-auto rounded"
+                    "class": "text-center space-y-1",
+                    "children": [
+                        {
+                            "class": "h-4 w-2/3 bg-slate-800 mx-auto rounded-sm"
+                        },
+                        {
+                            "class": "h-2 w-1/2 bg-blue-500 mx-auto rounded-sm"
+                        }
+                    ]
                 },
                 {
                     "type": "divider",
-                    "class": "h-px bg-slate-100 my-1"
+                    "class": "h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent"
                 },
                 {
                     "type": "body",
                     "class": "space-y-2",
                     "children": [
                         {
-                            "class": "h-2 w-full bg-slate-100 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/4 bg-blue-400 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-full bg-slate-100 rounded-sm"
+                                }
+                            ]
                         },
                         {
-                            "class": "h-2 w-full bg-slate-100 rounded"
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-1/5 bg-blue-400 rounded-sm"
+                                },
+                                {
+                                    "class": "flex flex-wrap gap-1",
+                                    "children": [
+                                        {
+                                            "class": "h-2 w-8 bg-blue-100 rounded-full"
+                                        },
+                                        {
+                                            "class": "h-2 w-6 bg-blue-100 rounded-full"
+                                        },
+                                        {
+                                            "class": "h-2 w-10 bg-blue-100 rounded-full"
+                                        }
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 }
@@ -296,20 +522,74 @@
         ],
         "description": "A bold, grid-based layout that organizes complex information elegantly.",
         "thumbnail": {
-            "bg": "bg-slate-50",
-            "mainClass": "grid grid-cols-2 p-4 gap-4",
+            "bg": "bg-white",
+            "mainClass": "grid grid-cols-2 p-3 gap-2 h-full",
             "elements": [
                 {
                     "type": "header",
-                    "class": "col-span-2 h-8 bg-slate-900 rounded-sm"
+                    "class": "col-span-2 bg-gradient-to-r from-red-600 to-red-700 rounded-sm p-3 flex flex-col justify-center",
+                    "children": [
+                        {
+                            "class": "h-4 w-3/4 bg-white rounded-sm"
+                        },
+                        {
+                            "class": "h-2 w-1/2 bg-white/60 rounded-sm mt-1.5"
+                        }
+                    ]
                 },
                 {
                     "type": "body1",
-                    "class": "h-full bg-slate-100 rounded-sm"
+                    "class": "bg-slate-50 rounded-sm p-2 space-y-2",
+                    "children": [
+                        {
+                            "class": "h-2 w-1/2 bg-slate-400 rounded-sm"
+                        },
+                        {
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-4/5 bg-slate-200 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "flex flex-wrap gap-1 mt-1",
+                            "children": [
+                                {
+                                    "class": "h-2 w-6 bg-red-100 rounded-sm"
+                                },
+                                {
+                                    "class": "h-2 w-8 bg-red-100 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     "type": "body2",
-                    "class": "h-full bg-slate-100 rounded-sm"
+                    "class": "bg-slate-50 rounded-sm p-2 space-y-2",
+                    "children": [
+                        {
+                            "class": "h-2 w-2/3 bg-slate-400 rounded-sm"
+                        },
+                        {
+                            "class": "space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-full bg-slate-200 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-3/4 bg-slate-200 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-5/6 bg-slate-200 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },

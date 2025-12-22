@@ -1,93 +1,94 @@
 <template>
-  <div class="bg-white shadow-2xl w-full min-h-[1000px] origin-top transform" :style="{ boxShadow: `0 25px 50px -12px ${accentColor}20` }">
+  <div class="bg-white shadow-2xl w-full min-h-[1000px] origin-top transform border border-slate-100" :style="{ boxShadow: `0 25px 50px -12px ${accentColor}25` }">
     
     <!-- Modernist Template (Two Column) -->
-    <div v-if="templateId === 'modernist'" class="p-8 lg:p-16">
-      <div class="flex gap-8">
+    <div v-if="templateId === 'modernist'" class="p-8 lg:p-12">
+      <div class="flex gap-10">
         <!-- Left Column - Only show on first page -->
-        <div v-if="isFirstPage" class="w-1/3 space-y-6">
+        <div v-if="isFirstPage" class="w-[35%] space-y-8">
           <!-- Contact -->
-          <div>
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Contact</h3>
-            <div class="space-y-2 text-xs text-slate-600">
-              <p v-if="formData.email"><i class="fa-solid fa-envelope mr-2" :style="{ color: accentColor }"></i>{{ formData.email }}</p>
-              <p v-if="formData.phone"><i class="fa-solid fa-phone mr-2" :style="{ color: accentColor }"></i>{{ formData.phone }}</p>
-              <p v-if="formData.location"><i class="fa-solid fa-location-dot mr-2" :style="{ color: accentColor }"></i>{{ formData.location }}</p>
-              <p v-if="formData.linkedin" class="break-all"><i class="fa-brands fa-linkedin mr-2" :style="{ color: accentColor }"></i>{{ formData.linkedin }}</p>
-              <p v-if="formData.github" class="break-all"><i class="fa-brands fa-github mr-2" :style="{ color: accentColor }"></i>{{ formData.github }}</p>
+          <div class="bg-slate-50/80 rounded-xl p-5">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 pb-2 border-b-2" :style="{ borderColor: accentColor }">Contact</h3>
+            <div class="space-y-3 text-[11px] text-slate-700">
+              <p v-if="formData.email" class="flex items-center gap-2.5 hover:translate-x-1 transition-transform"><span class="w-6 h-6 rounded-full flex items-center justify-center" :style="{ backgroundColor: accentColor + '20' }"><i class="fa-solid fa-envelope text-[10px]" :style="{ color: accentColor }"></i></span>{{ formData.email }}</p>
+              <p v-if="formData.phone" class="flex items-center gap-2.5 hover:translate-x-1 transition-transform"><span class="w-6 h-6 rounded-full flex items-center justify-center" :style="{ backgroundColor: accentColor + '20' }"><i class="fa-solid fa-phone text-[10px]" :style="{ color: accentColor }"></i></span>{{ formData.phone }}</p>
+              <p v-if="formData.location" class="flex items-center gap-2.5 hover:translate-x-1 transition-transform"><span class="w-6 h-6 rounded-full flex items-center justify-center" :style="{ backgroundColor: accentColor + '20' }"><i class="fa-solid fa-location-dot text-[10px]" :style="{ color: accentColor }"></i></span>{{ formData.location }}</p>
+              <p v-if="formData.linkedin" class="flex items-center gap-2.5 break-all hover:translate-x-1 transition-transform"><span class="w-6 h-6 rounded-full flex items-center justify-center" :style="{ backgroundColor: accentColor + '20' }"><i class="fa-brands fa-linkedin text-[10px]" :style="{ color: accentColor }"></i></span><span class="truncate">{{ formData.linkedin }}</span></p>
+              <p v-if="formData.github" class="flex items-center gap-2.5 break-all hover:translate-x-1 transition-transform"><span class="w-6 h-6 rounded-full flex items-center justify-center" :style="{ backgroundColor: accentColor + '20' }"><i class="fa-brands fa-github text-[10px]" :style="{ color: accentColor }"></i></span><span class="truncate">{{ formData.github }}</span></p>
             </div>
           </div>
 
           <!-- Skills -->
-          <div v-if="hasSkills">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Skills</h3>
-            <div class="space-y-3">
+          <div v-if="hasSkills" class="bg-slate-50/80 rounded-xl p-5">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 pb-2 border-b-2" :style="{ borderColor: accentColor }">Skills</h3>
+            <div class="space-y-4">
               <div v-if="formData.skills.backend.length">
-                <p class="text-[9px] font-bold text-slate-400 mb-1">Backend</p>
-                <div class="flex flex-wrap gap-1">
-                  <span v-for="skill in formData.skills.backend" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Backend</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="skill in formData.skills.backend" :key="skill" class="text-[9px] px-2.5 py-1 rounded-lg font-semibold shadow-sm" :style="{ backgroundColor: accentColor + '15', color: accentColor, border: `1px solid ${accentColor}30` }">{{ skill }}</span>
                 </div>
               </div>
               <div v-if="formData.skills.frontend.length">
-                <p class="text-[9px] font-bold text-slate-400 mb-1">Frontend</p>
-                <div class="flex flex-wrap gap-1">
-                  <span v-for="skill in formData.skills.frontend" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Frontend</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="skill in formData.skills.frontend" :key="skill" class="text-[9px] px-2.5 py-1 rounded-lg font-semibold shadow-sm" :style="{ backgroundColor: accentColor + '15', color: accentColor, border: `1px solid ${accentColor}30` }">{{ skill }}</span>
                 </div>
               </div>
               <div v-if="formData.skills.devops.length">
-                <p class="text-[9px] font-bold text-slate-400 mb-1">DevOps</p>
-                <div class="flex flex-wrap gap-1">
-                  <span v-for="skill in formData.skills.devops" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">DevOps</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="skill in formData.skills.devops" :key="skill" class="text-[9px] px-2.5 py-1 rounded-lg font-semibold shadow-sm" :style="{ backgroundColor: accentColor + '15', color: accentColor, border: `1px solid ${accentColor}30` }">{{ skill }}</span>
                 </div>
               </div>
               <div v-if="formData.skills.other.length">
-                <p class="text-[9px] font-bold text-slate-400 mb-1">Other</p>
-                <div class="flex flex-wrap gap-1">
-                  <span v-for="skill in formData.skills.other" :key="skill" class="text-[9px] px-2 py-0.5 rounded-full font-semibold" :style="{ backgroundColor: accentColor + '20', color: accentColor }">{{ skill }}</span>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Other</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="skill in formData.skills.other" :key="skill" class="text-[9px] px-2.5 py-1 rounded-lg font-semibold shadow-sm" :style="{ backgroundColor: accentColor + '15', color: accentColor, border: `1px solid ${accentColor}30` }">{{ skill }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Education -->
-          <div v-if="hasEducation">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b" :style="{ borderColor: accentColor }">Education</h3>
-            <div class="space-y-3">
-              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree">
-                <h4 class="font-bold text-[10px] text-slate-800">{{ edu.degree }}</h4>
-                <p class="text-[9px] text-slate-500">{{ edu.institution }}</p>
-                <p class="text-[9px] text-slate-400">{{ edu.year }}</p>
+          <div v-if="hasEducation" class="bg-slate-50/80 rounded-xl p-5">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 pb-2 border-b-2" :style="{ borderColor: accentColor }">Education</h3>
+            <div class="space-y-4">
+              <div v-for="edu in formData.education" :key="edu.id" v-show="edu.degree" class="relative pl-3 border-l-2" :style="{ borderColor: accentColor + '60' }">
+                <h4 class="font-bold text-[11px] text-slate-800">{{ edu.degree }}</h4>
+                <p class="text-[10px] text-slate-600 font-medium">{{ edu.institution }}</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">{{ edu.year }}</p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Right Column -->
-        <div :class="isFirstPage ? 'flex-1' : 'w-full'" class="space-y-6">
+        <div :class="isFirstPage ? 'flex-[1.2]' : 'w-full'" class="space-y-6">
           <!-- Header - Only on first page -->
-          <div v-if="isFirstPage">
+          <div v-if="isFirstPage" class="mb-2">
             <h1 
-              class="text-4xl font-black text-slate-900 tracking-tight uppercase outline-none"
+              class="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight outline-none"
               :contenteditable="editable"
               @blur="editable && handleEdit('fullName', $event)"
               suppressContentEditableWarning>
               {{ formData.fullName || 'Your Name' }}
             </h1>
             <p 
-              class="text-xl font-bold mt-2 outline-none" 
+              class="text-lg lg:text-xl font-bold mt-1.5 outline-none" 
               :style="{ color: accentColor }"
               :contenteditable="editable"
               @blur="editable && handleEdit('title', $event)"
               suppressContentEditableWarning>
               {{ formData.title || 'Your Professional Title' }}
             </p>
+            <div class="h-1 w-20 rounded-full mt-3" :style="{ background: `linear-gradient(to right, ${accentColor}, ${accentColor}50)` }"></div>
           </div>
 
           <!-- Summary - Only on first page -->
-          <div v-if="isFirstPage && (formData.summary || editable)">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Summary</h3>
+          <div v-if="isFirstPage && (formData.summary || editable)" class="bg-gradient-to-r from-slate-50 to-transparent rounded-lg p-4 border-l-3" :style="{ borderLeftColor: accentColor, borderLeftWidth: '3px' }">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Profile Summary</h3>
             <p 
-              class="text-xs text-slate-600 leading-relaxed outline-none"
+              class="text-xs text-slate-700 leading-relaxed outline-none"
               :contenteditable="editable"
               @blur="editable && handleEdit('summary', $event)"
               suppressContentEditableWarning>
@@ -97,32 +98,34 @@
 
           <!-- Experience - Paginated -->
           <div v-if="hasExperience && pageExperiences.length > 0">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-1">
-              Experience<span v-if="!isFirstPage" class="text-[9px] font-normal ml-2 text-slate-400">(continued)</span>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-5 pb-2 border-b-2" :style="{ borderColor: accentColor }">
+              Professional Experience<span v-if="!isFirstPage" class="text-[9px] font-normal ml-2 text-slate-400">(continued)</span>
             </h3>
-            <div class="space-y-4">
-              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company">
-                <div class="flex justify-between items-baseline">
+            <div class="space-y-5">
+              <div v-for="(exp, idx) in pageExperiences" :key="exp.id" v-show="exp.position || exp.company" class="relative pl-4 border-l-2 hover:bg-slate-50/50 rounded-r-lg transition-colors py-1" :style="{ borderLeftColor: accentColor + '60' }">
+                <div class="absolute left-[-5px] top-2 w-2 h-2 rounded-full" :style="{ backgroundColor: accentColor }"></div>
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1">
                   <h4 
-                    class="font-bold text-slate-800 outline-none"
+                    class="font-bold text-slate-800 text-sm outline-none"
                     :contenteditable="editable"
                     @blur="editable && handleEdit(`experience.${getGlobalIndex(idx)}.position`, $event)"
                     suppressContentEditableWarning>
-                    {{ exp.position }}{{ exp.company ? ' at ' + exp.company : '' }}
+                    {{ exp.position }}<span class="font-medium text-slate-500"> at </span><span :style="{ color: accentColor }">{{ exp.company }}</span>
                   </h4>
-                  <span class="text-[10px] font-bold text-slate-400 italic">{{ exp.startDate }}{{ exp.endDate ? ' — ' + exp.endDate : '' }}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" :style="{ backgroundColor: accentColor + '15', color: accentColor }">{{ exp.startDate }}{{ exp.current ? ' — Present' : (exp.endDate ? ' — ' + exp.endDate : '') }}</span>
                 </div>
-                <p v-if="exp.location" class="text-[10px] text-slate-400 mt-0.5">{{ exp.location }}</p>
-                <ul class="text-xs text-slate-500 mt-2 space-y-1">
+                <p v-if="exp.location" class="text-[10px] text-slate-400 mt-1 flex items-center gap-1"><i class="fa-solid fa-location-dot text-[8px]"></i>{{ exp.location }}</p>
+                <ul class="text-[11px] text-slate-600 mt-3 space-y-1.5">
                   <li 
                     v-for="(resp, respIdx) in exp.responsibilities" 
                     :key="respIdx" 
                     v-show="resp" 
-                    class="leading-relaxed outline-none"
+                    class="leading-relaxed outline-none flex items-start gap-2"
                     :contenteditable="editable"
                     @blur="editable && handleEdit(`experience.${getGlobalIndex(idx)}.responsibilities.${respIdx}`, $event)"
                     suppressContentEditableWarning>
-                    • {{ resp }}
+                    <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" :style="{ backgroundColor: accentColor }"></span>
+                    <span>{{ resp }}</span>
                   </li>
                 </ul>
               </div>
@@ -130,18 +133,19 @@
           </div>
 
           <!-- Achievements - Only on first page -->
-          <div v-if="isFirstPage && hasAchievements">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Achievements</h3>
-            <ul class="text-xs text-slate-600 space-y-2">
+          <div v-if="isFirstPage && hasAchievements" class="bg-gradient-to-r from-amber-50 to-transparent rounded-lg p-4 border-l-3" style="border-left: 3px solid #d97706;">
+            <h3 class="text-[10px] font-black text-amber-700 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><i class="fa-solid fa-trophy"></i>Key Achievements</h3>
+            <ul class="text-[11px] text-slate-700 space-y-2">
               <li 
                 v-for="(achievement, idx) in formData.achievements" 
                 :key="idx" 
                 v-show="achievement"
-                class="leading-relaxed outline-none"
+                class="leading-relaxed outline-none flex items-start gap-2"
                 :contenteditable="editable"
                 @blur="editable && handleEdit(`achievements.${idx}`, $event)"
                 suppressContentEditableWarning>
-                • {{ achievement }}
+                <span class="text-amber-500">★</span>
+                <span>{{ achievement }}</span>
               </li>
             </ul>
           </div>
