@@ -230,9 +230,21 @@ const formattingChecks = ref([])
 const criticalIssues = ref([])
 
 // Check authentication on mount
-onMounted(() => {
+onMounted(async () => {
   if (!authStore.isAuthenticated) {
-    showAuthModal.value = true
+    // If there's a session cookie, try to fetch user (for social login redirects)
+    if (authStore.hasSessionCookie()) {
+      // Wait for user fetch to complete before deciding to show modal
+      const userData = await authStore.fetchUser()
+      if (!userData) {
+        // No valid session, show auth modal
+        showAuthModal.value = true
+      }
+      // If userData exists, modal stays hidden (default false)
+    } else {
+      // No session cookie, show auth modal immediately
+      showAuthModal.value = true
+    }
   }
 })
 </script>
