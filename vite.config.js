@@ -1,0 +1,21 @@
+import vue from '@vitejs/plugin-vue';
+import laravel from 'laravel-vite-plugin';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/js/main.js'],
+            refresh: true,
+        }),
+        vue(),
+    ],
+    resolve: {
+        alias: {
+            '@': '/resources/js'
+        }
+    },
+    server: {
+        port: 3000,
+    }
+});

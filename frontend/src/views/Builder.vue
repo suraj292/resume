@@ -1,27 +1,11 @@
 <template>
   <!-- Auth Required Modal -->
-  <!-- <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" /> -->
+  <!-- <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal" = false" /> -->
   
-  <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased h-screen flex flex-col">
+  <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
     
-    <!-- Top Navigation -->
-    <nav class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 flex-shrink-0">
-      <div class="flex items-center gap-3">
-        <router-link to="/" class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold italic shadow-indigo-200 shadow-lg hover:bg-indigo-700 transition-colors">
-          R
-        </router-link>
-        <span class="font-display font-bold text-lg tracking-tight hidden md:block">ResumeAI</span>
-      </div>
-      <div class="flex items-center gap-4">
-        <router-link to="/" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:inline">Home</router-link>
-        <router-link to="/templates" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:inline">Templates</router-link>
-        <router-link to="/ats-checker" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:inline">ATS Checker</router-link>
-        <router-link to="/pricing" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:inline">Pricing</router-link>
-      </div>
-    </nav>
-
     <!-- Builder Action Bar -->
-    <div class="h-14 bg-slate-900 text-white flex items-center justify-between px-4 z-40 flex-shrink-0">
+    <div class="h-14 bg-slate-900 text-white flex items-center justify-between px-4 z-40 flex-shrink-0 sticky top-0">
       <div class="flex items-center gap-3">
         <button @click="toggleMobileSidebar" class="lg:hidden w-8 h-8 flex items-center justify-center text-white hover:bg-slate-800 rounded-lg transition-all">
           <i class="fa-solid fa-bars text-base"></i>
@@ -38,7 +22,6 @@
       </div>
     </div>
 
-    <!-- Main View -->
     <div class="flex flex-1 overflow-hidden lg:flex-row">
       
       <!-- Icon-Only Sidebar -->

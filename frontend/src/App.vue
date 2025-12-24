@@ -1,28 +1,18 @@
+<script setup>
+import Navbar from './components/common/Navbar.vue'
+import Footer from './components/common/Footer.vue'
+</script>
+
 <template>
-  <div id="app">
-    <router-view />
+  <div class="min-h-screen flex flex-col bg-slate-50">
+    <Navbar />
+    <main class="flex-grow pt-20">
+      <RouterView />
+    </main>
+    <Footer />
   </div>
 </template>
 
-<script setup>
-// Main App Component
-</script>
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#app {
-  width: 100%;
-  min-height: 100vh;
-}
+<style scoped>
+/* App-level styles */
 </style>
