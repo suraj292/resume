@@ -1,53 +1,46 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
+
+/**
+ * Web Routes
+ * 
+ * This is an API-only backend. The frontend is a separate Vue.js SPA.
+ * 
+ * Frontend: http://localhost:5173 (development)
+ * Backend API: http://localhost:8000/api
+ */
 
 Route::get('/', function () {
-    return Inertia::render('Home', [
-        'canRegister' => Features::enabled(Features::registration()),
+    return response()->json([
+        'message' => 'Resume Builder API',
+        'version' => '1.0.0',
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+        'api_base' => url('/api'),
+        'documentation' => url('/api/docs'),
+        'endpoints' => [
+            'resumes' => '/api/resumes',
+            'ai' => '/api/ai/*',
+            'export' => '/api/export/*',
+            'upload' => '/api/upload/*',
+            'ats' => '/api/ats-check',
+        ],
+        'status' => 'online'
     ]);
-})->name('home');
+});
 
-Route::get('/builder', function () {
-    return Inertia::render('Builder');
-})->name('builder');
+// Health check endpoint
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
 
-Route::get('/ats-checker', function () {
-    return Inertia::render('AtsChecker');
-})->name('ats-checker');
-
-Route::get('/templates', function () {
-    return Inertia::render('Templates');
-})->name('templates');
-
-Route::get('/pricing', function () {
-    return Inertia::render('Pricing');
-})->name('pricing');
-
-Route::get('/auth', function () {
-    return Inertia::render('Auth');
-})->name('auth');
-
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
-
-Route::get('/blog', function () {
-    return Inertia::render('Blog');
-})->name('blog');
-
-Route::get('/profile', function () {
-    return Inertia::render('Profile');
-})->name('profile');
-
-Route::get('/checkout', function () {
-    return Inertia::render('Checkout');
-})->name('checkout');
-
-Route::get('/blog/{id}', function ($id) {
-    return Inertia::render('BlogDetail', ['id' => $id]);
-})->name('blog.detail');
-
-require __DIR__.'/settings.php';
+// Redirect any other web routes to frontend
+Route::fallback(function () {
+    return response()->json([
+        'message' => 'This is an API-only backend. Please use the frontend at ' . env('FRONTEND_URL', 'http://localhost:5173'),
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    ], 404);
+});
