@@ -32,7 +32,7 @@ onMounted(async () => {
   
   if (!isAuthenticated.value) {
     console.log('Not authenticated, showing modal')
-    showAuthModal.value = true
+    showAuthModal.value = false
   } else {
     console.log('Authenticated successfully')
   }
