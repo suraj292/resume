@@ -1,0 +1,422 @@
+<script setup>
+onMounted(() => {
+  if (process.client) {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px"
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          
+          // Trigger child animations if needed (like progress bars)
+          const bars = entry.target.querySelectorAll('.bg-red-500, .bg-green-500');
+          if(bars.length > 0) {
+            bars.forEach(bar => {
+              const w = bar.style.getPropertyValue('--w') || '42%';
+              bar.style.width = w; 
+            });
+          }
+          
+          observer.unobserve(entry.target); 
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal').forEach(el => {
+      observer.observe(el);
+    });
+  }
+})
+
+useHead({
+  title: 'AI-Powered Resume Builder - Build ATS-Optimized Resumes',
+  meta: [
+    { name: 'description', content: 'Build an ATS-optimized resume in minutes with AI. Upload your existing resume, paste the job description, and let our AI tailor your CV to land 3x more interviews.' }
+  ]
+})
+</script>
+
+<template>
+  <div>
+    <!-- 2. HERO SECTION -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Background Blobs -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-violet-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+            <div class="absolute -bottom-8 left-1/3 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Left: Text -->
+            <div class="text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold mb-6 animate-fade-in-up">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                    AI V2.0 Now Live
+                </div>
+                
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-slate-900 leading-[1.15] mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                    Build an <span class="text-gradient">ATS-Optimized</span> Resume in Minutes
+                </h1>
+                
+                <p class="text-lg text-slate-600 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Stop getting rejected by bots. Upload your existing resume, paste the job description, and let our AI tailor your CV to land 3x more interviews.
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 animate-fade-in-up" style="animation-delay: 0.3s;">
+                    <NuxtLink to="/builder" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Build Resume
+                    </NuxtLink>
+                    <NuxtLink to="/ats-checker" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-white text-slate-700 border border-slate-200 font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 hover:border-indigo-300">
+                        <i class="fa-solid fa-shield-halved"></i> Check ATS Score
+                    </NuxtLink>
+                </div>
+                
+                <div class="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-slate-500 animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="flex -space-x-2">
+                        <img src="https://ui-avatars.com/api/?name=John+Doe&background=cbd5e1&color=fff" class="w-8 h-8 rounded-full border-2 border-white" alt="User">
+                        <img src="https://ui-avatars.com/api/?name=Jane+Smith&background=94a3b8&color=fff" class="w-8 h-8 rounded-full border-2 border-white" alt="User">
+                        <img src="https://ui-avatars.com/api/?name=Alex+Ray&background=64748b&color=fff" class="w-8 h-8 rounded-full border-2 border-white" alt="User">
+                    </div>
+                    <p>Join <span class="font-bold text-slate-700">50,000+</span> hired professionals</p>
+                </div>
+            </div>
+
+            <!-- Right: Visual -->
+            <div class="relative hidden lg:block animate-slide-in-right" style="animation-delay: 0.3s;">
+                <!-- Main Resume Mockup -->
+                <div class="relative z-10 bg-white p-2 rounded-2xl shadow-2xl border border-slate-100 transform rotate-2 hover:rotate-0 transition-transform duration-700 animate-float">
+                    <div class="aspect-[3/4] bg-slate-50 rounded-xl overflow-hidden border border-slate-100 relative">
+                        <!-- Mockup Content -->
+                        <div class="p-6 space-y-4 opacity-50 blur-[1px]">
+                            <div class="flex gap-4 items-center border-b pb-4 border-slate-200">
+                                <div class="w-16 h-16 bg-slate-200 rounded-full"></div>
+                                <div class="space-y-2">
+                                    <div class="w-48 h-4 bg-slate-300 rounded"></div>
+                                    <div class="w-32 h-3 bg-slate-200 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="w-full h-3 bg-slate-200 rounded"></div>
+                                <div class="w-full h-3 bg-slate-200 rounded"></div>
+                                <div class="w-3/4 h-3 bg-slate-200 rounded"></div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Success Card -->
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-xl shadow-xl border border-slate-100 flex items-center gap-4 z-20 w-64 hover:scale-105 transition-transform duration-300">
+                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+                                92
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">ATS Optimized</h4>
+                                <p class="text-xs text-slate-500">Ready for application</p>
+                            </div>
+                            <div class="ml-auto text-green-500">
+                                <i class="fa-solid fa-circle-check text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Decorative Elements -->
+                <div class="absolute top-10 -right-10 w-24 h-24 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. HOW IT WORKS -->
+    <section class="py-24 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">How it works</h2>
+                <p class="text-slate-600 text-lg max-w-2xl mx-auto">Three simple steps to your dream job. No design skills required.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="group p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all reveal delay-100 hover-card">
+                    <div class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600 text-2xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-6">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">1. Upload Resume</h3>
+                    <p class="text-slate-600 leading-relaxed">Upload your current PDF/DOCX or start from scratch. We extract your details instantly.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="group p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all reveal delay-200 hover-card">
+                    <div class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600 text-2xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-6">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">2. Add Job Target</h3>
+                    <p class="text-slate-600 leading-relaxed">Paste the job description you want to apply for. Our AI analyzes the keywords.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="group p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all reveal delay-300 hover-card">
+                    <div class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600 text-2xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-6">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">3. Optimize & Download</h3>
+                    <p class="text-slate-600 leading-relaxed">Our AI rewrites your bullets to match the job. Download as ATS-friendly PDF.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. KEY FEATURES -->
+    <section class="py-24 bg-slate-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">Everything you need to get hired</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal">
+                    <i class="fa-solid fa-robot text-3xl text-blue-500 mb-4 transition-transform group-hover:scale-110"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">AI Optimization</h3>
+                    <p class="text-slate-600 text-sm">Rewrites your experience to sound more professional and impactful.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal delay-100">
+                    <i class="fa-solid fa-chart-pie text-3xl text-indigo-500 mb-4"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">ATS Score Checker</h3>
+                    <p class="text-slate-600 text-sm">See exactly what the bots see with our detailed parsing analysis.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal delay-200">
+                    <i class="fa-solid fa-briefcase text-3xl text-purple-500 mb-4"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">Job Description Match</h3>
+                    <p class="text-slate-600 text-sm">Target specific keywords from the job listing to increase relevance.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal">
+                    <i class="fa-solid fa-layer-group text-3xl text-teal-500 mb-4"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">Professional Templates</h3>
+                    <p class="text-slate-600 text-sm">Clean, modern designs that are proven to pass ATS filters.</p>
+                </div>
+                <!-- Feature 5 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal delay-100">
+                    <i class="fa-solid fa-sliders text-3xl text-orange-500 mb-4"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">Tone Control</h3>
+                    <p class="text-slate-600 text-sm">Choose between confident, technical, or leadership narrative tones.</p>
+                </div>
+                <!-- Feature 6 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover-card reveal delay-200">
+                    <i class="fa-solid fa-file-export text-3xl text-red-500 mb-4"></i>
+                    <h3 class="font-bold text-lg text-slate-900 mb-2">PDF & DOCX Export</h3>
+                    <p class="text-slate-600 text-sm">Download in the format recruiters prefer with one click.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. ATS EXPLANATION -->
+    <section class="py-24 bg-white overflow-hidden">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-16">
+                
+                <div class="lg:w-1/2 reveal">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-6">
+                        Why <span class="text-indigo-600">ATS Compatibility</span> Matters
+                    </h2>
+                    <p class="text-slate-600 text-lg mb-8 leading-relaxed">
+                        75% of resumes are rejected by Applicant Tracking Systems (ATS) before a human ever sees them. Simple formatting errors or missing keywords can cost you the interview.
+                    </p>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <i class="fa-solid fa-check-circle text-green-500 text-xl animate-pulse"></i>
+                            <span class="text-slate-700 font-medium">Pass automated screening bots</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fa-solid fa-check-circle text-green-500 text-xl animate-pulse" style="animation-delay: 0.5s;"></i>
+                            <span class="text-slate-700 font-medium">Match hidden recruiter keywords</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fa-solid fa-check-circle text-green-500 text-xl animate-pulse" style="animation-delay: 1s;"></i>
+                            <span class="text-slate-700 font-medium">Format correctly for parsing</span>
+                        </li>
+                    </ul>
+
+                    <NuxtLink to="/ats-checker" class="group text-indigo-600 font-bold hover:text-indigo-700 border-b-2 border-indigo-200 hover:border-indigo-600 transition-all inline-flex items-center gap-2">
+                        Check your resume score now <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    </NuxtLink>
+                </div>
+
+                <div class="lg:w-1/2 w-full reveal delay-200">
+                    <div class="bg-slate-900 rounded-2xl p-8 shadow-2xl relative text-white transform hover:scale-[1.01] transition-transform duration-500">
+                        <div class="mb-8">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="font-bold text-slate-400 text-sm uppercase">Standard Resume</span>
+                                <span class="font-bold text-red-400">Score: 42/100</span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div class="bg-red-500 h-full w-[0%] animate-[progressFill_1.5s_ease-out_forwards] delay-300"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="font-bold text-indigo-300 text-sm uppercase">Optimized Resume</span>
+                                <span class="font-bold text-green-400">Score: 95/100</span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div class="bg-green-500 h-full w-[0%] shadow-[0_0_15px_rgba(34,197,94,0.5)] animate-[progressFill_2s_ease-out_forwards] delay-500" style="--w: 95%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-8 border-t border-slate-700 flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-xl animate-bounce">
+                                <i class="fa-solid fa-rocket"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold">3x More Interviews</p>
+                                <p class="text-slate-400 text-sm">On average for optimized users</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. TEMPLATES PREVIEW (Grid) -->
+    <section id="templates" class="py-24 bg-slate-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">Professional Templates</h2>
+                <p class="text-slate-600">Clean, parseable, and recruiter-approved.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Template 1 -->
+                <div class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden reveal">
+                    <div class="aspect-[3/4] bg-slate-200 relative">
+                        <!-- Mockup Visual -->
+                        <div class="absolute inset-4 bg-white shadow-sm flex flex-col p-4 gap-2 opacity-80 group-hover:scale-105 transition-transform duration-500">
+                            <div class="h-4 w-1/2 bg-slate-800"></div>
+                            <div class="h-2 w-full bg-slate-200"></div>
+                            <div class="h-24 w-full bg-slate-100 mt-2"></div>
+                        </div>
+                        
+                        <!-- Overlay -->
+                        <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <NuxtLink to="/builder" class="px-6 py-3 bg-white text-slate-900 rounded-lg font-bold transform translate-y-4 group-hover:translate-y-0 transition-transform">Use Template</NuxtLink>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 text-center">
+                        <h4 class="font-bold text-slate-800">The Professional</h4>
+                    </div>
+                </div>
+
+                <!-- Template 2 -->
+                <div class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden reveal delay-100">
+                    <div class="aspect-[3/4] bg-slate-200 relative">
+                        <div class="absolute inset-4 bg-white shadow-sm flex flex-col p-4 gap-2 opacity-80 group-hover:scale-105 transition-transform duration-500">
+                            <div class="flex gap-4 h-full">
+                                <div class="w-1/3 bg-slate-100 h-full"></div>
+                                <div class="w-2/3 bg-white h-full space-y-2">
+                                    <div class="h-4 w-3/4 bg-slate-800"></div>
+                                    <div class="h-2 w-full bg-slate-200"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <NuxtLink to="/builder" class="px-6 py-3 bg-white text-slate-900 rounded-lg font-bold transform translate-y-4 group-hover:translate-y-0 transition-transform">Use Template</NuxtLink>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 text-center">
+                        <h4 class="font-bold text-slate-800">The Modernist</h4>
+                    </div>
+                </div>
+
+                <!-- Template 3 -->
+                <div class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden reveal delay-200">
+                    <div class="aspect-[3/4] bg-slate-200 relative">
+                        <div class="absolute inset-4 bg-white shadow-sm flex flex-col p-4 gap-2 opacity-80 group-hover:scale-105 transition-transform duration-500">
+                            <div class="h-4 w-full bg-slate-800 text-center mb-4"></div>
+                            <div class="h-2 w-full bg-slate-200"></div>
+                            <div class="h-2 w-full bg-slate-200"></div>
+                            <div class="h-2 w-3/4 bg-slate-200"></div>
+                        </div>
+                        <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <NuxtLink to="/builder" class="px-6 py-3 bg-white text-slate-900 rounded-lg font-bold transform translate-y-4 group-hover:translate-y-0 transition-transform">Use Template</NuxtLink>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 text-center">
+                        <h4 class="font-bold text-slate-800">The Executive</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. FINAL CTA -->
+    <section class="py-24 bg-gradient-to-br from-indigo-900 to-slate-900 text-white text-center px-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-20">
+             <div class="absolute top-10 left-10 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+             <div class="absolute bottom-10 right-10 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+        </div>
+        
+        <div class="reveal relative z-10">
+            <h2 class="text-3xl md:text-5xl font-display font-bold mb-6">Land your dream job today</h2>
+            <p class="text-indigo-200 text-lg mb-10 max-w-2xl mx-auto">Join thousands of professionals using AI to advance their careers.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <NuxtLink to="/builder" class="px-8 py-4 bg-white text-indigo-900 font-bold rounded-xl shadow-lg hover:bg-indigo-50 transition-colors transform hover:-translate-y-1">
+                    Build Resume Free
+                </NuxtLink>
+                <NuxtLink to="/ats-checker" class="px-8 py-4 bg-transparent border border-indigo-400 text-white font-bold rounded-xl hover:bg-indigo-900/50 transition-colors transform hover:-translate-y-1">
+                    Check ATS Score
+                </NuxtLink>
+            </div>
+        </div>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Custom Gradients */
+.text-gradient {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+/* Card Hover Effects */
+.hover-card {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--w, 42%);
+  }
+}
+</style>

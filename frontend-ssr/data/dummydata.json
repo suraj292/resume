@@ -1,0 +1,114 @@
+{
+    "name": "Alex Johnson",
+    "title": "Senior Software Engineer",
+    "contact": {
+        "email": "alex.johnson@email.com",
+        "phone": "+1 (555) 123-4567",
+        "location": "San Francisco, CA",
+        "linkedin": "linkedin.com/in/alexjohnson",
+        "website": "alexjohnson.dev"
+    },
+    "summary": "Results-driven Senior Software Engineer with 8+ years of experience building scalable web applications. Expertise in full-stack development, cloud architecture, and leading cross-functional teams. Proven track record of delivering high-impact solutions that drive business growth and improve user experience.",
+    "experience": [
+        {
+            "position": "Senior Software Engineer",
+            "company": "Tech Innovations Inc.",
+            "location": "San Francisco, CA",
+            "duration": "2020 - Present",
+            "achievements": [
+                "Led development of microservices architecture serving 10M+ users",
+                "Reduced API response time by 60% through optimization",
+                "Mentored team of 5 junior developers"
+            ]
+        },
+        {
+            "position": "Software Engineer",
+            "company": "Digital Solutions Co.",
+            "location": "Seattle, WA",
+            "duration": "2017 - 2020",
+            "achievements": [
+                "Built real-time analytics dashboard using React and Node.js",
+                "Implemented CI/CD pipeline reducing deployment time by 40%",
+                "Collaborated with product team on feature roadmap"
+            ]
+        },
+        {
+            "position": "Junior Developer",
+            "company": "StartupXYZ",
+            "location": "Austin, TX",
+            "duration": "2015 - 2017",
+            "achievements": [
+                "Developed RESTful APIs for mobile applications",
+                "Maintained legacy codebase and fixed critical bugs",
+                "Participated in agile development process"
+            ]
+        }
+    ],
+    "education": [
+        {
+            "degree": "Bachelor of Science in Computer Science",
+            "institution": "University of California, Berkeley",
+            "location": "Berkeley, CA",
+            "duration": "2011 - 2015",
+            "gpa": "3.8/4.0"
+        }
+    ],
+    "skills": {
+        "technical": [
+            "JavaScript",
+            "TypeScript",
+            "React",
+            "Node.js",
+            "Python",
+            "AWS",
+            "Docker",
+            "Kubernetes",
+            "PostgreSQL",
+            "MongoDB",
+            "GraphQL",
+            "REST APIs"
+        ],
+        "soft": [
+            "Leadership",
+            "Communication",
+            "Problem Solving",
+            "Team Collaboration",
+            "Project Management"
+        ]
+    },
+    "certifications": [
+        {
+            "name": "AWS Certified Solutions Architect",
+            "issuer": "Amazon Web Services",
+            "date": "2022"
+        },
+        {
+            "name": "Certified Kubernetes Administrator",
+            "issuer": "Cloud Native Computing Foundation",
+            "date": "2021"
+        }
+    ],
+    "projects": [
+        {
+            "name": "E-Commerce Platform",
+            "description": "Built scalable e-commerce platform handling 100K+ daily transactions",
+            "technologies": [
+                "React",
+                "Node.js",
+                "PostgreSQL",
+                "AWS"
+            ],
+            "link": "github.com/alexj/ecommerce"
+        },
+        {
+            "name": "Real-Time Chat Application",
+            "description": "Developed WebSocket-based chat app with 50K+ concurrent users",
+            "technologies": [
+                "Socket.io",
+                "Redis",
+                "MongoDB"
+            ],
+            "link": "github.com/alexj/chat-app"
+        }
+    ]
+}
