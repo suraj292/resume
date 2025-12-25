@@ -14,6 +14,11 @@ const verifyEmail = async () => {
   try {
     const { path, signature, expires } = route.query
     
+    console.log('Verification query params:', route.query)
+    console.log('Path:', path)
+    console.log('Signature:', signature)
+    console.log('Expires:', expires)
+    
     if (!path || !signature || !expires) {
       status.value = 'error'
       message.value = 'Invalid verification link. Please request a new verification email.'
@@ -36,6 +41,7 @@ const verifyEmail = async () => {
     }, 3000)
     
   } catch (error) {
+    console.error('Verification error:', error)
     status.value = 'error'
     message.value = error.data?.message || 'Email verification failed. The link may have expired.'
   }

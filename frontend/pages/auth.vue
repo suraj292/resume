@@ -54,25 +54,30 @@ const strengthBars = computed(() => {
 // Login function
 const loginUser = async (credentials) => {
   try {
-    const response = await axios.post('/login', credentials, {
+    const config = useRuntimeConfig()
+    const apiBase = config.public.apiBase || 'http://127.0.0.1:8000'
+    
+    const response = await $fetch(`${apiBase}/api/login`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        'Accept': 'application/json'
       },
-      withCredentials: true
+      body: credentials,
+      credentials: 'include'
     })
     
-    if (response.data.success) {
-      await authStore.fetchUser()
-      return { success: true }
+    // Store token if provided
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token)
     }
     
-    return { success: false, error: 'Login failed' }
+    return { success: true, data: response }
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Login failed. Please try again.',
-      errors: error.response?.data?.errors || {}
+      error: error.data?.message || error.message || 'Login failed. Please try again.',
+      errors: error.data?.errors || {}
     }
   }
 }
@@ -124,9 +129,9 @@ const handleLogin = async () => {
     const intendedRoute = sessionStorage.getItem('intended_route')
     if (intendedRoute) {
       sessionStorage.removeItem('intended_route')
-      window.location.href = intendedRoute
+      navigateTo(intendedRoute)
     } else {
-      window.location.href = '/builder'
+      navigateTo('/builder')
     }
   } else {
     errorMessage.value = result.error

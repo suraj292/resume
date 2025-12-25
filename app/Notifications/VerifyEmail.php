@@ -33,15 +33,19 @@ class VerifyEmail extends BaseVerifyEmail implements ShouldQueue
     {
         $url = parent::verificationUrl($notifiable);
         
-        // Replace backend URL with frontend URL
+        // Parse the backend URL
+        $parsedUrl = parse_url($url);
+        $path = $parsedUrl['path'] ?? '';
+        $query = $parsedUrl['query'] ?? '';
+        
+        // Ensure path starts with /api/
+        if (!str_starts_with($path, '/api/')) {
+            $path = '/api' . $path;
+        }
+        
+        // Build frontend verification URL
         $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:5174'));
-        $backendUrl = config('app.url');
         
-        // Extract the verification path and parameters
-        $path = parse_url($url, PHP_URL_PATH);
-        $query = parse_url($url, PHP_URL_QUERY);
-        
-        // Return frontend URL with verification endpoint
         return $frontendUrl . '/verify-email?' . $query . '&path=' . urlencode($path);
     }
 }

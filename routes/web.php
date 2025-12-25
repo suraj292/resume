@@ -13,4 +13,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+use App\Http\Controllers\Api\AuthController;
+
+// Email verification route (for links from emails)
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['throttle:6,1'])
+    ->name('verification.verify.web');
+
 require __DIR__.'/settings.php';
