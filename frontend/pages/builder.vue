@@ -367,17 +367,34 @@ useHead({
   <!-- Auth Required Modal -->
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
 
-  <div class="min-h-screen bg-slate-50">
+  <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
     <!-- Navigation -->
     <CommonNavbar />
+    
+    <!-- Builder Action Bar -->
+    <div class="h-14 bg-slate-900 text-white flex items-center justify-between px-4 z-40 flex-shrink-0 sticky top-20">
+      <div class="flex items-center gap-3">
+        <button @click="toggleMobileSidebar" class="lg:hidden w-8 h-8 flex items-center justify-center text-white hover:bg-slate-800 rounded-lg transition-all">
+          <i class="fa-solid fa-bars text-base"></i>
+        </button>
+        <h1 class="font-bold text-sm sm:text-base">Resume Builder</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium text-slate-400 hidden sm:block italic">Draft saved {{ lastSaved }}</span>
+        <button @click="exportPDF" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
+          <i class="fa-solid fa-download text-[10px]"></i>
+          <span class="hidden sm:inline">Export PDF</span>
+          <span class="sm:hidden">Export</span>
+        </button>
+      </div>
+    </div>
 
-    <!-- Main View -->
-    <div class="flex min-h-screen">
+    <div class="flex flex-1 overflow-hidden lg:flex-row">
       
       <!-- Icon-Only Sidebar -->
       <aside 
         id="mobile-sidebar"
-        :class="['w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 z-40 fixed left-0 top-20 bottom-0 transition-transform duration-300', sidebarOpen ? '' : 'mobile-sidebar-hidden', 'lg:relative lg:translate-x-0 lg:top-0']">
+        :class="['w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 z-40 fixed left-0 top-28 bottom-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:top-0', { 'mobile-sidebar-hidden': !sidebarOpen }]">
         <div class="flex flex-col gap-4">
           <div v-for="tab in tabs" :key="tab.id" class="nav-item">
             <button 
@@ -1149,8 +1166,5 @@ useHead({
   .preview-fab {
     display: none;
   }
-}
-nav {
-  background-color: white;
 }
 </style>
