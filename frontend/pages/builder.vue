@@ -368,31 +368,10 @@ useHead({
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
 
   <div class="bg-slate-50 text-slate-900 font-sans antialiased overflow-hidden h-screen">
-    
-    <!-- Navbar -->
-    <nav class="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50">
-      <div class="flex items-center gap-3">
-        <!-- Mobile Menu Toggle -->
-        <button @click="toggleMobileSidebar" class="lg:hidden w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-          <i class="fa-solid fa-bars text-base"></i>
-        </button>
-        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold italic shadow-indigo-200 shadow-lg">
-          R
-        </div>
-        <span class="font-display font-bold text-lg tracking-tight hidden md:block">ResumeAI</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-medium text-slate-400 hidden sm:block italic">Draft saved {{ lastSaved }}</span>
-        <button @click="exportPDF" class="bg-slate-900 hover:bg-slate-800 text-white px-3 sm:px-4 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
-          <i class="fa-solid fa-download text-[10px]"></i>
-          <span class="hidden sm:inline">Export PDF</span>
-          <span class="sm:hidden">Export</span>
-        </button>
-      </div>
-    </nav>
+
 
     <!-- Main View -->
-    <div class="flex h-screen pt-14 lg:flex-row">
+    <div class="flex h-screen lg:flex-row">
       
       <!-- Icon-Only Sidebar -->
       <aside 
