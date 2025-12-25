@@ -57,6 +57,8 @@ onUnmounted(() => {
         <NuxtLink to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Resume Builder</NuxtLink>
         <NuxtLink to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">ATS Checker</NuxtLink>
         <NuxtLink to="/templates" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Templates</NuxtLink>
+        <NuxtLink to="/blog" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Blog</NuxtLink>
+        <NuxtLink to="/contact" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Contact</NuxtLink>
         <NuxtLink to="/pricing" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors" active-class="text-indigo-600">Pricing</NuxtLink>
       </div>
 
@@ -132,6 +134,8 @@ onUnmounted(() => {
       <NuxtLink to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Resume Builder</NuxtLink>
       <NuxtLink to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">ATS Checker</NuxtLink>
       <NuxtLink to="/templates" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Templates</NuxtLink>
+      <NuxtLink to="/blog" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Blog</NuxtLink>
+      <NuxtLink to="/contact" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Contact</NuxtLink>
       <NuxtLink to="/pricing" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Pricing</NuxtLink>
       
       <div class="h-px bg-slate-100 my-2"></div>
