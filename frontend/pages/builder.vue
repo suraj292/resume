@@ -367,16 +367,17 @@ useHead({
   <!-- Auth Required Modal -->
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
 
-  <div class="bg-slate-50 text-slate-900 font-sans antialiased overflow-hidden h-screen">
-
+  <div class="min-h-screen bg-slate-50">
+    <!-- Navigation -->
+    <CommonNavbar />
 
     <!-- Main View -->
-    <div class="flex h-screen lg:flex-row">
+    <div class="flex min-h-screen">
       
       <!-- Icon-Only Sidebar -->
       <aside 
         id="mobile-sidebar"
-        :class="['w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 z-40 fixed left-0 top-14 bottom-0 transition-transform duration-300', sidebarOpen ? '' : 'mobile-sidebar-hidden', 'lg:relative lg:translate-x-0']">
+        :class="['w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 z-40 fixed left-0 top-20 bottom-0 transition-transform duration-300', sidebarOpen ? '' : 'mobile-sidebar-hidden', 'lg:relative lg:translate-x-0 lg:top-0']">
         <div class="flex flex-col gap-4">
           <div v-for="tab in tabs" :key="tab.id" class="nav-item">
             <button 
@@ -994,7 +995,7 @@ useHead({
     </button>
 
     <!-- Mobile Sidebar Overlay -->
-    <div v-if="sidebarOpen" @click="toggleMobileSidebar" class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"></div>
+    <div v-if="sidebarOpen" @click="toggleMobileSidebar" class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30 mt-20"></div>
   </div>
 </template>
 
@@ -1148,5 +1149,8 @@ useHead({
   .preview-fab {
     display: none;
   }
+}
+nav {
+  background-color: white;
 }
 </style>
