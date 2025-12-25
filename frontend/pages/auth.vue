@@ -11,6 +11,9 @@ const showSignupPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 const validationErrors = ref({})
+const showVerificationMessage = ref(false)
+const verificationEmail = ref('')
+const isResending = ref(false)
 
 // Signup Form Data
 const signupForm = ref({
@@ -77,25 +80,34 @@ const loginUser = async (credentials) => {
 // Register function
 const registerUser = async (userData) => {
   try {
-    const response = await axios.post('/register', userData, {
+    const config = useRuntimeConfig()
+    const apiBase = config.public.apiBase || 'http://127.0.0.1:8000'
+    
+    const response = await $fetch(`${apiBase}/api/register`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        'Accept': 'application/json'
       },
-      withCredentials: true
+      body: userData,
+      credentials: 'include'
     })
     
-    if (response.data.success) {
-      await authStore.fetchUser()
-      return { success: true }
+    // Store token if provided
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token)
     }
     
-    return { success: false, error: 'Registration failed' }
+    return { 
+      success: true, 
+      data: response,
+      verification_sent: response.verification_sent || false
+    }
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Registration failed. Please try again.',
-      errors: error.response?.data?.errors || {}
+      error: error.data?.message || error.message || 'Registration failed. Please try again.',
+      errors: error.data?.errors || {}
     }
   }
 }
@@ -129,16 +141,23 @@ const handleSignup = async () => {
   errorMessage.value = ''
   validationErrors.value = {}
   
-  const result = await registerUser(signupForm.value)
+  // Only send required fields to API
+  const registrationData = {
+    name: signupForm.value.name,
+    email: signupForm.value.email,
+    password: signupForm.value.password
+  }
+  
+  const result = await registerUser(registrationData)
   
   if (result.success) {
-    // Check for intended route
-    const intendedRoute = sessionStorage.getItem('intended_route')
-    if (intendedRoute) {
-      sessionStorage.removeItem('intended_route')
-      window.location.href = intendedRoute
+    // Show verification message instead of redirecting
+    if (result.verification_sent) {
+      showVerificationMessage.value = true
+      verificationEmail.value = signupForm.value.email
     } else {
-      window.location.href = '/builder'
+      // If email already verified (shouldn't happen), redirect
+      navigateTo('/builder')
     }
   } else {
     errorMessage.value = result.error
@@ -155,6 +174,31 @@ const handleSocialLogin = (provider) => {
   
   // Redirect to the OAuth endpoint
   window.location.href = `${apiBase}/api/auth/${provider}/redirect`
+}
+
+const resendVerification = async () => {
+  isResending.value = true
+  try {
+    const config = useRuntimeConfig()
+    const apiBase = config.public.apiBase || 'http://127.0.0.1:8000'
+    const token = localStorage.getItem('auth_token')
+    
+    await $fetch(`${apiBase}/api/email/resend`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include'
+    })
+    
+    errorMessage.value = ''
+    // Show success message
+    alert('Verification email sent! Please check your inbox.')
+  } catch (error) {
+    errorMessage.value = error.data?.message || 'Failed to resend verification email.'
+  } finally {
+    isResending.value = false
+  }
 }
 </script>
 
@@ -224,6 +268,16 @@ const handleSocialLogin = (provider) => {
                     <p class="text-sm text-slate-500">Enter your details to access your account</p>
                 </div>
 
+                <!-- Error Message -->
+                <div v-if="errorMessage && activeTab === 'login'" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-red-600 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-sm text-red-800 font-medium">{{ errorMessage }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <form @submit.prevent="handleLogin" class="space-y-4">
                     <div class="input-group relative group">
                         <i class="fa-regular fa-envelope input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors z-10"></i>
@@ -263,6 +317,21 @@ const handleSocialLogin = (provider) => {
                     <p class="text-sm text-slate-500">Get started with your free resume builder</p>
                 </div>
 
+                <!-- Error Message -->
+                <div v-if="errorMessage && activeTab === 'signup'" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-red-600 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-sm text-red-800 font-medium">{{ errorMessage }}</p>
+                            <ul v-if="Object.keys(validationErrors).length > 0" class="mt-2 text-xs text-red-700 space-y-1">
+                                <li v-for="(errors, field) in validationErrors" :key="field">
+                                    <strong>{{ field }}:</strong> {{ errors.join(', ') }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <form @submit.prevent="handleSignup" class="space-y-4">
                     <div class="input-group relative group">
                         <i class="fa-regular fa-user input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors z-10"></i>
@@ -300,6 +369,30 @@ const handleSocialLogin = (provider) => {
                         <i v-if="!isLoading" class="fa-solid fa-user-plus group-hover:scale-110 transition-transform"></i>
                     </button>
                 </form>
+
+                <!-- Email Verification Message -->
+                <div v-if="showVerificationMessage" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-envelope-circle-check text-green-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-bold text-green-900 mb-1">Verification Email Sent!</h3>
+                            <p class="text-xs text-green-700 mb-3">
+                                We've sent a verification link to <strong>{{ verificationEmail }}</strong>. 
+                                Please check your inbox and click the link to verify your account.
+                            </p>
+                            <button 
+                                @click="resendVerification" 
+                                :disabled="isResending"
+                                class="text-xs font-bold text-green-700 hover:text-green-900 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <i v-if="isResending" class="fa-solid fa-circle-notch fa-spin mr-1"></i>
+                                {{ isResending ? 'Sending...' : 'Resend Email' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             </transition>
 
@@ -314,9 +407,11 @@ const handleSocialLogin = (provider) => {
                     <button @click="handleSocialLogin('google')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-red-500 hover:bg-red-500 transition-all shadow-sm hover:shadow-red-500/30">
                         <i class="fa-brands fa-google text-lg"></i>
                     </button>
+                    <!--
                     <button @click="handleSocialLogin('linkedin')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-blue-600 hover:bg-blue-600 transition-all shadow-sm hover:shadow-blue-600/30">
                         <i class="fa-brands fa-linkedin-in text-lg"></i>
                     </button>
+                    -->
                     <button @click="handleSocialLogin('github')" class="social-btn w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-800 hover:bg-slate-800 transition-all shadow-sm hover:shadow-slate-800/30">
                         <i class="fa-brands fa-github text-lg"></i>
                     </button>

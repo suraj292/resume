@@ -49,9 +49,11 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Registration successful',
+            'message' => 'Registration successful. Please check your email to verify your account.',
             'user' => $user->load('plan'),
             'token' => $token,
+            'email_verified' => false,
+            'verification_sent' => true,
         ], 201);
     }
 
