@@ -3,9 +3,8 @@ const isMenuOpen = ref(false)
 const isScrolled = ref(false)
 const showUserDropdown = ref(false)
 
-// TODO: Implement auth composable
-const isAuthenticated = ref(false)
-const currentUser = ref(null)
+// Auth composable
+const { isAuthenticated, currentUser, logout } = useAuth()
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
@@ -18,7 +17,7 @@ const handleScroll = () => {
 }
 
 const handleLogout = async () => {
-  // TODO: Implement logout logic
+  await logout()
   showUserDropdown.value = false
   await navigateTo('/')
 }

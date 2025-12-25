@@ -347,10 +347,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-// TODO: Implement auth composable or store
 
+// Add auth middleware to protect this page
+definePageMeta({
+  middleware: 'auth'
+})
 
-const currentUser = computed(() => authStore.currentUser)
+// Use auth composable
+const { currentUser, fetchUser, logout } = useAuth()
 
 const activeTab = ref('personal')
 const saving = ref(false)
@@ -360,7 +364,7 @@ const saved = ref(false)
 const user = computed(() => currentUser.value || {
     name: 'Loading...',
     email: '',
-    plan: 'Free Plan',
+    plan: { name: 'Free Plan' },
     avatar: 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=128'
 })
 
@@ -452,12 +456,13 @@ const handleSave = async () => {
 }
 
 const handleLogout = async () => {
-  await authStore.logout()
+  await logout()
+  navigateTo('/auth')
 }
 
 // Load user on mount
 onMounted(async () => {
-  await authStore.fetchUser()
+  await fetchUser()
   
   // Populate form with user data
   if (currentUser.value) {

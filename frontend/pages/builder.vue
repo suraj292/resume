@@ -1,6 +1,8 @@
 <script setup>
 
 const config = useRuntimeConfig()
+const route = useRoute()
+const router = useRouter()
 
 // Auth
 const { isAuthenticated, fetchUser } = useAuth()
@@ -8,9 +10,31 @@ const showAuthModal = ref(false)
 
 // Check authentication on mount
 onMounted(async () => {
-  await fetchUser()
+  // Handle OAuth callback
+  if (route.query.social_auth === 'success' && route.query.token) {
+    // Store the token in localStorage
+    const token = String(route.query.token)
+    localStorage.setItem('auth_token', token)
+    console.log('Token stored:', token)
+    
+    // Remove token from URL for security
+    await router.replace({ query: {} })
+    
+    // Small delay to ensure localStorage is written
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Fetch user data
+    const userData = await fetchUser()
+    console.log('User data after OAuth:', userData)
+  } else {
+    await fetchUser()
+  }
+  
   if (!isAuthenticated.value) {
+    console.log('Not authenticated, showing modal')
     showAuthModal.value = true
+  } else {
+    console.log('Authenticated successfully')
   }
 })
 

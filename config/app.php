@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for redirecting users to the frontend application
+    | after OAuth authentication or other backend operations.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://127.0.0.1:3000'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

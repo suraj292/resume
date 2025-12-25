@@ -149,10 +149,12 @@ const handleSignup = async () => {
 }
 
 const handleSocialLogin = (provider) => {
-  // TODO: Implement social login
-  console.log(`Social login with ${provider}`)
-  // For now, redirect to the OAuth endpoint
-  window.location.href = `/auth/${provider}`
+  // Get the API base URL from environment
+  const config = useRuntimeConfig()
+  const apiBase = config.public.apiBase || 'http://127.0.0.1:8000'
+  
+  // Redirect to the OAuth endpoint
+  window.location.href = `${apiBase}/api/auth/${provider}/redirect`
 }
 </script>
 

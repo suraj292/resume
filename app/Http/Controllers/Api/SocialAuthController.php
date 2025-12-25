@@ -87,8 +87,9 @@ class SocialAuthController extends Controller
         // Force session save
         session()->save();
 
-        // Redirect with a flag that frontend can detect
-        return redirect('/builder?social_auth=success');
+        // Redirect to frontend with token
+        $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:3000'));
+        return redirect($frontendUrl . '/builder?social_auth=success&token=' . urlencode($token));
     }
 
     /**

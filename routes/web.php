@@ -1,53 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
-Route::get('/', function () {
-    return Inertia::render('Home', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
-
-Route::get('/builder', function () {
-    return Inertia::render('Builder');
-})->name('builder');
-
-Route::get('/ats-checker', function () {
-    return Inertia::render('AtsChecker');
-})->name('ats-checker');
-
-Route::get('/templates', function () {
-    return Inertia::render('Templates');
-})->name('templates');
-
-Route::get('/pricing', function () {
-    return Inertia::render('Pricing');
-})->name('pricing');
-
-Route::get('/auth', function () {
-    return Inertia::render('Auth');
-})->name('auth');
-
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
-
-Route::get('/blog', function () {
-    return Inertia::render('Blog');
-})->name('blog');
-
-Route::get('/profile', function () {
-    return Inertia::render('Profile');
-})->name('profile');
-
-Route::get('/checkout', function () {
-    return Inertia::render('Checkout');
-})->name('checkout');
-
-Route::get('/blog/{id}', function ($id) {
-    return Inertia::render('BlogDetail', ['id' => $id]);
-})->name('blog.detail');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| This application uses API-only architecture with a standalone frontend.
+| All frontend routes are handled by the separate frontend application.
+| Web routes are minimal and only used for settings/admin panel.
+|
+*/
 
 require __DIR__.'/settings.php';
