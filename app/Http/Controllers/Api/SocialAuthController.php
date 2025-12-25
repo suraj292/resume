@@ -19,7 +19,14 @@ class SocialAuthController extends Controller
     {
         $this->validateProvider($provider);
 
-        return Socialite::driver($provider)->stateless()->redirect();
+        $driver = Socialite::driver($provider)->stateless();
+        
+        // Add scopes for GitHub to get email
+        if ($provider === 'github') {
+            $driver->scopes(['read:user', 'user:email']);
+        }
+        
+        return $driver->redirect();
     }
 
     /**
@@ -32,8 +39,26 @@ class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-            // Redirect to auth page with error
-            return redirect('/auth?error=oauth_failed');
+            // Log the error for debugging
+            \Log::error('OAuth callback error for ' . $provider . ': ' . $e->getMessage());
+            
+            // Redirect to frontend auth page with error
+            $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:5174'));
+            return redirect($frontendUrl . '/auth?error=oauth_failed&provider=' . $provider);
+        }
+
+        // Get email - handle GitHub's private email case
+        $email = $socialUser->getEmail();
+        
+        // If GitHub user has private email, generate a unique email
+        if (!$email && $provider === 'github') {
+            $email = $socialUser->getId() . '+' . $socialUser->getNickname() . '@users.noreply.github.com';
+        }
+        
+        // If still no email, redirect with error
+        if (!$email) {
+            $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:5174'));
+            return redirect($frontendUrl . '/auth?error=no_email&provider=' . $provider);
         }
 
         // Check if social account exists
@@ -46,13 +71,16 @@ class SocialAuthController extends Controller
             $user = $socialAccount->user;
         } else {
             // Check if user exists with this email
-            $user = User::where('email', $socialUser->getEmail())->first();
+            $user = User::where('email', $email)->first();
 
             if (!$user) {
+                // Get name from social provider
+                $name = $socialUser->getName() ?: $socialUser->getNickname() ?: 'User';
+                
                 // Create new user
                 $user = User::create([
-                    'name' => $socialUser->getName(),
-                    'email' => $socialUser->getEmail(),
+                    'name' => $name,
+                    'email' => $email,
                     'avatar' => $socialUser->getAvatar(),
                     'provider' => $provider,
                     'provider_id' => $socialUser->getId(),
