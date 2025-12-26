@@ -1,4 +1,7 @@
-<script setup>
+<script setup lang="ts">
+import type { ResumeData, ThemeConfig } from '~/types/resume'
+import { useResumeTemplate } from '~/composables/useResumeTemplate'
+import { useResumeTheme } from '~/composables/useResumeTheme'
 
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -128,6 +131,27 @@ const templatesData = await import('~/data/templates.json').then(m => m.default 
 const templatesFromJSON = ref(templatesData)
 const selectedTemplate = ref(templatesData[0]?.id || 'software-engineer')
 
+// New template system
+const { getTemplateComponent } = useResumeTemplate()
+const { currentTheme, updateTheme } = useResumeTheme()
+
+// Dynamic template component (using shallowRef to avoid unnecessary reactivity)
+const currentTemplateComponent = shallowRef(null)
+const previewScale = ref(0.7)
+
+// Watch for template changes and load component dynamically
+watch(selectedTemplate, async (newTemplateId) => {
+  try {
+    currentTemplateComponent.value = await getTemplateComponent(
+      newTemplateId,
+      templatesFromJSON.value
+    )
+  } catch (error) {
+    console.error('Template loading failed:', error)
+    uploadError.value = 'Failed to load template'
+  }
+}, { immediate: true })
+
 // Colors
 const selectedColor = ref('indigo')
 const customColor = ref('')
@@ -167,6 +191,43 @@ const currentAccentColor = computed(() => {
   const palette = colorPalettes.value.find(p => p.id === selectedColor.value)
   return palette ? palette.hex : '#4f46e5'
 })
+
+// Transform form data to ResumeData interface for templates
+const resumeDataFormatted = computed<ResumeData>(() => ({
+  basics: {
+    fullName: formData.value.fullName || '',
+    title: formData.value.title || '',
+    email: formData.value.email || '',
+    phone: formData.value.phone || '',
+    location: formData.value.location || '',
+    linkedin: formData.value.linkedin,
+    github: formData.value.github,
+    portfolio: formData.value.portfolio,
+    summary: formData.value.summary
+  },
+  experience: formData.value.experience || [],
+  education: formData.value.education || [],
+  skills: formData.value.skills || {},
+  achievements: formData.value.achievements?.filter((a: string) => a) || []
+}))
+
+// Current theme configuration
+const currentThemeConfig = computed<ThemeConfig>(() => ({
+  primaryColor: customColor.value || currentAccentColor.value,
+  fontFamily: 'inter',
+  spacing: 'normal',
+  typographyScale: 'medium'
+}))
+
+// Update theme when color changes
+watch(currentThemeConfig, (newTheme) => {
+  updateTheme(newTheme)
+})
+
+// Zoom controls
+const adjustZoom = (delta: number) => {
+  previewScale.value = Math.max(0.3, Math.min(1.5, previewScale.value + delta))
+}
 
 const scoreCircleDashoffset = computed(() => {
   const circumference = 264
@@ -1048,101 +1109,52 @@ useHead({
 
         <!-- Preview Panel (Right) - Scrollable -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
-          <div class="w-full max-w-[800px] space-y-8">
-            <!-- Page 1 -->
-            <div id="resume-page-1" :key="selectedTemplate" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-500 relative overflow-hidden">
-              <!-- Page Number -->
-              <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
-              
-              <!-- Dynamic Header based on template -->
-              <div :class="templateHeaderClass" class="transition-all duration-500">
-                <h1 :class="templateNameClass" class="transition-all duration-500">
-                  {{ formData.fullName || 'Your Name' }}
-                </h1>
-                <p :style="{ color: currentAccentColor }" class="text-base font-bold mt-1 transition-colors duration-500">
-                  {{ formData.title || 'Professional Title' }}
-                </p>
-                <div :class="currentTemplateConfig.id === 'executive' ? 'justify-center' : ''" class="flex gap-4 mt-4 text-[11px] font-bold text-slate-400 transition-all duration-500">
-                  <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1.5"></i>{{ formData.email }}</span>
-                  <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1.5"></i>{{ formData.phone }}</span>
-                  <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1.5"></i>{{ formData.location }}</span>
-                </div>
+          <div class="w-full max-w-[900px]">
+            <!-- A4 Paper Container with Dynamic Template -->
+            <div 
+              id="resume-preview"
+              class="resume-paper bg-white shadow-2xl"
+              :style="{ 
+                width: '210mm',
+                minHeight: '297mm',
+                transform: `scale(${previewScale})`,
+                transformOrigin: 'top center',
+                marginBottom: '2rem'
+              }"
+            >
+              <!-- Dynamic Template Component -->
+              <div v-if="currentTemplateComponent" class="resume-content p-16">
+                <component 
+                  :is="currentTemplateComponent"
+                  :data="resumeDataFormatted"
+                  :theme="currentThemeConfig"
+                />
               </div>
-
-              <!-- Content -->
-              <div class="space-y-8">
-                <div v-if="formData.summary">
-                  <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Professional Summary</h3>
-                  <p class="text-sm text-slate-700 leading-relaxed">{{ formData.summary }}</p>
-                </div>
-
-                <div v-if="hasSkills">
-                  <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Skills</h3>
-                  <div class="space-y-2">
-                    <div v-for="(skillsArray, category) in formData.skills" :key="category">
-                      <div v-if="skillsArray.length > 0">
-                        <span class="text-xs font-bold capitalize text-slate-900">{{ category }}:</span>
-                        <span class="text-xs text-slate-700 ml-2">{{ skillsArray.join(', ') }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="hasExperience" id="experience-section">
-                  <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Experience</h3>
-                  <div v-for="(exp, index) in formData.experience.slice(0, getExperienceCountForPage1())" :key="index" class="mb-4">
-                    <h4 class="font-bold text-sm text-slate-900">{{ exp.position }}</h4>
-                    <p class="text-xs text-slate-600">{{ exp.company }}</p>
-                    <ul class="list-disc list-inside text-xs text-slate-700 mt-1 space-y-0.5">
-                      <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div v-if="formData.education.length > 0 && formData.education[0].degree && !needsSecondPage">
-                  <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Education</h3>
-                  <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
-                    <h4 class="font-bold text-sm text-slate-900">{{ edu.degree }}</h4>
-                    <p class="text-xs text-slate-600">{{ edu.institution }}</p>
-                  </div>
-                </div>
+              
+              <!-- Loading State -->
+              <div v-else class="p-16 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                <p>Loading template...</p>
               </div>
             </div>
 
-            <!-- Page 2 (if content overflows) -->
-            <div v-if="needsSecondPage" id="resume-page-2" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-300 relative overflow-hidden">
-              <!-- Page Number -->
-              <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 2</div>
-              
-              <!-- Continued Experience -->
-              <div v-if="hasExperience && getExperienceCountForPage1() < formData.experience.length">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Experience (continued)</h3>
-                <div v-for="(exp, index) in formData.experience.slice(getExperienceCountForPage1())" :key="index" class="mb-4">
-                  <h4 class="font-bold text-sm text-slate-900">{{ exp.position }}</h4>
-                  <p class="text-xs text-slate-600">{{ exp.company }}</p>
-                  <ul class="list-disc list-inside text-xs text-slate-700 mt-1 space-y-0.5">
-                    <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- Education on Page 2 -->
-              <div v-if="formData.education.length > 0 && formData.education[0].degree" class="mt-8">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Education</h3>
-                <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
-                  <h4 class="font-bold text-sm text-slate-900">{{ edu.degree }}</h4>
-                  <p class="text-xs text-slate-600">{{ edu.institution }}</p>
-                  <p v-if="edu.year" class="text-xs text-slate-500">{{ edu.year }}</p>
-                </div>
-              </div>
-
-              <!-- Achievements on Page 2 -->
-              <div v-if="formData.achievements.length > 0 && formData.achievements[0]" class="mt-8">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Achievements</h3>
-                <ul class="list-disc list-inside text-xs text-slate-700 space-y-1">
-                  <li v-for="(achievement, index) in formData.achievements" :key="index">{{ achievement }}</li>
-                </ul>
-              </div>
+            <!-- Preview Controls -->
+            <div class="preview-controls flex items-center justify-center gap-4 mt-6">
+              <button 
+                @click="adjustZoom(-0.1)" 
+                class="zoom-btn w-10 h-10 flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+              >
+                <i class="fa-solid fa-minus text-slate-600"></i>
+              </button>
+              <span class="zoom-level text-sm font-bold text-slate-600 min-w-[4rem] text-center">
+                {{ Math.round(previewScale * 100) }}%
+              </span>
+              <button 
+                @click="adjustZoom(0.1)" 
+                class="zoom-btn w-10 h-10 flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+              >
+                <i class="fa-solid fa-plus text-slate-600"></i>
+              </button>
             </div>
           </div>
         </section>

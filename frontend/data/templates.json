@@ -1,7 +1,95 @@
 [
     {
+        "id": "modern-two-column",
+        "name": "Modern Two Column",
+        "component": "ModernTwoColumnTemplate",
+        "type": "professional modern",
+        "profession": "General",
+        "tags": [
+            "Modern",
+            "Clean",
+            "ATS Ready"
+        ],
+        "description": "Clean, modern two-column layout with avatar, perfect for any profession seeking a minimalist design.",
+        "thumbnail": {
+            "bg": "bg-white",
+            "mainClass": "flex-col p-4 gap-3",
+            "elements": [
+                {
+                    "type": "header",
+                    "class": "flex gap-3 items-start pb-3",
+                    "children": [
+                        {
+                            "class": "w-10 h-10 rounded-full bg-slate-300 flex-shrink-0"
+                        },
+                        {
+                            "class": "flex-1 space-y-1",
+                            "children": [
+                                {
+                                    "class": "h-3 w-4/5 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1.5 w-3/5 bg-slate-400 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "summary",
+                    "class": "pb-2 border-b border-slate-900",
+                    "children": [
+                        {
+                            "class": "h-1.5 w-1/4 bg-slate-900 rounded-sm mb-1"
+                        },
+                        {
+                            "class": "h-1 w-full bg-slate-200 rounded-sm"
+                        }
+                    ]
+                },
+                {
+                    "type": "columns",
+                    "class": "grid grid-cols-2 gap-2",
+                    "children": [
+                        {
+                            "class": "space-y-1.5 pr-2 border-r border-slate-200",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-2/3 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1 w-full bg-slate-200 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1 w-5/6 bg-slate-200 rounded-sm"
+                                }
+                            ]
+                        },
+                        {
+                            "class": "space-y-1.5",
+                            "children": [
+                                {
+                                    "class": "h-1.5 w-2/3 bg-slate-900 rounded-sm"
+                                },
+                                {
+                                    "class": "h-1 w-full bg-slate-200 rounded-sm"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "layout": {
+            "style": "two-column",
+            "headerAlign": "left",
+            "primaryColor": "bg-slate-900"
+        }
+    },
+    {
         "id": "software-engineer",
         "name": "Software Engineer",
+        "component": "SoftwareEngineerTemplate",
         "type": "tech ats",
         "profession": "Technology",
         "tags": [
@@ -95,6 +183,7 @@
     {
         "id": "data-scientist",
         "name": "Data Scientist",
+        "component": "DataScientistTemplate",
         "type": "tech analytics",
         "profession": "Technology",
         "tags": [
@@ -199,6 +288,7 @@
     {
         "id": "devops-engineer",
         "name": "DevOps Engineer",
+        "component": "DevOpsEngineerTemplate",
         "type": "tech infrastructure",
         "profession": "Technology",
         "tags": [
@@ -301,6 +391,7 @@
     {
         "id": "executive",
         "name": "Executive Suite",
+        "component": "ExecutiveTemplate",
         "type": "executive business",
         "profession": "Business",
         "tags": [
@@ -367,6 +458,7 @@
     {
         "id": "product-manager",
         "name": "Product Manager",
+        "component": "ProductManagerTemplate",
         "type": "business strategy",
         "profession": "Business",
         "tags": [
@@ -442,6 +534,7 @@
     {
         "id": "business-analyst",
         "name": "Business Analyst",
+        "component": "BusinessAnalystTemplate",
         "type": "business analytics",
         "profession": "Business",
         "tags": [
@@ -510,6 +603,7 @@
     {
         "id": "creative-designer",
         "name": "Creative Designer",
+        "component": "CreativeDesignerTemplate",
         "type": "creative design",
         "profession": "Creative",
         "tags": [
@@ -587,6 +681,7 @@
     {
         "id": "marketing-professional",
         "name": "Marketing Pro",
+        "component": "MarketingProTemplate",
         "type": "creative marketing",
         "profession": "Creative",
         "tags": [
@@ -670,6 +765,7 @@
     {
         "id": "content-creator",
         "name": "Content Creator",
+        "component": "ContentCreatorTemplate",
         "type": "creative media",
         "profession": "Creative",
         "tags": [
@@ -747,6 +843,7 @@
     {
         "id": "finance-professional",
         "name": "Finance Professional",
+        "component": "FinanceProfessionalTemplate",
         "type": "professional finance",
         "profession": "Professional Services",
         "tags": [
@@ -832,6 +929,7 @@
     {
         "id": "legal-professional",
         "name": "Legal Professional",
+        "component": "LegalProfessionalTemplate",
         "type": "professional legal",
         "profession": "Professional Services",
         "tags": [
@@ -901,6 +999,7 @@
     {
         "id": "healthcare",
         "name": "Healthcare Professional",
+        "component": "HealthcareTemplate",
         "type": "specialized healthcare",
         "profession": "Healthcare",
         "tags": [
@@ -989,6 +1088,7 @@
     {
         "id": "sales-professional",
         "name": "Sales Professional",
+        "component": "SalesProfessionalTemplate",
         "type": "specialized sales",
         "profession": "Sales",
         "tags": [
