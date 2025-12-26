@@ -190,6 +190,20 @@ const hasExperience = computed(() => {
   return formData.value.experience.length > 0 && formData.value.experience[0].position
 })
 
+// Multi-page logic
+const needsSecondPage = computed(() => {
+  // If we have more than 2 experience entries, we likely need a second page
+  const experienceCount = formData.value.experience.filter(exp => exp.position).length
+  return experienceCount > 2
+})
+
+const getExperienceCountForPage1 = () => {
+  // Show first 2 experience entries on page 1, rest on page 2
+  const experienceCount = formData.value.experience.filter(exp => exp.position).length
+  if (experienceCount <= 2) return experienceCount
+  return 2
+}
+
 // Methods
 const switchTab = (tabId) => {
   activeTab.value = tabId
@@ -990,8 +1004,12 @@ useHead({
 
         <!-- Preview Panel (Right) -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar">
-          <div class="sticky top-0 w-full max-w-[800px]">
-            <div id="resume-sheet" class="bg-white shadow-2xl w-full min-h-[1000px] p-8 lg:p-16 origin-top transform transition-all duration-300">
+          <div class="w-full max-w-[800px] space-y-8">
+            <!-- Page 1 -->
+            <div id="resume-page-1" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-300 relative overflow-hidden">
+              <!-- Page Number -->
+              <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
+              
               <div class="border-b-4 border-slate-900 pb-8 mb-8">
                 <h1 :style="{ color: '#1e293b' }" class="text-3xl font-black text-slate-900 tracking-tight uppercase transition-colors duration-500">
                   {{ formData.fullName || 'Your Name' }}
@@ -1006,7 +1024,7 @@ useHead({
                 </div>
               </div>
 
-              <!-- Mock Body Content -->
+              <!-- Content -->
               <div class="space-y-8">
                 <div v-if="formData.summary">
                   <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Professional Summary</h3>
@@ -1025,9 +1043,9 @@ useHead({
                   </div>
                 </div>
 
-                <div v-if="hasExperience">
+                <div v-if="hasExperience" id="experience-section">
                   <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Experience</h3>
-                  <div v-for="(exp, index) in formData.experience" :key="index" class="mb-4">
+                  <div v-for="(exp, index) in formData.experience.slice(0, getExperienceCountForPage1())" :key="index" class="mb-4">
                     <h4 class="font-bold text-sm text-slate-900">{{ exp.position }}</h4>
                     <p class="text-xs text-slate-600">{{ exp.company }}</p>
                     <ul class="list-disc list-inside text-xs text-slate-700 mt-1 space-y-0.5">
@@ -1035,6 +1053,50 @@ useHead({
                     </ul>
                   </div>
                 </div>
+
+                <div v-if="formData.education.length > 0 && formData.education[0].degree && !needsSecondPage">
+                  <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Education</h3>
+                  <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
+                    <h4 class="font-bold text-sm text-slate-900">{{ edu.degree }}</h4>
+                    <p class="text-xs text-slate-600">{{ edu.institution }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page 2 (if content overflows) -->
+            <div v-if="needsSecondPage" id="resume-page-2" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-300 relative overflow-hidden">
+              <!-- Page Number -->
+              <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 2</div>
+              
+              <!-- Continued Experience -->
+              <div v-if="hasExperience && getExperienceCountForPage1() < formData.experience.length">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Experience (continued)</h3>
+                <div v-for="(exp, index) in formData.experience.slice(getExperienceCountForPage1())" :key="index" class="mb-4">
+                  <h4 class="font-bold text-sm text-slate-900">{{ exp.position }}</h4>
+                  <p class="text-xs text-slate-600">{{ exp.company }}</p>
+                  <ul class="list-disc list-inside text-xs text-slate-700 mt-1 space-y-0.5">
+                    <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Education on Page 2 -->
+              <div v-if="formData.education.length > 0 && formData.education[0].degree" class="mt-8">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Education</h3>
+                <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
+                  <h4 class="font-bold text-sm text-slate-900">{{ edu.degree }}</h4>
+                  <p class="text-xs text-slate-600">{{ edu.institution }}</p>
+                  <p v-if="edu.year" class="text-xs text-slate-500">{{ edu.year }}</p>
+                </div>
+              </div>
+
+              <!-- Achievements on Page 2 -->
+              <div v-if="formData.achievements.length > 0 && formData.achievements[0]" class="mt-8">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-3 transition-colors duration-500">Achievements</h3>
+                <ul class="list-disc list-inside text-xs text-slate-700 space-y-1">
+                  <li v-for="(achievement, index) in formData.achievements" :key="index">{{ achievement }}</li>
+                </ul>
               </div>
             </div>
           </div>
