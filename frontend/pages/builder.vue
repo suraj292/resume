@@ -482,11 +482,11 @@ useHead({
       </aside>
 
       <!-- Dynamic Workspace -->
-      <main class="flex-1 flex overflow-hidden">
+      <main class="flex-1 flex overflow-hidden h-[calc(100vh-136px)]">
         
-        <!-- Editor Content (Left) -->
-        <section class="flex-1 lg:flex-[0.8] bg-white overflow-y-auto custom-scrollbar border-r border-slate-200 w-full">
-          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 pb-24 lg:pb-10">
+        <!-- Editor Content (Left) - Fixed, No Scroll -->
+        <section class="flex-1 lg:flex-[0.8] bg-white overflow-hidden border-r border-slate-200 w-full flex flex-col">
+          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 h-full overflow-hidden">
             
             <!-- Tab: Upload & Job Context -->
             <div v-show="activeTab === 'upload'" class="tab-content">
@@ -1002,8 +1002,8 @@ useHead({
           </div>
         </section>
 
-        <!-- Preview Panel (Right) -->
-        <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar">
+        <!-- Preview Panel (Right) - Scrollable -->
+        <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[800px] space-y-8">
             <!-- Page 1 -->
             <div id="resume-page-1" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-300 relative overflow-hidden">
