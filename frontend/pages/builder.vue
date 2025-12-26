@@ -1113,15 +1113,95 @@ useHead({
             <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
-        <div class="preview-container p-6">
-          <div class="bg-white shadow-2xl w-full min-h-[1000px] p-6 mx-auto max-w-2xl">
-            <div class="border-b-4 border-slate-900 pb-8 mb-8">
-              <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Your Name' }}</h1>
-              <p :style="{ color: currentAccentColor }" class="text-base font-bold mt-1">{{ formData.title || 'Professional Title' }}</p>
-              <div class="flex flex-wrap gap-3 mt-4 text-[10px] font-bold text-slate-400">
-                <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1.5"></i>{{ formData.email }}</span>
-                <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1.5"></i>{{ formData.phone }}</span>
+        <div class="preview-container p-4 space-y-6">
+          <!-- Page 1 -->
+          <div class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative">
+            <!-- Page Number -->
+            <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
+            
+            <div class="border-b-4 border-slate-900 pb-6 mb-6">
+              <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Your Name' }}</h1>
+              <p :style="{ color: currentAccentColor }" class="text-sm font-bold mt-1">{{ formData.title || 'Professional Title' }}</p>
+              <div class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400">
+                <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1"></i>{{ formData.email }}</span>
+                <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1"></i>{{ formData.phone }}</span>
+                <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1"></i>{{ formData.location }}</span>
               </div>
+            </div>
+
+            <!-- Content -->
+            <div class="space-y-6">
+              <div v-if="formData.summary">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Professional Summary</h3>
+                <p class="text-xs text-slate-700 leading-relaxed">{{ formData.summary }}</p>
+              </div>
+
+              <div v-if="hasSkills">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Skills</h3>
+                <div class="space-y-1.5">
+                  <div v-for="(skillsArray, category) in formData.skills" :key="category">
+                    <div v-if="skillsArray.length > 0">
+                      <span class="text-xs font-bold capitalize text-slate-900">{{ category }}:</span>
+                      <span class="text-xs text-slate-700 ml-1">{{ skillsArray.join(', ') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="hasExperience">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Experience</h3>
+                <div v-for="(exp, index) in formData.experience.slice(0, getExperienceCountForPage1())" :key="index" class="mb-3">
+                  <h4 class="font-bold text-xs text-slate-900">{{ exp.position }}</h4>
+                  <p class="text-[10px] text-slate-600">{{ exp.company }}</p>
+                  <ul class="list-disc list-inside text-[10px] text-slate-700 mt-1 space-y-0.5">
+                    <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div v-if="formData.education.length > 0 && formData.education[0].degree && !needsSecondPage">
+                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
+                <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
+                  <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
+                  <p class="text-[10px] text-slate-600">{{ edu.institution }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 2 (if content overflows) -->
+          <div v-if="needsSecondPage" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative">
+            <!-- Page Number -->
+            <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 2</div>
+            
+            <!-- Continued Experience -->
+            <div v-if="hasExperience && getExperienceCountForPage1() < formData.experience.length">
+              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Experience (continued)</h3>
+              <div v-for="(exp, index) in formData.experience.slice(getExperienceCountForPage1())" :key="index" class="mb-3">
+                <h4 class="font-bold text-xs text-slate-900">{{ exp.position }}</h4>
+                <p class="text-[10px] text-slate-600">{{ exp.company }}</p>
+                <ul class="list-disc list-inside text-[10px] text-slate-700 mt-1 space-y-0.5">
+                  <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Education on Page 2 -->
+            <div v-if="formData.education.length > 0 && formData.education[0].degree" class="mt-6">
+              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
+              <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
+                <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
+                <p class="text-[10px] text-slate-600">{{ edu.institution }}</p>
+                <p v-if="edu.year" class="text-[10px] text-slate-500">{{ edu.year }}</p>
+              </div>
+            </div>
+
+            <!-- Achievements on Page 2 -->
+            <div v-if="formData.achievements.length > 0 && formData.achievements[0]" class="mt-6">
+              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Achievements</h3>
+              <ul class="list-disc list-inside text-[10px] text-slate-700 space-y-0.5">
+                <li v-for="(achievement, index) in formData.achievements" :key="index">{{ achievement }}</li>
+              </ul>
             </div>
           </div>
         </div>

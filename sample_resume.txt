@@ -1,0 +1,20 @@
+John Doe
+Software Developer
+john@example.com
+123-456-7890
+New York, NY
+
+Experienced software developer with 5 years of experience in web development.
+
+Skills:
+- PHP, Laravel
+- JavaScript, Vue.js
+- MySQL, PostgreSQL
+
+Experience:
+Senior Developer at Tech Corp (2020-Present)
+- Led development of web applications
+- Mentored junior developers
+
+Education:
+BS Computer Science, University of Tech (2019)
