@@ -518,7 +518,7 @@ useHead({
         
         <!-- Editor Content (Left) - Fixed, No Scroll -->
         <section class="flex-1 lg:flex-[0.8] bg-white overflow-hidden border-r border-slate-200 w-full flex flex-col">
-          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 h-full overflow-hidden">
+          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 h-full overflow-y-auto custom-scrollbar">
             
             <!-- Tab: Upload & Job Context -->
             <div v-show="activeTab === 'upload'" class="tab-content">
@@ -994,72 +994,6 @@ useHead({
                     <i class="fa-solid fa-trash text-sm"></i>
                   </button>
                 </div>
-              </div>
-            </div>
-
-            <!-- Tab: AI Assistant -->
-            <div v-show="activeTab === 'ai'" class="space-y-6">
-              <h2 class="text-2xl font-black text-slate-900 mb-4">AI Assistant</h2>
-              <p class="text-sm text-slate-600">Use AI to optimize your resume content</p>
-              
-              <div class="space-y-4">
-                <button class="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  Generate Complete Resume
-                </button>
-                
-                <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-robot"></i>
-                  Optimize for ATS
-                </button>
-                
-                <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-list"></i>
-                  Improve Bullet Points
-                </button>
-              </div>
-            </div>
-
-            <!-- Tab: Templates -->
-            <div v-show="activeTab === 'templates'" class="space-y-6">
-              <h2 class="text-2xl font-black text-slate-900 mb-4">Choose Template</h2>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div 
-                  v-for="template in templatesFromJSON" 
-                  :key="template.id" 
-                  @click="selectTemplate(template.id)"
-                  :class="['template-card border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-lg', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-200']">
-                  <div class="aspect-[3/4] bg-slate-100 rounded mb-2"></div>
-                  <h3 class="font-bold text-sm text-slate-900">{{ template.name }}</h3>
-                  <p class="text-xs text-slate-600">{{ template.type }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tab: Colors -->
-            <div v-show="activeTab === 'colors'" class="space-y-6">
-              <h2 class="text-2xl font-black text-slate-900 mb-4">Color Palette</h2>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div 
-                  v-for="color in colorPalettes" 
-                  :key="color.id" 
-                  @click="selectColor(color)"
-                  :class="['color-card border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-lg', selectedColor === color.id ? 'color-card-active border-indigo-600' : 'border-slate-200']">
-                  <div :style="{ backgroundColor: color.hex }" class="w-full h-16 rounded mb-2"></div>
-                  <h3 class="font-bold text-sm text-slate-900">{{ color.name }}</h3>
-                  <p class="text-xs text-slate-600">{{ color.category }}</p>
-                </div>
-              </div>
-              
-              <div class="space-y-2">
-                <label class="block text-sm font-bold text-slate-700">Custom Color</label>
-                <input 
-                  v-model="customColor" 
-                  type="color" 
-                  @input="handleCustomColor"
-                  class="w-full h-12 rounded-lg cursor-pointer">
               </div>
             </div>
 
