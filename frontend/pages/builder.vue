@@ -137,7 +137,7 @@ const { currentTheme, updateTheme } = useResumeTheme()
 
 // Dynamic template component (using shallowRef to avoid unnecessary reactivity)
 const currentTemplateComponent = shallowRef(null)
-const previewScale = ref(0.7)
+const previewScale = ref(0.97)
 
 // Watch for template changes and load component dynamically
 watch(selectedTemplate, async (newTemplateId) => {
@@ -297,9 +297,16 @@ const templatePrimaryColor = computed(() => {
 
 // Multi-page logic
 const needsSecondPage = computed(() => {
-  // If we have more than 2 experience entries, we likely need a second page
+  // Check if we need a second page based on content
   const experienceCount = formData.value.experience.filter(exp => exp.position).length
-  return experienceCount > 2
+  const educationCount = formData.value.education.filter(edu => edu.degree).length
+  const achievementsCount = formData.value.achievements.filter(a => a).length
+  
+  // Show page 2 if:
+  // - More than 2 experience entries
+  // - Or more than 3 education entries
+  // - Or has achievements and more than 1 experience
+  return experienceCount > 2 || educationCount > 3 || (achievementsCount > 0 && experienceCount > 1)
 })
 
 const getExperienceCountForPage1 = () => {
@@ -1174,31 +1181,65 @@ useHead({
         <!-- Preview Panel (Right) - Scrollable -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[900px]">
-            <!-- A4 Paper Container with Dynamic Template -->
-            <div 
-              id="resume-preview"
-              class="resume-paper bg-white shadow-2xl"
-              :style="{ 
-                width: '210mm',
-                minHeight: '297mm',
-                transform: `scale(${previewScale})`,
-                transformOrigin: 'top center',
-                marginBottom: '2rem'
-              }"
-            >
-              <!-- Dynamic Template Component -->
-              <div v-if="currentTemplateComponent" class="resume-content p-16">
-                <component 
-                  :is="currentTemplateComponent"
-                  :data="resumeDataFormatted"
-                  :theme="currentThemeConfig"
-                />
+            <!-- Pages Container with minimal gap -->
+            <div class="space-y-2">
+              <!-- A4 Paper Container with Dynamic Template - Page 1 -->
+              <div 
+                id="resume-preview"
+                class="resume-paper bg-white shadow-2xl"
+                :style="{ 
+                  width: '210mm',
+                  minHeight: '297mm',
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top center'
+                }"
+              >
+                <!-- Dynamic Template Component - Page 1 -->
+                <div v-if="currentTemplateComponent" class="resume-content p-16">
+                  <component 
+                    :is="currentTemplateComponent"
+                    :data="resumeDataFormatted"
+                    :theme="currentThemeConfig"
+                  />
+                </div>
+                
+                <!-- Loading State -->
+                <div v-else class="p-16 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                  <p>Loading template...</p>
+                </div>
               </div>
-              
-              <!-- Loading State -->
-              <div v-else class="p-16 text-center text-slate-400">
-                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                <p>Loading template...</p>
+
+              <!-- Page 2 for Dynamic Template (if needed) -->
+              <div 
+                v-if="needsSecondPage && currentTemplateComponent"
+                class="resume-paper bg-white shadow-2xl"
+                :style="{ 
+                  width: '210mm',
+                  minHeight: '297mm',
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top center'
+                }"
+              >
+                <div class="resume-content p-16">
+                  <!-- Page number indicator -->
+                  <div class="text-right text-xs text-slate-400 mb-6">Page 2</div>
+                  
+                  <!-- Render template with page 2 data -->
+                  <component 
+                    :is="currentTemplateComponent"
+                    :data="{
+                      ...resumeDataFormatted,
+                      basics: {
+                        ...resumeDataFormatted.basics,
+                        summary: '' // Don't repeat summary on page 2
+                      },
+                      experience: resumeDataFormatted.experience.slice(getExperienceCountForPage1()),
+                      skills: {} // Don't repeat skills on page 2
+                    }"
+                    :theme="currentThemeConfig"
+                  />
+                </div>
               </div>
             </div>
 
