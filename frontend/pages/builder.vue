@@ -675,23 +675,23 @@ useHead({
 
             <!-- Tab: Templates -->
             <div v-show="activeTab === 'templates'" class="tab-content">
-              <header class="mb-8">
+              <header class="mb-6">
                 <h2 class="text-xl font-display font-bold text-slate-800">Choose a Layout</h2>
                 <p class="text-slate-400 text-xs mt-1 font-medium">Select a design that matches your industry and seniority level.</p>
               </header>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 <div v-for="template in templatesFromJSON" :key="template.id" @click="selectTemplate(template.id)"
                   :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-100']">
-                  <div class="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl mb-3 flex items-center justify-center">
-                    <i class="fa-solid fa-file-lines text-4xl text-slate-300"></i>
+                  <div class="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl mb-2 sm:mb-3 flex items-center justify-center">
+                    <i class="fa-solid fa-file-lines text-2xl sm:text-4xl text-slate-300"></i>
                   </div>
-                  <div class="px-2 pb-2">
-                    <h3 class="font-bold text-sm text-slate-800">{{ template.name }}</h3>
-                    <p class="text-[10px] text-slate-400 mt-0.5">{{ template.type }}</p>
+                  <div class="px-1 sm:px-2 pb-1 sm:pb-2">
+                    <h3 class="font-bold text-xs sm:text-sm text-slate-800 truncate">{{ template.name }}</h3>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">{{ template.type }}</p>
                   </div>
-                  <div v-if="selectedTemplate === template.id" class="absolute top-4 right-4 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <i class="fa-solid fa-check text-white text-xs"></i>
+                  <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-check text-white text-[10px] sm:text-xs"></i>
                   </div>
                 </div>
               </div>
@@ -1099,6 +1099,10 @@ useHead({
 }
 
 @media (max-width: 1023px) {
+  #mobile-sidebar {
+    margin-top: 25px;
+  }
+
   .mobile-sidebar-hidden {
     transform: translateX(-100%);
   }
