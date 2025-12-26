@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ResumeData, ThemeConfig } from '~/types/resume'
+import type { ResumeData, ThemeConfig, TemplateMetadata } from '~/types/resume'
 import { useResumeTemplate } from '~/composables/useResumeTemplate'
 import { useResumeTheme } from '~/composables/useResumeTheme'
 
@@ -59,10 +59,10 @@ const formData = ref({
   portfolio: '',
   summary: '',
   skills: {
-    backend: [],
-    frontend: [],
-    devops: [],
-    other: []
+    backend: [] as string[],
+    frontend: [] as string[],
+    devops: [] as string[],
+    other: [] as string[]
   },
   experience: [
     {
@@ -127,8 +127,8 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 
 // Templates from JSON
-const templatesData = await import('~/data/templates.json').then(m => m.default || m)
-const templatesFromJSON = ref(templatesData)
+const templatesData = await import('~/data/templates.json').then(m => m.default || m) as TemplateMetadata[]
+const templatesFromJSON = ref<TemplateMetadata[]>(templatesData)
 const selectedTemplate = ref(templatesData[0]?.id || 'software-engineer')
 
 // New template system
@@ -248,7 +248,7 @@ const hasSkills = computed(() => {
 })
 
 const hasExperience = computed(() => {
-  return formData.value.experience.length > 0 && formData.value.experience[0].position
+  return formData.value.experience.length > 0 && formData.value.experience[0]?.position
 })
 
 // Get current template configuration
@@ -310,7 +310,7 @@ const getExperienceCountForPage1 = () => {
 }
 
 // Methods
-const switchTab = (tabId) => {
+const switchTab = (tabId: string) => {
   activeTab.value = tabId
   if (process.client && window.innerWidth < 1024) {
     sidebarOpen.value = false
@@ -335,7 +335,7 @@ const closeMobilePreview = () => {
   if (process.client) document.body.style.overflow = ''
 }
 
-const selectTemplate = (templateId) => {
+const selectTemplate = (templateId: string) => {
   console.log('Selecting template:', templateId)
   selectedTemplate.value = templateId
   const template = templatesFromJSON.value.find(t => t.id === templateId)
@@ -345,12 +345,12 @@ const selectTemplate = (templateId) => {
 }
 
 const handleCustomColor = () => {
-  selectedColor.value = null
+  selectedColor.value = ''
   successMessage.value = '✓ Custom color applied'
   setTimeout(() => successMessage.value = '', 2000)
 }
 
-const adjustColorBrightness = (hex, percent) => {
+const adjustColorBrightness = (hex: string, percent: number): string => {
   // Remove # if present
   hex = hex.replace('#', '')
   
@@ -365,7 +365,7 @@ const adjustColorBrightness = (hex, percent) => {
   b = Math.max(0, Math.min(255, b + (b * percent / 100)))
   
   // Convert back to hex
-  const toHex = (n) => {
+  const toHex = (n: number): string => {
     const hex = Math.round(n).toString(16)
     return hex.length === 1 ? '0' + hex : hex
   }
@@ -373,20 +373,21 @@ const adjustColorBrightness = (hex, percent) => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-const getColorGradientStyle = (hex) => {
+const getColorGradientStyle = (hex: string) => {
   const darkerColor = adjustColorBrightness(hex, -20)
   return {
     background: `linear-gradient(135deg, ${hex} 0%, ${darkerColor} 100%)`
   }
 }
 
-const selectColor = (color) => {
+const selectColor = (color: { id: string }) => {
   selectedColor.value = color.id
   customColor.value = ''
 }
 
-const handleResumeUpload = async (event) => {
-  const file = event.target.files[0]
+const handleResumeUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
   if (!file) return
 
   isProcessing.value = true
@@ -398,7 +399,7 @@ const handleResumeUpload = async (event) => {
     formDataObj.append('file', file)
 
     // Request parsed structured data by adding parse=true parameter
-    const data = await $fetch(`${config.public.apiBase}/api/extract-text?parse=true`, {
+    const data = await $fetch<{ text?: string; parsedData?: any }>(`${config.public.apiBase}/api/extract-text?parse=true`, {
       method: 'POST',
       body: formDataObj
     })
@@ -418,7 +419,7 @@ const handleResumeUpload = async (event) => {
       
       setTimeout(() => successMessage.value = '', 5000)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Resume upload error:', error)
     uploadError.value = error.data?.error || 'Failed to extract text from resume'
   } finally {
@@ -426,7 +427,7 @@ const handleResumeUpload = async (event) => {
   }
 }
 
-const populateFormWithParsedData = (parsedData) => {
+const populateFormWithParsedData = (parsedData: any) => {
   // Populate personal information
   if (parsedData.fullName) formData.value.fullName = parsedData.fullName
   if (parsedData.title) formData.value.title = parsedData.title
@@ -450,7 +451,7 @@ const populateFormWithParsedData = (parsedData) => {
 
   // Populate experience
   if (parsedData.experience && parsedData.experience.length > 0) {
-    formData.value.experience = parsedData.experience.map((exp, index) => ({
+    formData.value.experience = parsedData.experience.map((exp: any, index: number) => ({
       id: index + 1,
       position: exp.position || '',
       company: exp.company || '',
@@ -464,7 +465,7 @@ const populateFormWithParsedData = (parsedData) => {
 
   // Populate education
   if (parsedData.education && parsedData.education.length > 0) {
-    formData.value.education = parsedData.education.map((edu, index) => ({
+    formData.value.education = parsedData.education.map((edu: any, index: number) => ({
       id: index + 1,
       degree: edu.degree || '',
       institution: edu.institution || '',
@@ -479,7 +480,7 @@ const populateFormWithParsedData = (parsedData) => {
   }
 }
 
-const parseResumeContent = (text) => {
+const parseResumeContent = (text: string) => {
   if (!text) return
 
   const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
@@ -488,10 +489,10 @@ const parseResumeContent = (text) => {
   const phoneMatch = text.match(/(?:\+?91[-\s]?)?[6-9]\d{9}|(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}/)
   if (phoneMatch) formData.value.phone = phoneMatch[0]
 
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l)
+  const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l)
   if (lines.length > 0) {
     const firstLine = lines[0]
-    if (firstLine.length < 50 && /[A-Z]/.test(firstLine)) {
+    if (firstLine && firstLine.length < 50 && /[A-Z]/.test(firstLine)) {
       formData.value.fullName = firstLine
     }
   }
@@ -510,19 +511,20 @@ const addExperience = () => {
   })
 }
 
-const removeExperience = (index) => {
+const removeExperience = (index: number) => {
   if (formData.value.experience.length > 1) {
     formData.value.experience.splice(index, 1)
   }
 }
 
-const addResponsibility = (expIndex) => {
-  formData.value.experience[expIndex].responsibilities.push('')
+const addResponsibility = (expIndex: number) => {
+  formData.value.experience[expIndex]?.responsibilities.push('')
 }
 
-const removeResponsibility = (expIndex, respIndex) => {
-  if (formData.value.experience[expIndex].responsibilities.length > 1) {
-    formData.value.experience[expIndex].responsibilities.splice(respIndex, 1)
+const removeResponsibility = (expIndex: number, respIndex: number) => {
+  const exp = formData.value.experience[expIndex]
+  if (exp && exp.responsibilities.length > 1) {
+    exp.responsibilities.splice(respIndex, 1)
   }
 }
 
@@ -536,13 +538,13 @@ const addEducation = () => {
   })
 }
 
-const removeEducation = (index) => {
+const removeEducation = (index: number) => {
   if (formData.value.education.length > 1) {
     formData.value.education.splice(index, 1)
   }
 }
 
-const addSkill = (category) => {
+const addSkill = (category: keyof typeof formData.value.skills) => {
   if (process.client) {
     const skill = prompt(`Enter new ${category} skill:`)
     if (skill && skill.trim()) {
@@ -551,7 +553,7 @@ const addSkill = (category) => {
   }
 }
 
-const removeSkill = (category, index) => {
+const removeSkill = (category: keyof typeof formData.value.skills, index: number) => {
   formData.value.skills[category].splice(index, 1)
 }
 
@@ -559,10 +561,72 @@ const addAchievement = () => {
   formData.value.achievements.push('')
 }
 
-const removeAchievement = (index) => {
+const removeAchievement = (index: number) => {
   if (formData.value.achievements.length > 1) {
     formData.value.achievements.splice(index, 1)
   }
+}
+
+// Job description upload handler
+const handleJobUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  isProcessing.value = true
+  uploadError.value = ''
+
+  try {
+    const formDataObj = new FormData()
+    formDataObj.append('file', file)
+
+    const data = await $fetch<{ text?: string }>(`${config.public.apiBase}/api/extract-text`, {
+      method: 'POST',
+      body: formDataObj
+    })
+
+    if (data.text) {
+      jobDescription.value = data.text
+      successMessage.value = 'Job description uploaded successfully!'
+      setTimeout(() => successMessage.value = '', 3000)
+    }
+  } catch (error: any) {
+    console.error('Job upload error:', error)
+    uploadError.value = error.data?.error || 'Failed to extract text from job description'
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+// Save context for AI
+const saveContext = () => {
+  successMessage.value = '✓ Context saved for AI processing'
+  setTimeout(() => successMessage.value = '', 2000)
+}
+
+// AI method stubs (to be implemented)
+const generateResume = () => {
+  console.log('Generate resume - To be implemented')
+  uploadError.value = 'This feature will be available soon!'
+  setTimeout(() => uploadError.value = '', 3000)
+}
+
+const optimizeForATS = () => {
+  console.log('Optimize for ATS - To be implemented')
+  uploadError.value = 'This feature will be available soon!'
+  setTimeout(() => uploadError.value = '', 3000)
+}
+
+const improveBulletPoints = () => {
+  console.log('Improve bullet points - To be implemented')
+  uploadError.value = 'This feature will be available soon!'
+  setTimeout(() => uploadError.value = '', 3000)
+}
+
+const analyzeSkillGap = () => {
+  console.log('Analyze skill gap - To be implemented')
+  uploadError.value = 'This feature will be available soon!'
+  setTimeout(() => uploadError.value = '', 3000)
 }
 
 const exportPDF = () => {
@@ -1180,7 +1244,7 @@ useHead({
             <div :class="templateHeaderClass.replace('pb-8 mb-8', 'pb-6 mb-6')" class="transition-all duration-500">
               <h1 :class="templateNameClass.replace('text-3xl', 'text-2xl').replace('text-4xl', 'text-2xl')" class="transition-all duration-500">{{ formData.fullName || 'Your Name' }}</h1>
               <p :style="{ color: currentAccentColor }" class="text-sm font-bold mt-1">{{ formData.title || 'Professional Title' }}</p>
-              <div :class="currentTemplateConfig.id === 'executive' ? 'justify-center' : ''" class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400 transition-all duration-500">
+              <div :class="currentTemplateConfig?.id === 'executive' ? 'justify-center' : ''" class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400 transition-all duration-500">
                 <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1"></i>{{ formData.email }}</span>
                 <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1"></i>{{ formData.phone }}</span>
                 <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1"></i>{{ formData.location }}</span>
@@ -1217,7 +1281,7 @@ useHead({
                 </div>
               </div>
 
-              <div v-if="formData.education.length > 0 && formData.education[0].degree && !needsSecondPage">
+              <div v-if="formData.education.length > 0 && formData.education[0]?.degree && !needsSecondPage">
                 <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
                 <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
                   <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
@@ -1245,7 +1309,7 @@ useHead({
             </div>
 
             <!-- Education on Page 2 -->
-            <div v-if="formData.education.length > 0 && formData.education[0].degree" class="mt-6">
+            <div v-if="formData.education.length > 0 && formData.education[0]?.degree" class="mt-6">
               <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
               <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
                 <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
