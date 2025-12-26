@@ -190,6 +190,50 @@ const hasExperience = computed(() => {
   return formData.value.experience.length > 0 && formData.value.experience[0].position
 })
 
+// Get current template configuration
+const currentTemplateConfig = computed(() => {
+  return templatesFromJSON.value.find(t => t.id === selectedTemplate.value) || templatesFromJSON.value[0]
+})
+
+// Dynamic template styles based on selected template
+const templateHeaderClass = computed(() => {
+  const config = currentTemplateConfig.value
+  if (!config) return 'border-b-4 border-slate-900 pb-8 mb-8'
+  
+  // Different header styles based on template
+  switch (config.id) {
+    case 'executive':
+      return 'text-center border-b-2 border-slate-900 pb-8 mb-8'
+    case 'creative-designer':
+    case 'marketing-professional':
+      return 'border-b-2 pb-6 mb-6'
+    case 'data-scientist':
+      return 'border-b border-slate-300 pb-6 mb-6'
+    default:
+      return 'border-b-4 border-slate-900 pb-8 mb-8'
+  }
+})
+
+const templateNameClass = computed(() => {
+  const config = currentTemplateConfig.value
+  if (!config) return 'text-3xl font-black text-slate-900 tracking-tight uppercase'
+  
+  switch (config.id) {
+    case 'executive':
+      return 'text-4xl font-black text-slate-900 tracking-tight uppercase'
+    case 'creative-designer':
+    case 'content-creator':
+      return 'text-3xl font-bold text-slate-900'
+    default:
+      return 'text-3xl font-black text-slate-900 tracking-tight uppercase'
+  }
+})
+
+const templatePrimaryColor = computed(() => {
+  const config = currentTemplateConfig.value
+  return config?.layout?.primaryColor || currentAccentColor.value
+})
+
 // Multi-page logic
 const needsSecondPage = computed(() => {
   // If we have more than 2 experience entries, we likely need a second page
@@ -231,8 +275,10 @@ const closeMobilePreview = () => {
 }
 
 const selectTemplate = (templateId) => {
+  console.log('Selecting template:', templateId)
   selectedTemplate.value = templateId
   const template = templatesFromJSON.value.find(t => t.id === templateId)
+  console.log('Template found:', template)
   successMessage.value = `✓ Applied ${template?.name || 'template'}`
   setTimeout(() => successMessage.value = '', 2000)
 }
@@ -1004,18 +1050,19 @@ useHead({
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[800px] space-y-8">
             <!-- Page 1 -->
-            <div id="resume-page-1" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-300 relative overflow-hidden">
+            <div id="resume-page-1" :key="selectedTemplate" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-8 lg:p-16 origin-top transform transition-all duration-500 relative overflow-hidden">
               <!-- Page Number -->
               <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
               
-              <div class="border-b-4 border-slate-900 pb-8 mb-8">
-                <h1 :style="{ color: '#1e293b' }" class="text-3xl font-black text-slate-900 tracking-tight uppercase transition-colors duration-500">
+              <!-- Dynamic Header based on template -->
+              <div :class="templateHeaderClass" class="transition-all duration-500">
+                <h1 :class="templateNameClass" class="transition-all duration-500">
                   {{ formData.fullName || 'Your Name' }}
                 </h1>
                 <p :style="{ color: currentAccentColor }" class="text-base font-bold mt-1 transition-colors duration-500">
                   {{ formData.title || 'Professional Title' }}
                 </p>
-                <div class="flex gap-4 mt-4 text-[11px] font-bold text-slate-400">
+                <div :class="currentTemplateConfig.id === 'executive' ? 'justify-center' : ''" class="flex gap-4 mt-4 text-[11px] font-bold text-slate-400 transition-all duration-500">
                   <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1.5"></i>{{ formData.email }}</span>
                   <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1.5"></i>{{ formData.phone }}</span>
                   <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1.5"></i>{{ formData.location }}</span>
@@ -1113,14 +1160,15 @@ useHead({
         </div>
         <div class="preview-container p-4 space-y-6">
           <!-- Page 1 -->
-          <div class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative">
+          <div :key="selectedTemplate" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative transition-all duration-500">
             <!-- Page Number -->
             <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
             
-            <div class="border-b-4 border-slate-900 pb-6 mb-6">
-              <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">{{ formData.fullName || 'Your Name' }}</h1>
+            <!-- Dynamic Header -->
+            <div :class="templateHeaderClass.replace('pb-8 mb-8', 'pb-6 mb-6')" class="transition-all duration-500">
+              <h1 :class="templateNameClass.replace('text-3xl', 'text-2xl').replace('text-4xl', 'text-2xl')" class="transition-all duration-500">{{ formData.fullName || 'Your Name' }}</h1>
               <p :style="{ color: currentAccentColor }" class="text-sm font-bold mt-1">{{ formData.title || 'Professional Title' }}</p>
-              <div class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400">
+              <div :class="currentTemplateConfig.id === 'executive' ? 'justify-center' : ''" class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400 transition-all duration-500">
                 <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1"></i>{{ formData.email }}</span>
                 <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1"></i>{{ formData.phone }}</span>
                 <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1"></i>{{ formData.location }}</span>
