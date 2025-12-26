@@ -49,12 +49,28 @@ class TextExtractionController extends Controller
                 return response()->json(['error' => 'Could not extract text from file'], 422);
             }
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'text' => trim($text),
                 'fileName' => $file->getClientOriginalName(),
                 'fileSize' => $file->getSize(),
-            ]);
+            ];
+
+            // If 'parse' parameter is true, parse the text into structured data
+            if ($request->query('parse') === 'true' || $request->input('parse') === true) {
+                try {
+                    $structuredData = $this->geminiService->parseResumeToStructuredData($text);
+                    $response['parsedData'] = $structuredData;
+                } catch (\Exception $parseError) {
+                    Log::warning('Failed to parse resume data', [
+                        'error' => $parseError->getMessage()
+                    ]);
+                    // Continue without parsed data
+                    $response['parseError'] = 'Could not parse resume structure';
+                }
+            }
+
+            return response()->json($response);
 
         } catch (\Exception $e) {
             Log::error('Text extraction error', [

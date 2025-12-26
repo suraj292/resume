@@ -372,4 +372,215 @@ class GeminiService
             return '';
         }
     }
+
+    /**
+     * Parse resume text into structured JSON data using Gemini AI
+     */
+    public function parseResumeToStructuredData(string $resumeText): array
+    {
+        try {
+            $prompt = $this->buildResumeParsingPrompt($resumeText);
+            
+            $response = Http::timeout(60)
+                ->post("{$this->baseUrl}{$this->model}:generateContent?key={$this->apiKey}", [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'topK' => 10,
+                        'topP' => 0.7,
+                        'maxOutputTokens' => 8192,
+                    ],
+                    'safetySettings' => [
+                        [
+                            'category' => 'HARM_CATEGORY_HARASSMENT',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_HATE_SPEECH',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                            'threshold' => 'BLOCK_NONE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                            'threshold' => 'BLOCK_NONE'
+                        ]
+                    ]
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('Gemini API Error in parseResumeToStructuredData', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                throw new \Exception('Failed to parse resume with Gemini API');
+            }
+
+            $data = $response->json();
+            $aiResponse = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            
+            if (empty($aiResponse)) {
+                throw new \Exception('Gemini API returned empty response');
+            }
+
+            return $this->parseStructuredResumeResponse($aiResponse);
+            
+        } catch (\Exception $e) {
+            Log::error('Resume parsing error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    protected function buildResumeParsingPrompt(string $resumeText): string
+    {
+        // Truncate if too long
+        if (strlen($resumeText) > 4000) {
+            $resumeText = substr($resumeText, 0, 4000) . '... [truncated]';
+        }
+
+        $prompt = "Extract and structure resume information from the following text. Return ONLY valid JSON.\n\n";
+        $prompt .= "RESUME TEXT:\n{$resumeText}\n\n";
+        $prompt .= "Extract the following information and return as JSON:\n\n";
+        $prompt .= json_encode([
+            'fullName' => 'Full name of the person',
+            'title' => 'Professional title or current role',
+            'email' => 'Email address',
+            'phone' => 'Phone number',
+            'location' => 'City/Location',
+            'linkedin' => 'LinkedIn profile URL (if available)',
+            'github' => 'GitHub profile URL (if available)',
+            'portfolio' => 'Portfolio website URL (if available)',
+            'summary' => 'Professional summary or objective (2-3 sentences)',
+            'skills' => [
+                'backend' => ['skill1', 'skill2'],
+                'frontend' => ['skill1', 'skill2'],
+                'devops' => ['skill1', 'skill2'],
+                'other' => ['skill1', 'skill2']
+            ],
+            'experience' => [
+                [
+                    'position' => 'Job title',
+                    'company' => 'Company name',
+                    'location' => 'City, State',
+                    'startDate' => 'Month Year',
+                    'endDate' => 'Month Year or Present',
+                    'current' => false,
+                    'responsibilities' => ['Achievement 1', 'Achievement 2', 'Achievement 3']
+                ]
+            ],
+            'education' => [
+                [
+                    'degree' => 'Degree name',
+                    'institution' => 'University/College name',
+                    'year' => 'Graduation year',
+                    'percentage' => 'GPA or percentage (if available)'
+                ]
+            ],
+            'achievements' => ['Achievement 1', 'Achievement 2']
+        ], JSON_PRETTY_PRINT);
+        
+        $prompt .= "\n\nRULES:\n";
+        $prompt .= "1. Extract ALL available information from the resume\n";
+        $prompt .= "2. Categorize skills appropriately (backend: PHP/Laravel/Python, frontend: React/Vue/JS, devops: Docker/AWS/CI-CD, other: everything else)\n";
+        $prompt .= "3. For experience, extract 3-5 key responsibilities/achievements per role\n";
+        $prompt .= "4. Use 'Present' for current positions\n";
+        $prompt .= "5. If information is not available, use empty string or empty array\n";
+        $prompt .= "6. Return ONLY the JSON object, no markdown formatting or extra text\n";
+        $prompt .= "7. Ensure all JSON is properly formatted and valid\n";
+
+        return $prompt;
+    }
+
+    protected function parseStructuredResumeResponse(string $response): array
+    {
+        // Clean up response
+        $response = preg_replace('/^```json\s*/i', '', $response);
+        $response = preg_replace('/```\s*$/i', '', $response);
+        $response = preg_replace('/^```\s*/i', '', $response);
+        $response = trim($response);
+        
+        // Remove any text before first {
+        $jsonStart = strpos($response, '{');
+        if ($jsonStart !== false && $jsonStart > 0) {
+            $response = substr($response, $jsonStart);
+        }
+        
+        // Remove any text after last }
+        $jsonEnd = strrpos($response, '}');
+        if ($jsonEnd !== false && $jsonEnd < strlen($response) - 1) {
+            $response = substr($response, 0, $jsonEnd + 1);
+        }
+
+        try {
+            $data = json_decode($response, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON Parse Error in resume parsing', [
+                    'error' => json_last_error_msg(),
+                    'response_preview' => substr($response, 0, 500)
+                ]);
+                throw new \Exception('Invalid JSON response from AI');
+            }
+
+            // Ensure structure with defaults
+            return [
+                'fullName' => $data['fullName'] ?? '',
+                'title' => $data['title'] ?? '',
+                'email' => $data['email'] ?? '',
+                'phone' => $data['phone'] ?? '',
+                'location' => $data['location'] ?? '',
+                'linkedin' => $data['linkedin'] ?? '',
+                'github' => $data['github'] ?? '',
+                'portfolio' => $data['portfolio'] ?? '',
+                'summary' => $data['summary'] ?? '',
+                'skills' => [
+                    'backend' => $data['skills']['backend'] ?? [],
+                    'frontend' => $data['skills']['frontend'] ?? [],
+                    'devops' => $data['skills']['devops'] ?? [],
+                    'other' => $data['skills']['other'] ?? []
+                ],
+                'experience' => $data['experience'] ?? [],
+                'education' => $data['education'] ?? [],
+                'achievements' => $data['achievements'] ?? []
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to parse structured resume response', [
+                'error' => $e->getMessage()
+            ]);
+            
+            // Return empty structure
+            return [
+                'fullName' => '',
+                'title' => '',
+                'email' => '',
+                'phone' => '',
+                'location' => '',
+                'linkedin' => '',
+                'github' => '',
+                'portfolio' => '',
+                'summary' => '',
+                'skills' => [
+                    'backend' => [],
+                    'frontend' => [],
+                    'devops' => [],
+                    'other' => []
+                ],
+                'experience' => [],
+                'education' => [],
+                'achievements' => []
+            ];
+        }
+    }
 }

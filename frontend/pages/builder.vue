@@ -244,22 +244,85 @@ const handleResumeUpload = async (event) => {
     const formDataObj = new FormData()
     formDataObj.append('file', file)
 
-    const data = await $fetch(`${config.public.apiBase}/api/extract-text`, {
+    // Request parsed structured data by adding parse=true parameter
+    const data = await $fetch(`${config.public.apiBase}/api/extract-text?parse=true`, {
       method: 'POST',
       body: formDataObj
     })
 
     if (data.text) {
       resumeText.value = data.text
-      parseResumeContent(data.text)
-      successMessage.value = 'Resume uploaded and content extracted successfully!'
-      setTimeout(() => successMessage.value = '', 3000)
+      
+      // If we have parsed data from Gemini AI, use it
+      if (data.parsedData) {
+        populateFormWithParsedData(data.parsedData)
+        successMessage.value = 'Resume uploaded and parsed successfully! All fields have been populated.'
+      } else {
+        // Fallback to basic parsing
+        parseResumeContent(data.text)
+        successMessage.value = 'Resume uploaded successfully! Basic information extracted.'
+      }
+      
+      setTimeout(() => successMessage.value = '', 5000)
     }
   } catch (error) {
     console.error('Resume upload error:', error)
     uploadError.value = error.data?.error || 'Failed to extract text from resume'
   } finally {
     isProcessing.value = false
+  }
+}
+
+const populateFormWithParsedData = (parsedData) => {
+  // Populate personal information
+  if (parsedData.fullName) formData.value.fullName = parsedData.fullName
+  if (parsedData.title) formData.value.title = parsedData.title
+  if (parsedData.email) formData.value.email = parsedData.email
+  if (parsedData.phone) formData.value.phone = parsedData.phone
+  if (parsedData.location) formData.value.location = parsedData.location
+  if (parsedData.linkedin) formData.value.linkedin = parsedData.linkedin
+  if (parsedData.github) formData.value.github = parsedData.github
+  if (parsedData.portfolio) formData.value.portfolio = parsedData.portfolio
+  if (parsedData.summary) formData.value.summary = parsedData.summary
+
+  // Populate skills
+  if (parsedData.skills) {
+    formData.value.skills = {
+      backend: parsedData.skills.backend || [],
+      frontend: parsedData.skills.frontend || [],
+      devops: parsedData.skills.devops || [],
+      other: parsedData.skills.other || []
+    }
+  }
+
+  // Populate experience
+  if (parsedData.experience && parsedData.experience.length > 0) {
+    formData.value.experience = parsedData.experience.map((exp, index) => ({
+      id: index + 1,
+      position: exp.position || '',
+      company: exp.company || '',
+      location: exp.location || '',
+      startDate: exp.startDate || '',
+      endDate: exp.endDate || '',
+      current: exp.current || false,
+      responsibilities: exp.responsibilities || ['']
+    }))
+  }
+
+  // Populate education
+  if (parsedData.education && parsedData.education.length > 0) {
+    formData.value.education = parsedData.education.map((edu, index) => ({
+      id: index + 1,
+      degree: edu.degree || '',
+      institution: edu.institution || '',
+      year: edu.year || '',
+      percentage: edu.percentage || ''
+    }))
+  }
+
+  // Populate achievements
+  if (parsedData.achievements && parsedData.achievements.length > 0) {
+    formData.value.achievements = parsedData.achievements
   }
 }
 
@@ -279,9 +342,6 @@ const parseResumeContent = (text) => {
       formData.value.fullName = firstLine
     }
   }
-
-  successMessage.value = '✓ Resume content extracted!'
-  setTimeout(() => successMessage.value = '', 3000)
 }
 
 const addExperience = () => {
