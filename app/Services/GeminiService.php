@@ -9,12 +9,15 @@ class GeminiService
 {
     protected string $apiKey;
     protected string $model;
+    protected string $textPhrasesModel;
     protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
         $this->model = config('services.gemini.model', 'gemini-pro');
+        $this->textPhrasesModel = config('services.gemini.text_phrases_model', 'gemini-flash-latest');
+
     }
 
     /**
@@ -382,7 +385,7 @@ class GeminiService
             $prompt = $this->buildResumeParsingPrompt($resumeText);
             
             $response = Http::timeout(60)
-                ->post("{$this->baseUrl}{$this->model}:generateContent?key={$this->apiKey}", [
+                ->post("{$this->baseUrl}{$this->textPhrasesModel}:generateContent?key={$this->apiKey}", [
                     'contents' => [
                         [
                             'parts' => [

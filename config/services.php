@@ -56,6 +56,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-pro'),
+        'text_phrases_model' => env('GEMINI_TEXT_PHRASES_MODEL', 'gemini-flash-latest'),
     ],
 
     'razorpay' => [
