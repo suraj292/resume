@@ -237,13 +237,45 @@ const selectTemplate = (templateId) => {
   setTimeout(() => successMessage.value = '', 2000)
 }
 
+const handleCustomColor = () => {
+  selectedColor.value = null
+  successMessage.value = '✓ Custom color applied'
+  setTimeout(() => successMessage.value = '', 2000)
+}
+
+const adjustColorBrightness = (hex, percent) => {
+  // Remove # if present
+  hex = hex.replace('#', '')
+  
+  // Convert to RGB
+  let r = parseInt(hex.substring(0, 2), 16)
+  let g = parseInt(hex.substring(2, 4), 16)
+  let b = parseInt(hex.substring(4, 6), 16)
+  
+  // Adjust brightness
+  r = Math.max(0, Math.min(255, r + (r * percent / 100)))
+  g = Math.max(0, Math.min(255, g + (g * percent / 100)))
+  b = Math.max(0, Math.min(255, b + (b * percent / 100)))
+  
+  // Convert back to hex
+  const toHex = (n) => {
+    const hex = Math.round(n).toString(16)
+    return hex.length === 1 ? '0' + hex : hex
+  }
+  
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+const getColorGradientStyle = (hex) => {
+  const darkerColor = adjustColorBrightness(hex, -20)
+  return {
+    background: `linear-gradient(135deg, ${hex} 0%, ${darkerColor} 100%)`
+  }
+}
+
 const selectColor = (color) => {
   selectedColor.value = color.id
   customColor.value = ''
-}
-
-const handleCustomColor = () => {
-  selectedColor.value = 'custom'
 }
 
 const handleResumeUpload = async (event) => {
@@ -757,14 +789,35 @@ useHead({
               <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 <div v-for="template in templatesFromJSON" :key="template.id" @click="selectTemplate(template.id)"
                   :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-100']">
-                  <div class="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl mb-2 sm:mb-3 flex items-center justify-center">
-                    <i class="fa-solid fa-file-lines text-2xl sm:text-4xl text-slate-300"></i>
+                  
+                  <!-- Dynamic Template Thumbnail -->
+                  <div :class="['aspect-[3/4] rounded-xl mb-2 sm:mb-3 overflow-hidden', template.thumbnail.bg]">
+                    <div :class="['w-full h-full flex', template.thumbnail.mainClass]">
+                      <template v-for="(element, idx) in template.thumbnail.elements" :key="idx">
+                        <div :class="element.class">
+                          <template v-if="element.children">
+                            <template v-for="(child, cidx) in element.children" :key="cidx">
+                              <div :class="child.class">
+                                <template v-if="child.children">
+                                  <div v-for="(grandchild, gidx) in child.children" :key="gidx" :class="grandchild.class"></div>
+                                </template>
+                              </div>
+                            </template>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
                   </div>
+
                   <div class="px-1 sm:px-2 pb-1 sm:pb-2">
                     <h3 class="font-bold text-xs sm:text-sm text-slate-800 truncate">{{ template.name }}</h3>
                     <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">{{ template.type }}</p>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <span v-for="tag in template.tags.slice(0, 2)" :key="tag" class="text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">{{ tag }}</span>
+                    </div>
                   </div>
-                  <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                  
+                  <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                     <i class="fa-solid fa-check text-white text-[10px] sm:text-xs"></i>
                   </div>
                 </div>
@@ -773,31 +826,42 @@ useHead({
 
             <!-- Tab: Colors -->
             <div v-show="activeTab === 'colors'" class="tab-content">
-              <header class="mb-8">
+              <header class="mb-6">
                 <h2 class="text-xl font-display font-bold text-slate-800">Accent Colors</h2>
-                <p class="text-slate-400 text-xs mt-1 font-medium italic">Apply a brand identity to your resume</p>
+                <p class="text-slate-400 text-xs mt-1 font-medium italic">Choose a color that represents your brand</p>
               </header>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button v-for="color in colorPalettes" :key="color.id" @click="selectColor(color)"
-                  :class="['color-card text-left bg-white border-2 p-4 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedColor === color.id ? 'color-card-active border-indigo-600' : 'border-slate-100']">
-                  <div :style="{ backgroundColor: color.hex }" class="w-full h-16 rounded-xl mb-3 shadow-inner"></div>
-                  <h3 class="font-bold text-sm text-slate-800">{{ color.name }}</h3>
-                  <p class="text-[10px] text-slate-400 mt-0.5">{{ color.category }}</p>
-                  <div v-if="selectedColor === color.id" class="absolute top-4 right-4 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <i class="fa-solid fa-check text-white text-xs"></i>
+                  :class="['color-card relative text-left bg-white border-2 p-3 sm:p-4 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedColor === color.id ? 'color-card-active border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-100']">
+                  
+                  <!-- Color Preview with Gradient -->
+                  <div class="relative w-full h-14 sm:h-16 rounded-xl mb-2 sm:mb-3 overflow-hidden shadow-inner">
+                    <div :style="{ backgroundColor: color.hex }" class="absolute inset-0"></div>
+                    <div :style="getColorGradientStyle(color.hex)" class="absolute inset-0"></div>
+                  </div>
+
+                  <h3 class="font-bold text-xs sm:text-sm text-slate-800">{{ color.name }}</h3>
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">{{ color.category }}</p>
+                  
+                  <div v-if="selectedColor === color.id" class="absolute top-2 sm:top-3 right-2 sm:right-3 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-check text-[10px] sm:text-xs" :style="{ color: color.hex }"></i>
                   </div>
                 </button>
 
                 <!-- Custom Color -->
-                <div class="relative bg-white border-2 border-slate-100 p-4 rounded-2xl hover:border-indigo-200 transition-all">
-                  <label for="custom-color-input" class="cursor-pointer">
-                    <div class="w-full h-16 rounded-xl mb-3 shadow-inner overflow-hidden relative">
+                <div class="relative bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 p-3 sm:p-4 rounded-2xl hover:border-indigo-300 transition-all">
+                  <label for="custom-color-input" class="cursor-pointer block">
+                    <div class="relative w-full h-14 sm:h-16 rounded-xl mb-2 sm:mb-3 overflow-hidden shadow-inner border-2 border-white">
                       <input id="custom-color-input" v-model="customColor" @input="handleCustomColor" type="color"
-                        class="absolute inset-0 w-full h-full cursor-pointer">
+                        class="absolute inset-0 w-full h-full cursor-pointer opacity-0">
+                      <div :style="{ backgroundColor: customColor || '#6366f1' }" class="absolute inset-0"></div>
+                      <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa-solid fa-palette text-white text-xl opacity-50"></i>
+                      </div>
                     </div>
-                    <h3 class="font-bold text-sm text-slate-800">Custom Color</h3>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Choose your own</p>
+                    <h3 class="font-bold text-xs sm:text-sm text-slate-800">Custom Color</h3>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">Pick your own</p>
                   </label>
                 </div>
               </div>
