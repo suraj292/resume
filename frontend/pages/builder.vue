@@ -1219,7 +1219,8 @@ useHead({
                   minHeight: '297mm',
                   transform: `scale(${previewScale})`,
                   transformOrigin: 'top center',
-                  marginTop: `calc(-297mm * (1 - ${previewScale}))`
+                  marginTop: `calc(-297mm * (1 - ${previewScale}))`,
+                  marginBottom: `calc(-297mm * (1 - ${previewScale}))`
                 }"
               >
                 <div class="resume-content p-16">
