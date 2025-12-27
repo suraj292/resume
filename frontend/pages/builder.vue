@@ -1277,9 +1277,13 @@ useHead({
             <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
-        <div class="preview-container p-4 space-y-6">
+        <div class="preview-container p-4 space-y-3">
           <!-- Page 1 -->
-          <div :key="selectedTemplate" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative transition-all duration-500">
+          <div 
+            :key="selectedTemplate" 
+            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-500"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', padding: '1rem' }"
+          >
             <!-- Page Number -->
             <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
             
@@ -1335,7 +1339,11 @@ useHead({
           </div>
 
           <!-- Page 2 (if content overflows) -->
-          <div v-if="needsSecondPage" class="bg-white shadow-2xl w-full min-h-[1056px] max-h-[1056px] p-6 mx-auto overflow-hidden relative">
+          <div 
+            v-if="needsSecondPage" 
+            class="bg-white shadow-2xl mx-auto overflow-hidden relative"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', padding: '1rem' }"
+          >
             <!-- Page Number -->
             <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 2</div>
             
