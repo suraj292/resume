@@ -8,6 +8,8 @@ const { isAuthenticated, currentUser, logout } = useAuth()
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
+  //<!-- Mobile Menu Button -->
+  //<!-- Mobile Menu -->
 }
 
 const handleScroll = () => {
@@ -123,13 +125,20 @@ onUnmounted(() => {
       </div>
 
       <!-- Mobile Menu Button -->
-      <button @click="toggleMenu" class="md:hidden text-slate-600 text-xl focus:outline-none">
-        <i class="fa-solid" :class="isMenuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+      <button v-if="!isMenuOpen" @click="toggleMenu" class="md:hidden text-slate-600 text-xl focus:outline-none">
+        <i class="fa-solid fa-bars"></i>
       </button>
     </div>
 
     <!-- Mobile Menu -->
-    <div v-if="isMenuOpen" class="md:hidden bg-white border-t border-slate-100 px-6 py-4 shadow-lg absolute w-full left-0 top-20 flex flex-col gap-4">
+    <div v-if="isMenuOpen" class="md:hidden bg-white border-t border-slate-100 px-6 py-4 shadow-lg absolute w-full left-0 top-20 z-50 flex flex-col gap-4">
+      <!-- Close Button -->
+      <div class="flex justify-end -mt-2 -mr-2">
+        <button @click="toggleMenu" class="text-slate-600 text-2xl focus:outline-none p-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
       <NuxtLink to="/" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Home</NuxtLink>
       <NuxtLink to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">Resume Builder</NuxtLink>
       <NuxtLink to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600" @click="isMenuOpen = false">ATS Checker</NuxtLink>
