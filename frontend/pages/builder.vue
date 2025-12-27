@@ -35,6 +35,17 @@ const router = useRouter()
 const { isAuthenticated, fetchUser } = useAuth()
 const showAuthModal = ref(false)
 
+// ATS Badge Animation Loop
+const isPulsing = ref(false)
+onMounted(() => {
+  if (process.client) {
+    setInterval(() => {
+      isPulsing.value = true
+      setTimeout(() => isPulsing.value = false, 2000)
+    }, 4000)
+  }
+})
+
 // Check authentication on mount
 onMounted(async () => {
   // Handle OAuth callback
@@ -1000,6 +1011,15 @@ useHead({
 </script>
 
 <template>
+  <div :class="['ats-floating-badge', { 'ats-pulse-burst': isPulsing }]">
+    <div class="ats-shimmer-sweep"></div>
+    <div class="ats-floating-label">ATS Score</div>
+    <div class="ats-floating-score-wrapper">
+      <span class="ats-floating-score">80</span>
+      <span class="ats-floating-total">/100</span>
+    </div>
+  </div>
+
   <!-- Auth Required Modal -->
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
 
@@ -2329,5 +2349,123 @@ useHead({
 #toast-container .toast-title {
   font-weight: 700 !important;
   font-size: 15px !important;
+}
+
+/* ATS Floating Badge Styles */
+.ats-floating-badge {
+  padding: 16px;
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  width: 130px;
+  height: 90px;
+  position: fixed;
+  z-index: 50;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 24px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 25px 50px -12px rgba(234, 88, 12, 0.4);
+  font-family: 'Inter', sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: default;
+  user-select: none;
+  animation: ats-float 4s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.ats-shimmer-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  animation: ats-shimmer 3s infinite;
+}
+
+.ats-pulse-burst {
+  box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+  animation: ats-float 4s ease-in-out infinite, pulse-glow 2s infinite;
+}
+
+@keyframes ats-float {
+  0%, 100% { transform: translateY(-50%); }
+  50% { transform: translateY(-58%); }
+}
+
+@keyframes ats-shimmer {
+  0% { transform: translateX(-200%) skewX(-25deg); }
+  100% { transform: translateX(300%) skewX(-25deg); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba(234, 88, 12, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+}
+
+.ats-floating-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.ats-floating-score-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.ats-floating-score {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ats-floating-total {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Responsive adjustments for ATS Badge */
+@media (max-width: 1024px) {
+  .ats-floating-badge {
+    width: 80px;
+    height: 60px;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 16px;
+    padding: 10px;
+    animation: ats-float 4s ease-in-out infinite;
+    opacity: 0.8;
+  }
+
+  .ats-floating-score {
+    font-size: 20px;
+  }
+  
+  .ats-floating-label {
+    font-size: 6px;
+  }
+  
+  @keyframes ats-float-mobile {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
 }
 </style>
