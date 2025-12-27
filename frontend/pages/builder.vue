@@ -643,9 +643,90 @@ const analyzeSkillGap = () => {
   setTimeout(() => uploadError.value = '', 3000)
 }
 
-const exportPDF = () => {
-  if (process.client) {
-    window.print()
+const exportPDF = async () => {
+  if (!process.client) return
+  
+  try {
+    // Show loading state
+    isProcessing.value = true
+    
+    // Dynamically import required libraries
+    const html2canvas = (await import('html2canvas')).default
+    const { jsPDF } = await import('jspdf')
+    
+    // Get all resume pages
+    const pages = document.querySelectorAll('.preview-container .resume-paper')
+    if (!pages || pages.length === 0) {
+      uploadError.value = 'Resume preview not found'
+      isProcessing.value = false
+      return
+    }
+    
+    // Create PDF document
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    })
+    
+    // Process each page
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i] as HTMLElement
+      
+      // Clone the page
+      const clone = page.cloneNode(true) as HTMLElement
+      
+      // Reset transforms and margins
+      clone.style.transform = 'none'
+      clone.style.transformOrigin = 'initial'
+      clone.style.marginTop = '0'
+      clone.style.marginBottom = '0'
+      clone.style.width = '210mm'
+      clone.style.minHeight = '297mm'
+      clone.style.position = 'absolute'
+      clone.style.left = '-9999px'
+      clone.style.top = '0'
+      
+      // Append to body temporarily
+      document.body.appendChild(clone)
+      
+      // Capture as canvas
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 794,  // A4 width in pixels
+        height: 1123 // A4 height in pixels
+      })
+      
+      // Remove clone from DOM
+      document.body.removeChild(clone)
+      
+      // Convert canvas to image
+      const imgData = canvas.toDataURL('image/jpeg', 0.98)
+      
+      // Add new page if not first page
+      if (i > 0) {
+        pdf.addPage()
+      }
+      
+      // Add image to PDF (A4 size: 210mm x 297mm)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297)
+    }
+    
+    // Download the PDF
+    pdf.save(`${formData.value.fullName || 'Resume'}_Resume.pdf`)
+    
+    // Show success message
+    successMessage.value = '✓ PDF downloaded successfully!'
+    setTimeout(() => successMessage.value = '', 3000)
+    
+  } catch (error) {
+    console.error('PDF export error:', error)
+    uploadError.value = 'Failed to export PDF. Please try again.'
+    setTimeout(() => uploadError.value = '', 3000)
+  } finally {
+    isProcessing.value = false
   }
 }
 
