@@ -879,6 +879,204 @@ useHead({
                       class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
                   </div>
                 </div>
+
+                <!-- LinkedIn -->
+                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
+                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">LinkedIn Profile</label>
+                    <input v-model="formData.linkedin" type="url" placeholder="linkedin.com/in/yourprofile"
+                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
+                  </div>
+                </div>
+
+                <!-- GitHub -->
+                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
+                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">GitHub Profile</label>
+                    <input v-model="formData.github" type="url" placeholder="github.com/yourusername"
+                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
+                  </div>
+                </div>
+
+                <!-- Portfolio -->
+                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
+                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Website</label>
+                    <input v-model="formData.portfolio" type="url" placeholder="yourwebsite.com"
+                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
+                  </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
+                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Professional Summary</label>
+                    <textarea v-model="formData.summary" rows="4" placeholder="Brief overview of your professional background..."
+                      class="w-full bg-transparent font-normal text-slate-700 outline-none text-sm resize-none"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Skills Section -->
+              <div class="mt-8">
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Skills</h3>
+                <div class="space-y-4">
+                  <!-- Backend Skills -->
+                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="text-sm font-bold text-slate-700">Backend</label>
+                      <button @click="addSkill('backend')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, index) in formData.skills.backend" :key="index" 
+                        class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                        {{ skill }}
+                        <button @click="removeSkill('backend', index)" class="hover:text-blue-900">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Frontend Skills -->
+                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="text-sm font-bold text-slate-700">Frontend</label>
+                      <button @click="addSkill('frontend')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, index) in formData.skills.frontend" :key="index" 
+                        class="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                        {{ skill }}
+                        <button @click="removeSkill('frontend', index)" class="hover:text-green-900">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- DevOps Skills -->
+                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="text-sm font-bold text-slate-700">DevOps</label>
+                      <button @click="addSkill('devops')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, index) in formData.skills.devops" :key="index" 
+                        class="inline-flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
+                        {{ skill }}
+                        <button @click="removeSkill('devops', index)" class="hover:text-orange-900">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Other Skills -->
+                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="text-sm font-bold text-slate-700">Other</label>
+                      <button @click="addSkill('other')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, index) in formData.skills.other" :key="index" 
+                        class="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+                        {{ skill }}
+                        <button @click="removeSkill('other', index)" class="hover:text-purple-900">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Experience Section -->
+              <div class="mt-8">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-lg font-bold text-slate-900">Work Experience</h3>
+                  <button @click="addExperience" class="text-indigo-600 hover:text-indigo-700 text-sm font-bold">+ Add Experience</button>
+                </div>
+                <div class="space-y-4">
+                  <div v-for="(exp, index) in formData.experience" :key="exp.id" class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-start mb-3">
+                      <h4 class="text-sm font-bold text-slate-900">Experience {{ index + 1 }}</h4>
+                      <button @click="removeExperience(index)" v-if="formData.experience.length > 1" class="text-red-600 hover:text-red-700">
+                        <i class="fa-solid fa-trash text-sm"></i>
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                      <input v-model="exp.position" type="text" placeholder="Position" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="exp.company" type="text" placeholder="Company" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="exp.startDate" type="text" placeholder="Start Date" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="exp.endDate" type="text" placeholder="End Date" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div class="mb-2">
+                      <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-slate-700">Responsibilities</label>
+                        <button @click="addResponsibility(index)" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
+                      </div>
+                      <div v-for="(resp, rIndex) in exp.responsibilities" :key="rIndex" class="flex gap-2 mb-2">
+                        <input v-model="exp.responsibilities[rIndex]" type="text" placeholder="Responsibility" 
+                          class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        <button @click="removeResponsibility(index, rIndex)" v-if="exp.responsibilities.length > 1" class="text-red-600 hover:text-red-700">
+                          <i class="fa-solid fa-trash text-sm"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Education Section -->
+              <div class="mt-8">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-lg font-bold text-slate-900">Education</h3>
+                  <button @click="addEducation" class="text-indigo-600 hover:text-indigo-700 text-sm font-bold">+ Add Education</button>
+                </div>
+                <div class="space-y-4">
+                  <div v-for="(edu, index) in formData.education" :key="edu.id" class="bg-white border border-slate-200 p-4 rounded-2xl">
+                    <div class="flex justify-between items-start mb-3">
+                      <h4 class="text-sm font-bold text-slate-900">Education {{ index + 1 }}</h4>
+                      <button @click="removeEducation(index)" v-if="formData.education.length > 1" class="text-red-600 hover:text-red-700">
+                        <i class="fa-solid fa-trash text-sm"></i>
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <input v-model="edu.degree" type="text" placeholder="Degree" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="edu.institution" type="text" placeholder="Institution" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="edu.year" type="text" placeholder="Year" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                      <input v-model="edu.percentage" type="text" placeholder="GPA/Percentage" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Achievements -->
+              <div class="mt-8">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-lg font-bold text-slate-900">Achievements</h3>
+                  <button @click="addAchievement" class="text-indigo-600 hover:text-indigo-700 text-sm font-bold">+ Add Achievement</button>
+                </div>
+                <div v-for="(achievement, achIndex) in formData.achievements" :key="achIndex" class="flex gap-2 mb-2">
+                  <input v-model="formData.achievements[achIndex]" type="text" placeholder="Achievement" 
+                    class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <button @click="removeAchievement(achIndex)" class="text-red-600 hover:text-red-700">
+                    <i class="fa-solid fa-trash text-sm"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
