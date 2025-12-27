@@ -19,11 +19,13 @@
     "jspdf": "^3.0.4",
     "nuxt": "^4.2.2",
     "pinia": "^2.3.0",
+    "toastr": "^2.1.4",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/toastr": "^2.1.43",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.1"
   }

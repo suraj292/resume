@@ -2,6 +2,30 @@
 import type { ResumeData, ThemeConfig, TemplateMetadata } from '~/types/resume'
 import { useResumeTemplate } from '~/composables/useResumeTemplate'
 import { useResumeTheme } from '~/composables/useResumeTheme'
+import toastr from 'toastr'
+import 'toastr/build/toastr.min.css'
+
+// Configure toastr
+toastr.options = {
+  closeButton: true,
+  progressBar: true,
+  positionClass: 'toast-top-right',
+  timeOut: 5000,
+  extendedTimeOut: 2000,
+  showMethod: 'slideDown',
+  hideMethod: 'slideUp',
+  showDuration: 300,
+  hideDuration: 200,
+  preventDuplicates: true,
+  newestOnTop: true,
+  toastClass: 'toastr-custom',
+  iconClasses: {
+    error: 'toast-error',
+    info: 'toast-info',
+    success: 'toast-success',
+    warning: 'toast-warning'
+  }
+}
 
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -103,6 +127,11 @@ const jobDescription = ref('')
 const atsScore = ref(0)
 const selectedTone = ref('Professional')
 const tones = ['Professional', 'Creative', 'Direct']
+const aiResults = ref({
+  atsOptimization: null as any,
+  improvedBullets: [] as string[],
+  skillGapAnalysis: null as any
+})
 
 // ATS Analysis Results
 const atsAnalysisCompleted = ref(false)
@@ -417,18 +446,16 @@ const handleResumeUpload = async (event: Event) => {
       // If we have parsed data from Gemini AI, use it
       if (data.parsedData) {
         populateFormWithParsedData(data.parsedData)
-        successMessage.value = 'Resume uploaded and parsed successfully! All fields have been populated.'
+        toastr.success('Resume uploaded and parsed successfully! All fields have been populated.', 'Success')
       } else {
         // Fallback to basic parsing
         parseResumeContent(data.text)
-        successMessage.value = 'Resume uploaded successfully! Basic information extracted.'
+        toastr.success('Resume uploaded successfully! Basic information extracted.', 'Success')
       }
-      
-      setTimeout(() => successMessage.value = '', 5000)
     }
   } catch (error: any) {
     console.error('Resume upload error:', error)
-    uploadError.value = error.data?.error || 'Failed to extract text from resume'
+    toastr.error(error.data?.error || 'Failed to extract text from resume', 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -599,7 +626,7 @@ const handleJobUpload = async (event: Event) => {
     }
   } catch (error: any) {
     console.error('Job upload error:', error)
-    uploadError.value = error.data?.error || 'Failed to extract text from job description'
+    toastr.error(error.data?.error || 'Failed to extract text from job description', 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -607,40 +634,277 @@ const handleJobUpload = async (event: Event) => {
 
 // Save context for AI
 const saveContext = async () => {
-  isProcessing.value = true
-  uploadError.value = ''
+  try {
+    isProcessing.value = true
+    uploadError.value = ''
+    
+    // Simulate processing time to show loader
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Show success message using toastr
+    toastr.success('Context saved for AI processing', 'Success')
+    
+  } catch (error: any) {
+    console.error('Save context error:', error)
+    const errorMsg = error.data?.message || error.message || 'Failed to save context'
+    toastr.error(errorMsg, 'Error')
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+// AI method implementations
+const generateResume = async () => {
+  if (isProcessing.value) return
   
-  // Simulate processing time to show loader
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  try {
+    isProcessing.value = true
+    uploadError.value = ''
+    
+    // Prepare resume context from current data
+    const resumeContext = `
+Name: ${formData.value.fullName}
+Title: ${formData.value.title}
+Email: ${formData.value.email}
+Phone: ${formData.value.phone}
+Location: ${formData.value.location}
+Summary: ${formData.value.summary}
+    `.trim()
+    
+    const response = await $fetch<{ success: boolean; data?: any; message?: string }>(`${config.public.apiBase}/api/ai/generate-resume`, {
+      method: 'POST',
+      body: {
+        resumeContext,
+        jobDescription: jobDescription.value,
+        tone: selectedTone.value,
+        currentData: formData.value
+      }
+    })
+    
+    if (response.success && response.data) {
+      // Update form data with AI-generated content
+      if (response.data.summary) {
+        formData.value.summary = response.data.summary
+      }
+      
+      if (response.data.experience && Array.isArray(response.data.experience)) {
+        formData.value.experience = response.data.experience.map((exp: any) => ({
+          id: Date.now() + Math.random(),
+          position: exp.position || '',
+          company: exp.company || '',
+          startDate: exp.startDate || '',
+          endDate: exp.endDate || '',
+          location: exp.location || '',
+          responsibilities: exp.responsibilities || []
+        }))
+      }
+      
+      if (response.data.skills) {
+        formData.value.skills = {
+          backend: response.data.skills.backend || [],
+          frontend: response.data.skills.frontend || [],
+          devops: response.data.skills.devops || [],
+          other: response.data.skills.other || []
+        }
+      }
+      
+      // Show API message using toastr
+      const message = response.message || 'Resume generated successfully!'
+      toastr.success(message, 'Success')
+    }
+    
+  } catch (error: any) {
+    console.error('Generate resume error:', error)
+    const errorMsg = error.data?.message || error.message || 'Failed to generate resume. Please try again.'
+    toastr.error(errorMsg, 'Error')
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+const optimizeForATS = async () => {
+  if (isProcessing.value) return
   
-  successMessage.value = '✓ Context saved for AI processing'
-  setTimeout(() => successMessage.value = '', 2000)
-  isProcessing.value = false
+  try {
+    isProcessing.value = true
+    uploadError.value = ''
+    
+    const response = await $fetch<{ success: boolean; suggestions?: any; message?: string }>(`${config.public.apiBase}/api/ai/optimize-ats`, {
+      method: 'POST',
+      body: {
+        currentResume: formData.value,
+        jobDescription: jobDescription.value
+      }
+    })
+    
+    if (response.success && response.suggestions) {
+      aiResults.value.atsOptimization = response.suggestions
+      
+      // Show API message using toastr
+      let message = response.message || ''
+      if (!message && response.suggestions.atsScore) {
+        message = `ATS Score: ${response.suggestions.atsScore}/100. Check suggestions below.`
+      } else if (!message) {
+        message = 'ATS optimization complete! Review suggestions.'
+      }
+      
+      toastr.success(message, 'Success')
+    }
+    
+  } catch (error: any) {
+    console.error('ATS optimization error:', error)
+    const errorMsg = error.data?.message || error.message || 'Failed to optimize for ATS. Please try again.'
+    toastr.error(errorMsg, 'Error')
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-// AI method stubs (to be implemented)
-const generateResume = () => {
-  console.log('Generate resume - To be implemented')
-  uploadError.value = 'This feature will be available soon!'
-  setTimeout(() => uploadError.value = '', 3000)
+const improveBulletPoints = async () => {
+  if (isProcessing.value) return
+  
+  try {
+    isProcessing.value = true
+    uploadError.value = ''
+    
+    // Collect all bullet points from experience
+    const allBullets: string[] = []
+    formData.value.experience.forEach(exp => {
+      if (exp.responsibilities && exp.responsibilities.length > 0) {
+        allBullets.push(...exp.responsibilities.filter(r => r.trim()))
+      }
+    })
+    
+    if (allBullets.length === 0) {
+      uploadError.value = 'No bullet points found. Add some experience first.'
+      setTimeout(() => uploadError.value = '', 3000)
+      isProcessing.value = false
+      return
+    }
+    
+    const response = await $fetch<{ success: boolean; improvedBullets?: string[]; message?: string }>(`${config.public.apiBase}/api/ai/improve-bullets`, {
+      method: 'POST',
+      body: {
+        bulletPoints: allBullets,
+        tone: selectedTone.value
+      }
+    })
+    
+    if (response.success && response.improvedBullets) {
+      aiResults.value.improvedBullets = response.improvedBullets
+      
+      // Show API message using toastr
+      const message = response.message || `Improved ${response.improvedBullets.length} bullet points! Review below.`
+      toastr.success(message, 'Success')
+    }
+    
+  } catch (error: any) {
+    console.error('Improve bullets error:', error)
+    const errorMsg = error.data?.message || error.message || 'Failed to improve bullet points. Please try again.'
+    toastr.error(errorMsg, 'Error')
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-const optimizeForATS = () => {
-  console.log('Optimize for ATS - To be implemented')
-  uploadError.value = 'This feature will be available soon!'
-  setTimeout(() => uploadError.value = '', 3000)
+const analyzeSkillGap = async () => {
+  if (isProcessing.value) return
+  
+  if (!jobDescription.value.trim()) {
+    uploadError.value = 'Please enter a job description first.'
+    setTimeout(() => uploadError.value = '', 3000)
+    return
+  }
+  
+  try {
+    isProcessing.value = true
+    uploadError.value = ''
+    
+    const response = await $fetch<{ success: boolean; analysis?: any; message?: string }>(`${config.public.apiBase}/api/ai/skill-gap`, {
+      method: 'POST',
+      body: {
+        currentSkills: formData.value.skills,
+        jobDescription: jobDescription.value
+      }
+    })
+    
+    if (response.success && response.analysis) {
+      aiResults.value.skillGapAnalysis = response.analysis
+      
+      // Show API message using toastr
+      const matchPercentage = response.analysis.matchPercentage || 0
+      const message = response.message || `Skill match: ${matchPercentage}%. Check analysis below.`
+      toastr.success(message, 'Success')
+    }
+    
+  } catch (error: any) {
+    console.error('Skill gap analysis error:', error)
+    const errorMsg = error.data?.message || error.message || 'Failed to analyze skill gap. Please try again.'
+    toastr.error(errorMsg, 'Error')
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-const improveBulletPoints = () => {
-  console.log('Improve bullet points - To be implemented')
-  uploadError.value = 'This feature will be available soon!'
-  setTimeout(() => uploadError.value = '', 3000)
+// Apply improved bullets to experience section
+const applyImprovedBullets = () => {
+  if (aiResults.value.improvedBullets.length === 0) return
+  
+  // Distribute improved bullets across experience entries
+  let bulletIndex = 0
+  formData.value.experience.forEach((exp, expIndex) => {
+    if (exp.responsibilities && bulletIndex < aiResults.value.improvedBullets.length) {
+      const bulletsToAdd = Math.min(
+        exp.responsibilities.length || 3,
+        aiResults.value.improvedBullets.length - bulletIndex
+      )
+      
+      exp.responsibilities = aiResults.value.improvedBullets.slice(
+        bulletIndex,
+        bulletIndex + bulletsToAdd
+      )
+      
+      bulletIndex += bulletsToAdd
+    }
+  })
+  
+  toastr.success('Improved bullets applied to your experience!', 'Success')
 }
 
-const analyzeSkillGap = () => {
-  console.log('Analyze skill gap - To be implemented')
-  uploadError.value = 'This feature will be available soon!'
-  setTimeout(() => uploadError.value = '', 3000)
+// Add missing skills from skill gap analysis
+const addMissingSkills = () => {
+  if (!aiResults.value.skillGapAnalysis?.missingSkills) return
+  
+  const missingSkills = aiResults.value.skillGapAnalysis.missingSkills
+  
+  // Add to "other" category by default, or try to categorize
+  missingSkills.forEach((skill: string) => {
+    const skillLower = skill.toLowerCase()
+    
+    // Try to categorize the skill
+    if (skillLower.includes('node') || skillLower.includes('python') || skillLower.includes('java') || 
+        skillLower.includes('backend') || skillLower.includes('api') || skillLower.includes('database')) {
+      if (!formData.value.skills.backend.includes(skill)) {
+        formData.value.skills.backend.push(skill)
+      }
+    } else if (skillLower.includes('react') || skillLower.includes('vue') || skillLower.includes('angular') || 
+               skillLower.includes('frontend') || skillLower.includes('css') || skillLower.includes('html')) {
+      if (!formData.value.skills.frontend.includes(skill)) {
+        formData.value.skills.frontend.push(skill)
+      }
+    } else if (skillLower.includes('docker') || skillLower.includes('kubernetes') || skillLower.includes('aws') || 
+               skillLower.includes('devops') || skillLower.includes('ci/cd') || skillLower.includes('jenkins')) {
+      if (!formData.value.skills.devops.includes(skill)) {
+        formData.value.skills.devops.push(skill)
+      }
+    } else {
+      if (!formData.value.skills.other.includes(skill)) {
+        formData.value.skills.other.push(skill)
+      }
+    }
+  })
+  
+  toastr.success(`Added ${missingSkills.length} missing skills to your resume!`, 'Success')
 }
 
 const exportPDF = async () => {
@@ -883,13 +1147,6 @@ useHead({
                   {{ isProcessing ? 'Saving...' : 'Save Context for AI' }}
                 </button>
 
-                <!-- Success/Error Messages -->
-                <div v-if="successMessage" class="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs font-medium">
-                  {{ successMessage }}
-                </div>
-                <div v-if="uploadError" class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
-                  {{ uploadError }}
-                </div>
               </div>
             </div>
 
@@ -1238,6 +1495,202 @@ useHead({
                         <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-400 transition-colors"></i>
                       </div>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Job Description Input -->
+                <div class="p-5 bg-slate-50 rounded-3xl border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Job Description (Optional)</label>
+                  <textarea 
+                    v-model="jobDescription" 
+                    placeholder="Paste the job description here for better AI results..."
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    rows="4"
+                  ></textarea>
+                  <p class="text-[10px] text-slate-400 mt-2">AI will tailor your resume to match this job description</p>
+                </div>
+
+                <!-- AI Results Display -->
+                <div v-if="aiResults.atsOptimization" class="p-5 bg-blue-50 rounded-3xl border border-blue-200">
+                  <h3 class="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-robot"></i>
+                    ATS Optimization Results
+                  </h3>
+                  
+                  <!-- ATS Score -->
+                  <div v-if="aiResults.atsOptimization.atsScore" class="mb-4 p-4 bg-white rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-bold text-slate-700">ATS Score</span>
+                      <span class="text-2xl font-bold text-blue-600">{{ aiResults.atsOptimization.atsScore }}/100</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-3">
+                      <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" :style="{ width: aiResults.atsOptimization.atsScore + '%' }"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-2">
+                      {{ aiResults.atsOptimization.atsScore >= 80 ? 'Excellent! Your resume is well-optimized.' : 
+                         aiResults.atsOptimization.atsScore >= 60 ? 'Good, but there\'s room for improvement.' : 
+                         'Needs improvement to pass ATS systems.' }}
+                    </p>
+                  </div>
+
+                  <!-- Missing Keywords -->
+                  <div v-if="aiResults.atsOptimization.missingKeywords && aiResults.atsOptimization.missingKeywords.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      <i class="fa-solid fa-exclamation-triangle text-amber-600"></i>
+                      Missing Keywords ({{ aiResults.atsOptimization.missingKeywords.length }})
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(keyword, idx) in aiResults.atsOptimization.missingKeywords" :key="idx" 
+                        class="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold">
+                        {{ keyword }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Priority Changes -->
+                  <div v-if="aiResults.atsOptimization.priorityChanges && aiResults.atsOptimization.priorityChanges.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      <i class="fa-solid fa-star text-amber-500"></i>
+                      Priority Changes
+                    </p>
+                    <ul class="space-y-2">
+                      <li v-for="(change, idx) in aiResults.atsOptimization.priorityChanges.slice(0, 3)" :key="idx" 
+                        class="text-xs text-slate-600 flex items-start gap-2">
+                        <i class="fa-solid fa-check-circle text-green-600 mt-0.5"></i>
+                        <span>{{ change }}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- All Suggestions -->
+                  <div v-if="aiResults.atsOptimization.suggestions && aiResults.atsOptimization.suggestions.length > 0" class="p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2">All Suggestions ({{ aiResults.atsOptimization.suggestions.length }})</p>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                      <div v-for="(suggestion, idx) in aiResults.atsOptimization.suggestions" :key="idx" 
+                        class="p-2 bg-blue-50 rounded-lg border border-blue-100">
+                        <div class="flex items-start gap-2">
+                          <i class="fa-solid fa-lightbulb text-blue-600 mt-0.5 text-xs"></i>
+                          <p class="text-xs text-slate-700 flex-1">{{ suggestion.action || suggestion }}</p>
+                        </div>
+                        <span v-if="suggestion.type" class="inline-block mt-1 px-2 py-0.5 bg-blue-200 text-blue-800 rounded text-[9px] font-bold uppercase">
+                          {{ suggestion.type }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="aiResults.improvedBullets.length > 0" class="p-5 bg-emerald-50 rounded-3xl border border-emerald-200">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-emerald-900 flex items-center gap-2">
+                      <i class="fa-solid fa-list"></i>
+                      Improved Bullet Points ({{ aiResults.improvedBullets.length }})
+                    </h3>
+                    <button 
+                      @click="applyImprovedBullets" 
+                      class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors"
+                    >
+                      <i class="fa-solid fa-check mr-1"></i>
+                      Apply All
+                    </button>
+                  </div>
+                  <div class="space-y-3 max-h-96 overflow-y-auto">
+                    <div v-for="(bullet, idx) in aiResults.improvedBullets" :key="idx" class="p-3 bg-white rounded-lg border border-emerald-200">
+                      <div class="flex items-start gap-2 mb-2">
+                        <i class="fa-solid fa-arrow-right text-emerald-600 mt-1"></i>
+                        <p class="text-xs text-slate-700 flex-1">{{ bullet }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="text-[10px] text-slate-500 mt-3 italic">
+                    Click "Apply All" to update your experience section with these improved bullets
+                  </p>
+                </div>
+
+                <div v-if="aiResults.skillGapAnalysis" class="p-5 bg-amber-50 rounded-3xl border border-amber-200">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-amber-900 flex items-center gap-2">
+                      <i class="fa-solid fa-chart-line"></i>
+                      Skill Gap Analysis
+                    </h3>
+                    <button 
+                      v-if="aiResults.skillGapAnalysis.missingSkills && aiResults.skillGapAnalysis.missingSkills.length > 0"
+                      @click="addMissingSkills" 
+                      class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors"
+                    >
+                      <i class="fa-solid fa-plus mr-1"></i>
+                      Add Missing Skills
+                    </button>
+                  </div>
+                  
+                  <!-- Match Percentage -->
+                  <div v-if="aiResults.skillGapAnalysis.matchPercentage !== undefined" class="mb-4 p-4 bg-white rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-bold text-slate-700">Match Percentage</span>
+                      <span class="text-2xl font-bold text-amber-600">{{ aiResults.skillGapAnalysis.matchPercentage }}%</span>
+                    </div>
+                    <div class="w-full bg-amber-200 rounded-full h-3">
+                      <div class="bg-amber-600 h-3 rounded-full transition-all duration-500" :style="{ width: aiResults.skillGapAnalysis.matchPercentage + '%' }"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-2">
+                      {{ aiResults.skillGapAnalysis.matchPercentage >= 80 ? 'Excellent match! You have most required skills.' : 
+                         aiResults.skillGapAnalysis.matchPercentage >= 60 ? 'Good match, consider adding missing skills.' : 
+                         'Significant skill gap. Focus on learning missing skills.' }}
+                    </p>
+                  </div>
+
+                  <!-- Missing Skills -->
+                  <div v-if="aiResults.skillGapAnalysis.missingSkills && aiResults.skillGapAnalysis.missingSkills.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      <i class="fa-solid fa-times-circle text-red-600"></i>
+                      Missing Skills ({{ aiResults.skillGapAnalysis.missingSkills.length }})
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, idx) in aiResults.skillGapAnalysis.missingSkills" :key="idx" 
+                        class="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Matching Skills -->
+                  <div v-if="aiResults.skillGapAnalysis.matchingSkills && aiResults.skillGapAnalysis.matchingSkills.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      <i class="fa-solid fa-check-circle text-green-600"></i>
+                      Matching Skills ({{ aiResults.skillGapAnalysis.matchingSkills.length }})
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, idx) in aiResults.skillGapAnalysis.matchingSkills" :key="idx" 
+                        class="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Recommended Skills -->
+                  <div v-if="aiResults.skillGapAnalysis.recommendedSkills && aiResults.skillGapAnalysis.recommendedSkills.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      <i class="fa-solid fa-star text-blue-600"></i>
+                      Recommended Skills ({{ aiResults.skillGapAnalysis.recommendedSkills.length }})
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(skill, idx) in aiResults.skillGapAnalysis.recommendedSkills" :key="idx" 
+                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Suggestions -->
+                  <div v-if="aiResults.skillGapAnalysis.suggestions && aiResults.skillGapAnalysis.suggestions.length > 0" class="p-4 bg-white rounded-xl">
+                    <p class="text-xs font-bold text-slate-700 mb-2">Learning Recommendations</p>
+                    <ul class="space-y-2">
+                      <li v-for="(suggestion, idx) in aiResults.skillGapAnalysis.suggestions" :key="idx" 
+                        class="text-xs text-slate-600 flex items-start gap-2">
+                        <i class="fa-solid fa-graduation-cap text-amber-600 mt-0.5"></i>
+                        <span>{{ suggestion }}</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
 
@@ -1846,5 +2299,35 @@ useHead({
   .preview-fab {
     display: none;
   }
+}
+
+/* Toastr Custom Styles - Ensure visibility */
+#toast-container {
+  z-index: 999999 !important;
+}
+
+#toast-container > div {
+  opacity: 1 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 16px 20px !important;
+  min-width: 300px !important;
+}
+
+#toast-container .toast-success {
+  background-color: #10b981 !important;
+}
+
+#toast-container .toast-error {
+  background-color: #ef4444 !important;
+}
+
+#toast-container .toast-message {
+  font-size: 14px !important;
+}
+
+#toast-container .toast-title {
+  font-weight: 700 !important;
+  font-size: 15px !important;
 }
 </style>
