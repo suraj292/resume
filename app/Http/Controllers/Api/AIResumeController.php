@@ -36,9 +36,12 @@ class AIResumeController extends Controller
             
             $response = $this->geminiService->generateContent($prompt);
 
+            $parsedData = $this->parseAIResponse($response);
+
             return response()->json([
                 'success' => true,
-                'data' => $this->parseAIResponse($response),
+                'data' => $parsedData,
+                'atsScore' => $parsedData['atsScore'] ?? null,
                 'message' => 'Resume generated successfully'
             ]);
 
@@ -207,7 +210,8 @@ You are an expert resume writer. Generate a complete, ATS-optimized resume based
         "frontend": ["skill1", "skill2"],
         "devops": ["skill1", "skill2"],
         "other": ["skill1", "skill2"]
-    }
+    },
+    "atsScore": 85
 }
 
 Generate a compelling, tailored resume now.

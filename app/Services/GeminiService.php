@@ -465,6 +465,7 @@ class GeminiService
             'github' => 'GitHub profile URL (if available)',
             'portfolio' => 'Portfolio website URL (if available)',
             'summary' => 'Professional summary or objective (2-3 sentences)',
+            'atsScore' => 'A score from 0-100 indicating overall resume quality/completeness without a job description',
             'skills' => [
                 'backend' => ['skill1', 'skill2'],
                 'frontend' => ['skill1', 'skill2'],
@@ -547,6 +548,7 @@ class GeminiService
                 'github' => $data['github'] ?? '',
                 'portfolio' => $data['portfolio'] ?? '',
                 'summary' => $data['summary'] ?? '',
+                'atsScore' => $data['atsScore'] ?? 0,
                 'skills' => [
                     'backend' => $data['skills']['backend'] ?? [],
                     'frontend' => $data['skills']['frontend'] ?? [],
@@ -574,6 +576,7 @@ class GeminiService
                 'github' => '',
                 'portfolio' => '',
                 'summary' => '',
+                'atsScore' => 0,
                 'skills' => [
                     'backend' => [],
                     'frontend' => [],

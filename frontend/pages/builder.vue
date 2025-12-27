@@ -446,13 +446,19 @@ const handleResumeUpload = async (event: Event) => {
     formDataObj.append('file', file)
 
     // Request parsed structured data by adding parse=true parameter
-    const data = await $fetch<{ text?: string; parsedData?: any }>(`${config.public.apiBase}/api/extract-text?parse=true`, {
+    const data = await $fetch<{ text?: string; parsedData?: any; atsScore?: number }>(`${config.public.apiBase}/api/extract-text?parse=true`, {
       method: 'POST',
       body: formDataObj
     })
 
     if (data.text) {
       resumeText.value = data.text
+      
+      // Update ATS score if returned
+      if (data.atsScore) {
+        atsScore.value = data.atsScore
+        atsAnalysisCompleted.value = true
+      }
       
       // If we have parsed data from Gemini AI, use it
       if (data.parsedData) {
@@ -682,7 +688,7 @@ Location: ${formData.value.location}
 Summary: ${formData.value.summary}
     `.trim()
     
-    const response = await $fetch<{ success: boolean; data?: any; message?: string }>(`${config.public.apiBase}/api/ai/generate-resume`, {
+    const response = await $fetch<{ success: boolean; data?: any; message?: string; atsScore?: number }>(`${config.public.apiBase}/api/ai/generate-resume`, {
       method: 'POST',
       body: {
         resumeContext,
@@ -693,6 +699,12 @@ Summary: ${formData.value.summary}
     })
     
     if (response.success && response.data) {
+      // Update ATS score if returned
+      if (response.atsScore) {
+        atsScore.value = response.atsScore
+        atsAnalysisCompleted.value = true
+      }
+      
       // Update form data with AI-generated content
       if (response.data.summary) {
         formData.value.summary = response.data.summary
@@ -750,6 +762,12 @@ const optimizeForATS = async () => {
     
     if (response.success && response.suggestions) {
       aiResults.value.atsOptimization = response.suggestions
+      
+      // Update global ATS score refs
+      if (response.suggestions.atsScore) {
+        atsScore.value = response.suggestions.atsScore
+        atsAnalysisCompleted.value = true
+      }
       
       // Show API message using toastr
       let message = response.message || ''
@@ -1011,11 +1029,14 @@ useHead({
 </script>
 
 <template>
-  <div :class="['ats-floating-badge', { 'ats-pulse-burst': isPulsing }]">
+  <div v-if="atsScore > 0" :class="['ats-floating-badge', { 'ats-pulse-burst': isPulsing }]">
+    <button @click="atsScore = 0" class="absolute -top-1 -right-1 w-4 h-4 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center text-[10px] transition-colors z-10">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
     <div class="ats-shimmer-sweep"></div>
     <div class="ats-floating-label">ATS Score</div>
     <div class="ats-floating-score-wrapper">
-      <span class="ats-floating-score">80</span>
+      <span class="ats-floating-score">{{ atsScore }}</span>
       <span class="ats-floating-total">/100</span>
     </div>
   </div>

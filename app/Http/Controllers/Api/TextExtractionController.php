@@ -61,6 +61,9 @@ class TextExtractionController extends Controller
                 try {
                     $structuredData = $this->geminiService->parseResumeToStructuredData($text);
                     $response['parsedData'] = $structuredData;
+                    if (isset($structuredData['atsScore'])) {
+                        $response['atsScore'] = $structuredData['atsScore'];
+                    }
                 } catch (\Exception $parseError) {
                     Log::warning('Failed to parse resume data', [
                         'error' => $parseError->getMessage()

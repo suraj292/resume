@@ -110,6 +110,7 @@ class ResumeAnalysisController extends Controller
                 'data' => [
                     'id' => $analysis->id,
                     'ats_score' => $analysis->ats_score,
+                    'atsScore' => $analysis->ats_score, // Alias for frontend consistency
                     'score_grade' => $analysis->score_grade,
                     'matched_keywords' => $analysis->matched_keywords,
                     'missing_keywords' => $analysis->missing_keywords,
