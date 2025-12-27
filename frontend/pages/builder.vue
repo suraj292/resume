@@ -606,9 +606,16 @@ const handleJobUpload = async (event: Event) => {
 }
 
 // Save context for AI
-const saveContext = () => {
+const saveContext = async () => {
+  isProcessing.value = true
+  uploadError.value = ''
+  
+  // Simulate processing time to show loader
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
   successMessage.value = '✓ Context saved for AI processing'
   setTimeout(() => successMessage.value = '', 2000)
+  isProcessing.value = false
 }
 
 // AI method stubs (to be implemented)
@@ -650,6 +657,17 @@ useHead({
 <template>
   <!-- Auth Required Modal -->
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
+
+  <!-- Full Screen Loading Overlay -->
+  <div v-if="isProcessing" class="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center">
+    <div class="rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm mx-4">
+      <div class="relative">
+        <i class="fa-solid fa-spinner fa-spin text-6xl text-indigo-600"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900">Processing...</h3>
+      <p class="text-sm text-slate-600 text-center">Saving your context for AI processing</p>
+    </div>
+  </div>
 
   <div class="builder-app bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
     <!-- Navigation -->
@@ -780,7 +798,7 @@ useHead({
                 <!-- Save Button -->
                 <button @click="saveContext" :disabled="isProcessing"
                   class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <i class="fa-solid fa-bolt-lightning text-amber-400"></i>
+                  <i :class="isProcessing ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-bolt-lightning'" class="text-amber-400"></i>
                   {{ isProcessing ? 'Saving...' : 'Save Context for AI' }}
                 </button>
 
