@@ -154,7 +154,7 @@ watch(selectedTemplate, async (newTemplateId) => {
 
 // Colors
 const selectedColor = ref('indigo')
-const customColor = ref('')
+const customColor = ref('#6366f1')
 const colorPalettes = ref([
   { id: 'indigo', name: 'Royal Indigo', category: 'Default Corporate', hex: '#4f46e5' },
   { id: 'emerald', name: 'Growth Emerald', category: 'Finance & Healthcare', hex: '#059669' },
@@ -1412,11 +1412,13 @@ useHead({
               >
                 <!-- Dynamic Template Component - Page 1 -->
                 <div v-if="currentTemplateComponent" class="resume-content p-16">
-                  <component 
-                    :is="currentTemplateComponent"
-                    :data="resumeDataFormatted"
-                    :theme="currentThemeConfig"
-                  />
+                  <ClientOnly>
+                    <component 
+                      :is="currentTemplateComponent"
+                      :data="resumeDataFormatted"
+                      :theme="currentThemeConfig"
+                    />
+                  </ClientOnly>
                 </div>
                 
                 <!-- Loading State -->
@@ -1444,19 +1446,21 @@ useHead({
                   <div class="text-right text-xs text-slate-400 mb-6">Page 2</div>
                   
                   <!-- Render template with page 2 data -->
-                  <component 
-                    :is="currentTemplateComponent"
-                    :data="{
-                      ...resumeDataFormatted,
-                      basics: {
-                        ...resumeDataFormatted.basics,
-                        summary: '' // Don't repeat summary on page 2
-                      },
-                      experience: resumeDataFormatted.experience.slice(getExperienceCountForPage1()),
-                      skills: {} // Don't repeat skills on page 2
-                    }"
-                    :theme="currentThemeConfig"
-                  />
+                  <ClientOnly>
+                    <component 
+                      :is="currentTemplateComponent"
+                      :data="{
+                        ...resumeDataFormatted,
+                        basics: {
+                          ...resumeDataFormatted.basics,
+                          summary: '' // Don't repeat summary on page 2
+                        },
+                        experience: resumeDataFormatted.experience.slice(getExperienceCountForPage1()),
+                        skills: {} // Don't repeat skills on page 2
+                      }"
+                      :theme="currentThemeConfig"
+                    />
+                  </ClientOnly>
                 </div>
               </div>
             </div>
