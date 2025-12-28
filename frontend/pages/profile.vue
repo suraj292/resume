@@ -1,45 +1,5 @@
 <template>
     <div class="flex flex-col min-h-screen bg-slate-50">
-        <!-- Header -->
-        <header class="glass-header sticky top-0 z-50">
-            <div class="container mx-auto px-6 h-16 flex items-center justify-between">
-                <NuxtLink to="/" class="flex items-center gap-2.5 group">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white text-sm shadow-md group-hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-file-contract"></i>
-                    </div>
-                    <span class="text-lg font-display font-bold text-slate-800 tracking-tight">
-                        Resume<span class="text-indigo-600">AI</span>
-                    </span>
-                </NuxtLink>
-
-                <nav class="hidden md:flex items-center gap-8">
-                    <NuxtLink to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Dashboard</NuxtLink>
-                    <NuxtLink to="/builder" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Builder</NuxtLink>
-                    <NuxtLink to="/ats-checker" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">ATS Check</NuxtLink>
-                    <NuxtLink to="/templates" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Templates</NuxtLink>
-                    <NuxtLink to="/profile" class="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-md">Profile</NuxtLink>
-                </nav>
-
-                <div class="flex items-center gap-4">
-                    <div class="hidden md:block text-right">
-                        <p class="text-xs font-bold text-slate-900">{{ currentUser?.name || 'Guest' }}</p>
-                        <p class="text-[10px] text-slate-500">{{ currentUser?.plan?.name || 'Free Plan' }}</p>
-                    </div>
-                    <div class="relative group">
-                        <img :src="currentUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=128'" class="w-9 h-9 rounded-full border-2 border-white shadow-sm hover:border-indigo-200 transition-all cursor-pointer">
-                        <!-- Dropdown -->
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                            <div class="p-2">
-                                <button @click="handleLogout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
-                                    <i class="fa-solid fa-right-from-bracket"></i>
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
 
         <!-- Main Content -->
         <main class="flex-grow container mx-auto px-6 py-10 max-w-5xl">

@@ -4,10 +4,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     // Try to fetch user if not already authenticated
     if (!isAuthenticated.value) {
-        await fetchUser()
+        try {
+            await fetchUser()
+        } catch (error) {
+            // If fetchUser fails (e.g., backend offline), still redirect to auth
+            return navigateTo({
+                path: '/auth',
+                query: { redirect: to.fullPath }
+            })
+        }
     }
 
-    // If still not authenticated, redirect to auth page
+    // If still not authenticated after fetching, redirect to auth page
     if (!isAuthenticated.value) {
         return navigateTo({
             path: '/auth',
