@@ -33,13 +33,19 @@ class PaymentController extends Controller
         $user = auth()->user();
         $plan = Plan::findOrFail($request->plan_id);
 
-        // Determine amount based on billing cycle
-        $amount = $request->billing_cycle === 'yearly' 
+        // Determine base amount based on billing cycle
+        $basePlanAmount = $request->billing_cycle === 'yearly' 
             ? $plan->yearly_price 
             : $plan->monthly_price;
 
+        // Calculate GST (18%)
+        $gstAmount = $basePlanAmount * 0.18;
+        
+        // Total amount including GST
+        $totalAmount = $basePlanAmount + $gstAmount;
+
         // Convert to smallest currency unit (paise for INR, cents for USD)
-        $amountInSmallestUnit = (int)($amount * 100);
+        $amountInSmallestUnit = (int)($totalAmount * 100);
 
         try {
             // Create Razorpay order
@@ -51,6 +57,9 @@ class PaymentController extends Controller
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
                     'billing_cycle' => $request->billing_cycle,
+                    'base_amount' => $basePlanAmount,
+                    'gst_amount' => $gstAmount,
+                    'total_amount' => $totalAmount,
                 ]
             ]);
 
@@ -59,12 +68,14 @@ class PaymentController extends Controller
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
                 'razorpay_order_id' => $order['id'],
-                'amount' => $amount,
+                'amount' => $totalAmount, // Store total amount including GST
                 'currency' => $plan->currency_code,
                 'status' => 'pending',
                 'metadata' => [
                     'billing_cycle' => $request->billing_cycle,
                     'plan_name' => $plan->name,
+                    'base_amount' => $basePlanAmount,
+                    'gst_amount' => $gstAmount,
                 ],
             ]);
 
