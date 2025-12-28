@@ -15,28 +15,27 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async fetchUser() {
       if (typeof window === 'undefined') return null
-      
+
       try {
         this.loading = true
         this.error = null
-        
+
         const config = useRuntimeConfig()
         const token = localStorage.getItem('auth_token')
         console.log('Fetching user with token:', token ? 'Token exists' : 'No token')
-        
+
         const headers: any = {}
         if (token) {
           headers['Authorization'] = `Bearer ${token}`
         }
-        
+        headers['Content-Type'] = 'application/json'
+        headers['Accept'] = 'application/json'
+
         const response: any = await $fetch('/api/user', {
           baseURL: config.public.apiBase,
           credentials: 'include',
           headers
         })
-        
-        console.log('User fetched successfully:', response)
-        
         // The API returns { user, capabilities }
         this.user = response.user || response
         return this.user
@@ -52,11 +51,11 @@ export const useAuthStore = defineStore('auth', {
 
     async login(credentials: { email: string; password: string }) {
       if (typeof window === 'undefined') return null
-      
+
       try {
         this.loading = true
         this.error = null
-        
+
         const config = useRuntimeConfig()
         const data: any = await $fetch('/api/login', {
           method: 'POST',
@@ -64,12 +63,12 @@ export const useAuthStore = defineStore('auth', {
           body: credentials,
           credentials: 'include'
         })
-        
+
         // Store token in localStorage
         if (data.token) {
           localStorage.setItem('auth_token', data.token)
         }
-        
+
         this.user = data.user
         return data
       } catch (error: any) {
@@ -83,11 +82,11 @@ export const useAuthStore = defineStore('auth', {
 
     async register(userData: any) {
       if (typeof window === 'undefined') return null
-      
+
       try {
         this.loading = true
         this.error = null
-        
+
         const config = useRuntimeConfig()
         const data: any = await $fetch('/api/register', {
           method: 'POST',
@@ -95,12 +94,12 @@ export const useAuthStore = defineStore('auth', {
           body: userData,
           credentials: 'include'
         })
-        
+
         // Store token in localStorage
         if (data.token) {
           localStorage.setItem('auth_token', data.token)
         }
-        
+
         this.user = data.user
         return data
       } catch (error: any) {
@@ -114,7 +113,7 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       if (typeof window === 'undefined') return
-      
+
       try {
         this.loading = true
         const config = useRuntimeConfig()
@@ -123,14 +122,14 @@ export const useAuthStore = defineStore('auth', {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`
         }
-        
+
         await $fetch('/api/logout', {
           method: 'POST',
           baseURL: config.public.apiBase,
           credentials: 'include',
           headers
         })
-        
+
         // Clear token from localStorage
         localStorage.removeItem('auth_token')
         this.user = null

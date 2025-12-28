@@ -49,32 +49,36 @@ onMounted(() => {
 
 // Check authentication on mount
 onMounted(async () => {
-  // Handle OAuth callback
-  if (route.query.social_auth === 'success' && route.query.token) {
-    // Store the token in localStorage
-    const token = String(route.query.token)
-    localStorage.setItem('auth_token', token)
-    console.log('Token stored:', token)
+  try {
+    // Handle OAuth callback
+    if (route.query.social_auth === 'success' && route.query.token) {
+      // Store the token in localStorage
+      const token = String(route.query.token)
+      localStorage.setItem('auth_token', token)
+      console.log('Token stored:', token)
+      
+      // Remove token from URL for security
+      await router.replace({ query: {} })
+      
+      // Small delay to ensure localStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Fetch user data
+      const userData = await fetchUser()
+      console.log('User data after OAuth:', userData)
+    } else {
+      await fetchUser()
+    }
     
-    // Remove token from URL for security
-    await router.replace({ query: {} })
-    
-    // Small delay to ensure localStorage is written
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    // Fetch user data
-    const userData = await fetchUser()
-    console.log('User data after OAuth:', userData)
-  } else {
-    await fetchUser()
-  }
-  
-  // Check auth status and show modal if not authenticated
-  if (!isAuthenticated.value) {
-    console.log('Not authenticated, showing modal')
-    showAuthModal.value = true
-  } else {
-    console.log('Authenticated successfully')
+    // Check auth status and show modal if not authenticated
+    if (!isAuthenticated.value) {
+      console.log('Not authenticated, showing modal')
+      showAuthModal.value = true
+    }
+  } catch (error) {
+    console.log('Auth check failed (backend may be offline):', error)
+    // Don't show auth modal if backend is offline - allow using the app without auth
+    showAuthModal.value = false
   }
 })
 
