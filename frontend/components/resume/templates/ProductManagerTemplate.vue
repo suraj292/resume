@@ -14,8 +14,8 @@ const allSkills = computed(() => {
 
 <template>
   <article class="resume-template product-manager" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Minimalist Header with Line -->
-    <header class="pm-header">
+    <!-- Minimalist Header with Line (only on page 1) -->
+    <header v-if="data.basics.fullName" class="pm-header">
       <div class="header-line"></div>
       <h1 class="name">{{ data.basics.fullName }}</h1>
       <h2 class="title">{{ data.basics.title }}</h2>

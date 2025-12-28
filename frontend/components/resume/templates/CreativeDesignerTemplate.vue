@@ -10,30 +10,29 @@ const hasPortfolio = computed(() =>
 
 <template>
   <article class="resume-template creative" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Creative Header with Accent -->
-    <header class="creative-header">
+    <!-- Creative Header with Accent (only on page 1) -->
+    <header v-if="data.basics.fullName" class="creative-header">
       <div class="accent-block"></div>
       <div class="header-content">
-        <h1 class="name">{{ data.basics.fullName }}</h1>
-        <h2 class="title">{{ data.basics.title }}</h2>
+        <h1 class="creative-name">{{ data.basics.fullName }}</h1>
+        <h2 class="creative-title">{{ data.basics.title }}</h2>
+        
+        <div class="creative-contact">
+          <span v-if="data.basics.email">
+            <i class="fa-solid fa-envelope"></i> {{ data.basics.email }}
+          </span>
+          <span v-if="data.basics.phone">
+            <i class="fa-solid fa-phone"></i> {{ data.basics.phone }}
+          </span>
+          <span v-if="data.basics.location">
+            <i class="fa-solid fa-location-dot"></i> {{ data.basics.location }}
+          </span>
+          <span v-if="data.basics.portfolio">
+            <i class="fa-solid fa-globe"></i> {{ data.basics.portfolio }}
+          </span>
+        </div>
       </div>
     </header>
-
-    <!-- Contact as Icons Row -->
-    <div class="icon-contacts">
-      <a v-if="data.basics.email" class="icon-link">
-        <i class="fa-solid fa-envelope"></i>
-        <span>{{ data.basics.email }}</span>
-      </a>
-      <a v-if="data.basics.portfolio" class="icon-link">
-        <i class="fa-solid fa-globe"></i>
-        <span>{{ data.basics.portfolio }}</span>
-      </a>
-      <a v-if="data.basics.phone" class="icon-link">
-        <i class="fa-solid fa-phone"></i>
-        <span>{{ data.basics.phone }}</span>
-      </a>
-    </div>
 
     <!-- About Section -->
     <section v-if="data.basics.summary" class="about-section">

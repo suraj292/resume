@@ -22,8 +22,8 @@ const hasProjects = computed(() =>
 
 <template>
   <article class="resume-template data-scientist" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Header with Stats Badge -->
-    <header class="resume-header">
+    <!-- Header with Stats Badge  (only on page 1) -->
+    <header v-if="data.basics.fullName" class="resume-header">
       <div class="header-content">
         <div class="name-block">
           <h1 class="name">{{ data.basics.fullName }}</h1>

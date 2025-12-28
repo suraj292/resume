@@ -6,8 +6,8 @@ const props = defineProps<TemplateProps>()
 
 <template>
   <article class="resume-template marketing" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Bold Header with Impact -->
-    <header class="marketing-header">
+    <!-- Bold Header with Impact (only on page 1) -->
+    <header v-if="data.basics.fullName" class="marketing-header">
       <div class="impact-row">
         <span class="impact-label">MARKETING PROFESSIONAL</span>
         <span class="location">{{ data.basics.location }}</span>
@@ -34,6 +34,19 @@ const props = defineProps<TemplateProps>()
       <p class="profile-text">{{ data.basics.summary }}</p>
     </section>
 
+    <!-- Skills as Strength Areas (moved before experience for better page breaks) -->
+    <section v-if="Object.values(data.skills).some(s => s.length > 0)" class="skills-section">
+      <h3 class="bold-title">CORE COMPETENCIES</h3>
+      <div class="competency-boxes">
+        <template v-for="(skillsArray, category) in data.skills" :key="category">
+          <div v-if="(skillsArray ?? []).length > 0" class="competency-box">
+            <h4>{{ category }}</h4>
+            <p>{{ (skillsArray ?? []).join(' • ') }}</p>
+          </div>
+        </template>
+      </div>
+    </section>
+
     <!-- Experience with Results Focus -->
     <section v-if="data.experience.length > 0" class="experience-section">
       <h3 class="bold-title">PROFESSIONAL EXPERIENCE</h3>
@@ -56,18 +69,7 @@ const props = defineProps<TemplateProps>()
       </div>
     </section>
 
-    <!-- Skills as Strength Areas -->
-    <section v-if="Object.values(data.skills).some(s => s.length > 0)" class="skills-section">
-      <h3 class="bold-title">CORE COMPETENCIES</h3>
-      <div class="competency-boxes">
-        <template v-for="(skillsArray, category) in data.skills" :key="category">
-          <div v-if="(skillsArray ?? []).length > 0" class="competency-box">
-            <h4>{{ category }}</h4>
-            <p>{{ (skillsArray ?? []).join(' • ') }}</p>
-          </div>
-        </template>
-      </div>
-    </section>
+
 
     <!-- Education Compact -->
     <section v-if="data.education.length > 0" class="education-section">

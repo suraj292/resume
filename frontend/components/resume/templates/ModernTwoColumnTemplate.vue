@@ -15,8 +15,8 @@ const allSkills = computed(() => {
 
 <template>
   <article class="resume-template modern-two-column" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Header with Avatar and Name -->
-    <header class="resume-header">
+    <!-- Header with Avatar and Name (only on page 1) -->
+    <header v-if="data.basics.fullName" class="resume-header">
       <div class="avatar-circle">
         <i class="fa-solid fa-user"></i>
       </div>

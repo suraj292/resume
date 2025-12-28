@@ -15,8 +15,8 @@ const allSkills = computed(() => {
 
 <template>
   <article class="resume-template executive" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Header Section - Centered for Executive -->
-    <header class="resume-header">
+    <!-- Header Section - Centered for Executive (only on page 1) -->
+    <header v-if="data.basics.fullName" class="resume-header">
       <h1 class="name">{{ data.basics.fullName }}</h1>
       <h2 class="title">{{ data.basics.title }}</h2>
       

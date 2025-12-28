@@ -350,7 +350,84 @@ const templatePrimaryColor = computed(() => {
   return config?.layout?.primaryColor || currentAccentColor.value
 })
 
-// Removed multi-page logic - templates now handle their own layout with dynamic height
+// Smart multi-page logic - detect when content exceeds A4 page height
+const needsSecondPage = computed(() => {
+  // Estimate content height in pixels
+  let estimatedHeight = 0
+  
+  // Header section: ~150px
+  estimatedHeight += 150
+  
+  // Summary: base 100px + 1px per character (wrapping considered)
+  if (formData.value.summary) {
+    estimatedHeight += 100 + Math.ceil(formData.value.summary.length / 2)
+  }
+  
+  // Skills section: base 100px + 5px per skill
+  const skillCount = Object.values(formData.value.skills)
+    .reduce((sum, arr) => sum + arr.length, 0)
+  if (skillCount > 0) {
+    estimatedHeight += 100 + (skillCount * 5)
+  }
+  
+  // Experience: 150px base per entry + 30px per responsibility
+  formData.value.experience.forEach(exp => {
+    if (exp.position) {
+      estimatedHeight += 150
+      const respCount = exp.responsibilities.filter(r => r).length
+      estimatedHeight += respCount * 30
+    }
+  })
+  
+  // Education: 80px per entry
+  const eduCount = formData.value.education.filter(e => e.degree).length
+  estimatedHeight += eduCount * 80
+  
+  // Achievements: base 100px + 30px per achievement
+  const achCount = formData.value.achievements?.filter(a => a).length || 0
+  if (achCount > 0) {
+    estimatedHeight += 100 + (achCount * 30)
+  }
+  
+  // Page capacity is ~1000px usable height (A4 page minus padding)
+  // Show second page if content exceeds this threshold
+  return estimatedHeight > 1000
+})
+
+// Split data for page 1 (when multi-page is needed)
+const page1Data = computed<ResumeData>(() => {
+  if (!needsSecondPage.value) {
+    return resumeDataFormatted.value
+  }
+  
+  // Page 1: Header, Summary, Skills, First 2 experiences
+  return {
+    ...resumeDataFormatted.value,
+    experience: resumeDataFormatted.value.experience.slice(0, 2),
+    education: [], // Move to page 2
+    achievements: [] // Move to page 2
+  }
+})
+
+// Split data for page 2 (when multi-page is needed)
+const page2Data = computed<ResumeData | null>(() => {
+  if (!needsSecondPage.value) {
+    return null
+  }
+  
+  // Page 2: Remaining experience, Education, Achievements (no header/summary duplicate)
+  return {
+    ...resumeDataFormatted.value,
+    basics: {
+      ...resumeDataFormatted.value.basics,
+      fullName: '', // Don't repeat name
+      title: '', // Don't repeat title
+      summary: '' // Don't repeat summary
+    },
+    experience: resumeDataFormatted.value.experience.slice(2),
+    skills: {} // Don't repeat skills
+  }
+})
 
 // Methods
 const switchTab = (tabId: string) => {
@@ -1976,42 +2053,76 @@ useHead({
         <!-- Preview Panel (Right) - Scrollable -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[900px]">
-            <!-- Single Continuous Page Container -->
-            <div 
-              id="resume-preview"
-              class="resume-paper bg-white shadow-2xl transition-all duration-300"
-              :style="{ 
-                width: '210mm',
-                minHeight: '297mm',
-                height: 'auto',
-                transform: `scale(${previewScale})`,
-                transformOrigin: 'top center'
-              }"
-            >
-              <!-- Loading State -->
-              <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
-                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                <p>Loading template...</p>
+            <!-- Multi-Page Container with minimal gap -->
+            <div class="space-y-8">
+              <!-- Page 1 -->
+              <div 
+                id="resume-preview"
+                class="resume-paper bg-white shadow-2xl transition-all duration-300"
+                :class="{ 'overflow-hidden': needsSecondPage }"
+                :style="{ 
+                  width: '210mm',
+                  minHeight: '297mm',
+                  height: needsSecondPage ? '297mm' : 'auto',
+                  maxHeight: needsSecondPage ? '297mm' : 'none',
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top center'
+                }"
+              >
+                <!-- Loading State -->
+                <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                  <p>Loading template...</p>
+                </div>
+                
+                <!-- Dynamic Template Component - Page 1 -->
+                <div v-else-if="currentTemplateComponent" class="resume-content p-16">
+                  <ClientOnly>
+                    <Transition name="fade" mode="out-in">
+                      <component 
+                        :key="selectedTemplate + '-page1'"
+                        :is="currentTemplateComponent"
+                        :data="page1Data"
+                        :theme="currentThemeConfig"
+                      />
+                    </Transition>
+                  </ClientOnly>
+                </div>
+                
+                <!-- Fallback Loading State -->
+                <div v-else class="p-16 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                  <p>Loading template...</p>
+                </div>
               </div>
-              
-              <!-- Dynamic Template Component -->
-              <div v-else-if="currentTemplateComponent" class="resume-content p-16">
-                <ClientOnly>
-                  <Transition name="fade" mode="out-in">
-                    <component 
-                      :key="selectedTemplate"
-                      :is="currentTemplateComponent"
-                      :data="resumeDataFormatted"
-                      :theme="currentThemeConfig"
-                    />
-                  </Transition>
-                </ClientOnly>
-              </div>
-              
-              <!-- Fallback Loading State -->
-              <div v-else class="p-16 text-center text-slate-400">
-                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                <p>Loading template...</p>
+
+              <!-- Page 2 (Conditional) -->
+              <div 
+                v-if="needsSecondPage && currentTemplateComponent && page2Data"
+                class="resume-paper bg-white shadow-2xl transition-all duration-300"
+                :style="{ 
+                  width: '210mm',
+                  minHeight: '297mm',
+                  height: 'auto',
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top center'
+                }"
+              >
+                <div class="resume-content p-16">
+                  <!-- Page Indicator -->
+                  <div class="text-right text-xs text-slate-400 mb-6 font-medium">Page 2</div>
+                  
+                  <ClientOnly>
+                    <Transition name="fade" mode="out-in">
+                      <component 
+                        :key="selectedTemplate + '-page2'"
+                        :is="currentTemplateComponent"
+                        :data="page2Data"
+                        :theme="currentThemeConfig"
+                      />
+                    </Transition>
+                  </ClientOnly>
+                </div>
               </div>
             </div>
 
@@ -2047,12 +2158,12 @@ useHead({
             <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
-        <div class="preview-container p-4">
-          <!-- Single Continuous Page -->
+        <div class="preview-container p-4 space-y-4">
+          <!-- Page 1 -->
           <div 
-            :key="selectedTemplate" 
+            :key="selectedTemplate + '-mobile-page1'" 
             class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', padding: '1rem' }"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: needsSecondPage ? '297mm' : 'auto', padding: '1rem' }"
           >
             <!-- Loading State -->
             <div v-if="isTemplateLoading" class="p-8 text-center text-slate-400">
@@ -2060,14 +2171,14 @@ useHead({
               <p class="text-sm">Loading template...</p>
             </div>
             
-            <!-- Dynamic Template Component -->
+            <!-- Dynamic Template Component - Page 1 -->
             <div v-else-if="currentTemplateComponent" class="resume-content">
               <ClientOnly>
                 <Transition name="fade" mode="out-in">
                   <component 
-                    :key="selectedTemplate"
+                    :key="selectedTemplate + '-mobile'  "
                     :is="currentTemplateComponent"
-                    :data="resumeDataFormatted"
+                    :data="page1Data"
                     :theme="currentThemeConfig"
                   />
                 </Transition>
@@ -2078,6 +2189,30 @@ useHead({
             <div v-else class="p-8 text-center text-slate-400">
               <i class="fa-solid fa-spinner fa-spin text-xl mb-3"></i>
               <p class="text-sm">Loading template...</p>
+            </div>
+          </div>
+
+          <!-- Page 2 (Conditional) -->
+          <div 
+            v-if="needsSecondPage && currentTemplateComponent && page2Data"
+            :key="selectedTemplate + '-mobile-page2'" 
+            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', padding: '1rem' }"
+          >
+            <div class="resume-content">
+              <!-- Page Indicator for Mobile -->
+              <div class="text-right text-xs text-slate-400 mb-4 font-medium">Page 2</div>
+              
+              <ClientOnly>
+                <Transition name="fade" mode="out-in">
+                  <component 
+                    :key="selectedTemplate + '-mobile-page2'"
+                    :is="currentTemplateComponent"
+                    :data="page2Data"
+                    :theme="currentThemeConfig"
+                  />
+                </Transition>
+              </ClientOnly>
             </div>
           </div>
         </div>
