@@ -63,6 +63,9 @@ export const useGemini = () => {
 - experience (array of objects with: position, company, location, startDate, endDate, current (boolean), responsibilities (array of strings))
 - education (array of objects with: degree, institution, year, percentage)
 - achievements (array of strings)
+- atsScore (number 0-100 - Applicant Tracking System score based on: keyword relevance, formatting clarity, quantifiable achievements, skills alignment, experience depth, education credentials, and overall completeness. Provide a realistic score.)
+
+Analyze the resume and provide an ATS score that reflects how well it would perform in automated screening systems.
 
 Return ONLY valid JSON, no markdown formatting or code blocks.
 

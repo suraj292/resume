@@ -528,6 +528,8 @@ const handleResumeUpload = async (event: Event) => {
       try {
         toastr.info('Parsing resume data with AI...', 'Processing')
         const parsedData = await parseResumeToStructuredData(text)
+
+        // console.log(parsedData);
         
         if (parsedData) {
           populateFormWithParsedData(parsedData)
