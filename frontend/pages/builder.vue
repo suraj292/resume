@@ -46,6 +46,7 @@ onMounted(() => {
   }
 })
 
+
 // Check authentication on mount
 onMounted(async () => {
   // Handle OAuth callback
@@ -68,9 +69,10 @@ onMounted(async () => {
     await fetchUser()
   }
   
+  // Check auth status and show modal if not authenticated
   if (!isAuthenticated.value) {
     console.log('Not authenticated, showing modal')
-    showAuthModal.value = false
+    showAuthModal.value = true
   } else {
     console.log('Authenticated successfully')
   }
