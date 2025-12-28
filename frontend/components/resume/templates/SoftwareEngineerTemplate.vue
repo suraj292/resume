@@ -142,6 +142,14 @@ const otherSkills = computed(() => {
       <h3 class="section-title">Additional Skills</h3>
       <p class="skills-list">{{ otherSkills.join(' • ') }}</p>
     </section>
+
+    <!-- Achievements -->
+    <section v-if="data.achievements && data.achievements.length > 0" class="resume-section achievements-section">
+      <h3 class="section-title">Achievements</h3>
+      <ul class="achievements-list">
+        <li v-for="(achievement, idx) in data.achievements" :key="idx">{{ achievement }}</li>
+      </ul>
+    </section>
   </article>
 </template>
 
@@ -418,6 +426,20 @@ const otherSkills = computed(() => {
   font-size: 0.875rem;
   color: #475569;
   margin: 0;
+}
+
+/* Achievements */
+.achievements-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.achievements-list li {
+  font-size: 0.875rem;
+  color: #475569;
+  margin-bottom: 0.375rem;
+  line-height: 1.6;
 }
 
 /* Print-specific adjustments */

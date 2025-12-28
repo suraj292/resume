@@ -73,6 +73,14 @@ const allSkills = computed(() => {
         </div>
       </div>
     </section>
+
+    <!-- Achievements -->
+    <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section">
+      <h3 class="minimal-title">Key Achievements</h3>
+      <ul class="achievements-list">
+        <li v-for="(achievement, idx) in data.achievements" :key="idx">{{ achievement }}</li>
+      </ul>
+    </section>
   </article>
 </template>
 
@@ -316,6 +324,31 @@ const allSkills = computed(() => {
   font-size: 0.75rem;
   color: var(--primary);
   font-weight: 600;
+}
+
+/* Achievements */
+.achievements-section {
+  margin-bottom: 2rem;
+}
+
+.achievements-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: none;
+}
+
+.achievements-list li {
+  font-size: 0.875rem;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.achievements-list li::before {
+  content: '▸';
+  position: absolute;
+  left: -1.25rem;
+  color: var(--primary);
 }
 
 @media print {

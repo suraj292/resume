@@ -107,6 +107,17 @@ const hasPortfolio = computed(() =>
         </div>
       </section>
     </div>
+
+    <!-- Achievements -->
+    <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section">
+      <div class="section-header">
+        <span class="section-number">05</span>
+        <h3>Achievements</h3>
+      </div>
+      <ul class="achievements-list">
+        <li v-for="(achievement, idx) in data.achievements" :key="idx">{{ achievement }}</li>
+      </ul>
+    </section>
   </article>
 </template>
 
@@ -366,6 +377,24 @@ const hasPortfolio = computed(() =>
   font-size: 0.813rem;
   color: #64748b;
   margin: 0;
+}
+
+/* Achievements */
+.achievements-section {
+  margin-bottom: 2rem;
+}
+
+.achievements-list {
+  margin: 0;
+  padding-left: 3.5rem;
+  list-style: disc;
+}
+
+.achievements-list li {
+  font-size: 0.875rem;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
 }
 
 @media print {

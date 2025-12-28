@@ -127,6 +127,7 @@ const formData = ref({
 const isProcessing = ref(false)
 const uploadError = ref('')
 const successMessage = ref('')
+const isTemplateLoading = ref(false)
 
 // Input Modes
 const resumeInputMode = ref('upload')
@@ -182,13 +183,27 @@ const previewScale = ref(0.97)
 // Watch for template changes and load component dynamically
 watch(selectedTemplate, async (newTemplateId) => {
   try {
+    isTemplateLoading.value = true
+    currentTemplateComponent.value = null // Clear old component
+    
+    await nextTick() // Ensure cleanup
+    
     currentTemplateComponent.value = await getTemplateComponent(
       newTemplateId,
       templatesFromJSON.value
     )
+    
+    // Show success feedback
+    const template = templatesFromJSON.value.find(t => t.id === newTemplateId)
+    if (template) {
+      successMessage.value = `✓ Template switched to ${template.name}`
+      setTimeout(() => successMessage.value = '', 2000)
+    }
   } catch (error) {
     console.error('Template loading failed:', error)
     uploadError.value = 'Failed to load template'
+  } finally {
+    isTemplateLoading.value = false
   }
 }, { immediate: true })
 
@@ -335,26 +350,7 @@ const templatePrimaryColor = computed(() => {
   return config?.layout?.primaryColor || currentAccentColor.value
 })
 
-// Multi-page logic
-const needsSecondPage = computed(() => {
-  // Check if we need a second page based on content
-  const experienceCount = formData.value.experience.filter(exp => exp.position).length
-  const educationCount = formData.value.education.filter(edu => edu.degree).length
-  const achievementsCount = formData.value.achievements.filter(a => a).length
-  
-  // Show page 2 if:
-  // - More than 2 experience entries
-  // - Or more than 3 education entries
-  // - Or has achievements and more than 1 experience
-  return experienceCount > 2 || educationCount > 3 || (achievementsCount > 0 && experienceCount > 1)
-})
-
-const getExperienceCountForPage1 = () => {
-  // Show first 2 experience entries on page 1, rest on page 2
-  const experienceCount = formData.value.experience.filter(exp => exp.position).length
-  if (experienceCount <= 2) return experienceCount
-  return 2
-}
+// Removed multi-page logic - templates now handle their own layout with dynamic height
 
 // Methods
 const switchTab = (tabId: string) => {
@@ -442,37 +438,45 @@ const handleResumeUpload = async (event: Event) => {
   successMessage.value = ''
 
   try {
-    const formDataObj = new FormData()
-    formDataObj.append('file', file)
-
-    // Request parsed structured data by adding parse=true parameter
-    const data = await $fetch<{ text?: string; parsedData?: any; atsScore?: number }>(`${config.public.apiBase}/api/extract-text?parse=true`, {
-      method: 'POST',
-      body: formDataObj
-    })
-
-    if (data.text) {
-      resumeText.value = data.text
+    const { extractTextFromFile, parseResumeToStructuredData } = useGemini()
+    
+    // Extract text from file using Gemini API
+    toastr.info('Extracting text from file...', 'Processing')
+    const text = await extractTextFromFile(file)
+    
+    if (text) {
+      resumeText.value = text
       
-      // Update ATS score if returned
-      if (data.atsScore) {
-        atsScore.value = data.atsScore
-        atsAnalysisCompleted.value = true
-      }
-      
-      // If we have parsed data from Gemini AI, use it
-      if (data.parsedData) {
-        populateFormWithParsedData(data.parsedData)
-        toastr.success('Resume uploaded and parsed successfully! All fields have been populated.', 'Success')
-      } else {
-        // Fallback to basic parsing
-        parseResumeContent(data.text)
-        toastr.success('Resume uploaded successfully! Basic information extracted.', 'Success')
+      // Parse the extracted text into structured data using Gemini API
+      try {
+        toastr.info('Parsing resume data with AI...', 'Processing')
+        const parsedData = await parseResumeToStructuredData(text)
+        
+        if (parsedData) {
+          populateFormWithParsedData(parsedData)
+          
+          // Update ATS score if returned
+          if (parsedData.atsScore) {
+            atsScore.value = parsedData.atsScore
+            atsAnalysisCompleted.value = true
+          }
+          
+          toastr.success('Resume uploaded and parsed successfully! All fields have been populated.', 'Success')
+        } else {
+          // Fallback to basic parsing
+          parseResumeContent(text)
+          toastr.success('Resume uploaded successfully! Basic information extracted.', 'Success')
+        }
+      } catch (parseError: any) {
+        console.error('Parse error:', parseError)
+        // Fallback to basic parsing if AI parsing fails
+        parseResumeContent(text)
+        toastr.warning('Resume uploaded. Using basic text extraction.', 'Partial Success')
       }
     }
   } catch (error: any) {
     console.error('Resume upload error:', error)
-    toastr.error(error.data?.error || 'Failed to extract text from resume', 'Error')
+    toastr.error(error.message || 'Failed to extract text from resume', 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -1972,71 +1976,42 @@ useHead({
         <!-- Preview Panel (Right) - Scrollable -->
         <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[900px]">
-            <!-- Pages Container with minimal gap -->
-            <div class="space-y-2">
-              <!-- A4 Paper Container with Dynamic Template - Page 1 -->
-              <div 
-                id="resume-preview"
-                class="resume-paper bg-white shadow-2xl"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center'
-                }"
-              >
-                <!-- Dynamic Template Component - Page 1 -->
-                <div v-if="currentTemplateComponent" class="resume-content p-16">
-                  <ClientOnly>
+            <!-- Single Continuous Page Container -->
+            <div 
+              id="resume-preview"
+              class="resume-paper bg-white shadow-2xl transition-all duration-300"
+              :style="{ 
+                width: '210mm',
+                minHeight: '297mm',
+                height: 'auto',
+                transform: `scale(${previewScale})`,
+                transformOrigin: 'top center'
+              }"
+            >
+              <!-- Loading State -->
+              <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                <p>Loading template...</p>
+              </div>
+              
+              <!-- Dynamic Template Component -->
+              <div v-else-if="currentTemplateComponent" class="resume-content p-16">
+                <ClientOnly>
+                  <Transition name="fade" mode="out-in">
                     <component 
+                      :key="selectedTemplate"
                       :is="currentTemplateComponent"
                       :data="resumeDataFormatted"
                       :theme="currentThemeConfig"
                     />
-                  </ClientOnly>
-                </div>
-                
-                <!-- Loading State -->
-                <div v-else class="p-16 text-center text-slate-400">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                  <p>Loading template...</p>
-                </div>
+                  </Transition>
+                </ClientOnly>
               </div>
-
-              <!-- Page 2 for Dynamic Template (if needed) -->
-              <div 
-                v-if="needsSecondPage && currentTemplateComponent"
-                class="resume-paper bg-white shadow-2xl"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center',
-                  marginTop: `calc(-297mm * (1 - ${previewScale}))`,
-                  marginBottom: `calc(-297mm * (1 - ${previewScale}))`
-                }"
-              >
-                <div class="resume-content p-16">
-                  <!-- Page number indicator -->
-                  <div class="text-right text-xs text-slate-400 mb-6">Page 2</div>
-                  
-                  <!-- Render template with page 2 data -->
-                  <ClientOnly>
-                    <component 
-                      :is="currentTemplateComponent"
-                      :data="{
-                        ...resumeDataFormatted,
-                        basics: {
-                          ...resumeDataFormatted.basics,
-                          summary: '' // Don't repeat summary on page 2
-                        },
-                        experience: resumeDataFormatted.experience.slice(getExperienceCountForPage1()),
-                        skills: {} // Don't repeat skills on page 2
-                      }"
-                      :theme="currentThemeConfig"
-                    />
-                  </ClientOnly>
-                </div>
+              
+              <!-- Fallback Loading State -->
+              <div v-else class="p-16 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                <p>Loading template...</p>
               </div>
             </div>
 
@@ -2072,104 +2047,37 @@ useHead({
             <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
-        <div class="preview-container p-4 space-y-3">
-          <!-- Page 1 -->
+        <div class="preview-container p-4">
+          <!-- Single Continuous Page -->
           <div 
             :key="selectedTemplate" 
-            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-500"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', padding: '1rem' }"
+            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', padding: '1rem' }"
           >
-            <!-- Page Number -->
-            <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 1</div>
+            <!-- Loading State -->
+            <div v-if="isTemplateLoading" class="p-8 text-center text-slate-400">
+              <i class="fa-solid fa-spinner fa-spin text-xl mb-3"></i>
+              <p class="text-sm">Loading template...</p>
+            </div>
             
-            <!-- Dynamic Header -->
-            <div :class="templateHeaderClass.replace('pb-8 mb-8', 'pb-6 mb-6')" class="transition-all duration-500">
-              <h1 :class="templateNameClass.replace('text-3xl', 'text-2xl').replace('text-4xl', 'text-2xl')" class="transition-all duration-500">{{ formData.fullName || 'Your Name' }}</h1>
-              <p :style="{ color: currentAccentColor }" class="text-sm font-bold mt-1">{{ formData.title || 'Professional Title' }}</p>
-              <div :class="currentTemplateConfig?.id === 'executive' ? 'justify-center' : ''" class="flex flex-wrap gap-2 mt-3 text-[10px] font-bold text-slate-400 transition-all duration-500">
-                <span v-if="formData.email"><i class="fa-solid fa-envelope mr-1"></i>{{ formData.email }}</span>
-                <span v-if="formData.phone"><i class="fa-solid fa-phone mr-1"></i>{{ formData.phone }}</span>
-                <span v-if="formData.location"><i class="fa-solid fa-location-dot mr-1"></i>{{ formData.location }}</span>
-              </div>
+            <!-- Dynamic Template Component -->
+            <div v-else-if="currentTemplateComponent" class="resume-content">
+              <ClientOnly>
+                <Transition name="fade" mode="out-in">
+                  <component 
+                    :key="selectedTemplate"
+                    :is="currentTemplateComponent"
+                    :data="resumeDataFormatted"
+                    :theme="currentThemeConfig"
+                  />
+                </Transition>
+              </ClientOnly>
             </div>
-
-            <!-- Content -->
-            <div class="space-y-6">
-              <div v-if="formData.summary">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Professional Summary</h3>
-                <p class="text-xs text-slate-700 leading-relaxed">{{ formData.summary }}</p>
-              </div>
-
-              <div v-if="hasSkills">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Skills</h3>
-                <div class="space-y-1.5">
-                  <div v-for="(skillsArray, category) in formData.skills" :key="category">
-                    <div v-if="skillsArray.length > 0">
-                      <span class="text-xs font-bold capitalize text-slate-900">{{ category }}:</span>
-                      <span class="text-xs text-slate-700 ml-1">{{ skillsArray.join(', ') }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="hasExperience">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Experience</h3>
-                <div v-for="(exp, index) in formData.experience.slice(0, getExperienceCountForPage1())" :key="index" class="mb-3">
-                  <h4 class="font-bold text-xs text-slate-900">{{ exp.position }}</h4>
-                  <p class="text-[10px] text-slate-600">{{ exp.company }}</p>
-                  <ul class="list-disc list-inside text-[10px] text-slate-700 mt-1 space-y-0.5">
-                    <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div v-if="formData.education.length > 0 && formData.education[0]?.degree && !needsSecondPage">
-                <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
-                <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
-                  <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
-                  <p class="text-[10px] text-slate-600">{{ edu.institution }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Page 2 (if content overflows) -->
-          <div 
-            v-if="needsSecondPage" 
-            class="bg-white shadow-2xl mx-auto overflow-hidden relative"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', padding: '1rem' }"
-          >
-            <!-- Page Number -->
-            <div class="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium">Page 2</div>
             
-            <!-- Continued Experience -->
-            <div v-if="hasExperience && getExperienceCountForPage1() < formData.experience.length">
-              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Experience (continued)</h3>
-              <div v-for="(exp, index) in formData.experience.slice(getExperienceCountForPage1())" :key="index" class="mb-3">
-                <h4 class="font-bold text-xs text-slate-900">{{ exp.position }}</h4>
-                <p class="text-[10px] text-slate-600">{{ exp.company }}</p>
-                <ul class="list-disc list-inside text-[10px] text-slate-700 mt-1 space-y-0.5">
-                  <li v-for="(resp, rIndex) in exp.responsibilities.filter(r => r)" :key="rIndex">{{ resp }}</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Education on Page 2 -->
-            <div v-if="formData.education.length > 0 && formData.education[0]?.degree" class="mt-6">
-              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Education</h3>
-              <div v-for="(edu, index) in formData.education" :key="index" class="mb-2">
-                <h4 class="font-bold text-xs text-slate-900">{{ edu.degree }}</h4>
-                <p class="text-[10px] text-slate-600">{{ edu.institution }}</p>
-                <p v-if="edu.year" class="text-[10px] text-slate-500">{{ edu.year }}</p>
-              </div>
-            </div>
-
-            <!-- Achievements on Page 2 -->
-            <div v-if="formData.achievements.length > 0 && formData.achievements[0]" class="mt-6">
-              <h3 :style="{ color: currentAccentColor }" class="text-xs font-black uppercase tracking-widest mb-2">Achievements</h3>
-              <ul class="list-disc list-inside text-[10px] text-slate-700 space-y-0.5">
-                <li v-for="(achievement, index) in formData.achievements" :key="index">{{ achievement }}</li>
-              </ul>
+            <!-- Fallback Loading State -->
+            <div v-else class="p-8 text-center text-slate-400">
+              <i class="fa-solid fa-spinner fa-spin text-xl mb-3"></i>
+              <p class="text-sm">Loading template...</p>
             </div>
           </div>
         </div>
@@ -2210,6 +2118,22 @@ useHead({
   background-color: #f8fafc;
   background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* Fade transition for template switching */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Ensure resume paper can grow dynamically */
+.resume-paper {
+  transition: height 0.3s ease;
 }
 
 .nav-item {
