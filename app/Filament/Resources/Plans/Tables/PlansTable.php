@@ -20,10 +20,10 @@ class PlansTable
                 TextColumn::make('slug')
                     ->searchable(),
                 TextColumn::make('monthly_price')
-                    ->money()
+                    ->money(fn ($record) => $record->currency_code ?? 'USD')
                     ->sortable(),
                 TextColumn::make('yearly_price')
-                    ->money()
+                    ->money(fn ($record) => $record->currency_code ?? 'USD')
                     ->sortable(),
                 TextColumn::make('monthly_price_usd')
                     ->numeric()
