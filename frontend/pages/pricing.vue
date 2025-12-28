@@ -2,15 +2,14 @@
 import { ref, onMounted, computed } from 'vue'
 // useRouter is auto-imported in Nuxt
 import axios from 'axios'
-// TODO: Implement auth composable or store
 
 const router = useRouter()
 
+// Auth
+const { isAuthenticated, fetchUser } = useAuth()
 
 const isYearly = ref(false)
 const plans = ref([])
-
-const isAuthenticated = computed(() => false)
 
 const toggleBilling = () => {
     isYearly.value = !isYearly.value
@@ -49,7 +48,8 @@ const fetchPlans = async () => {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
+    await fetchUser()
     fetchPlans()
 })
 </script>

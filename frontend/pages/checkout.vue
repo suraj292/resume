@@ -241,10 +241,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 // useRouter is auto-imported in Nuxt
-// TODO: Implement auth composable or store
 
 const router = useRouter()
 
+// Auth
+const { user: authUser, fetchUser } = useAuth()
 
 // Data
 const selectedPlan = ref(null)
@@ -261,7 +262,7 @@ const priceAnimating = ref(false)
 const loading = ref(true)
 
 // Computed
-const user = computed(() => authStore.currentUser || { name: 'Guest', email: '' })
+const user = computed(() => authUser.value || { name: 'Guest', email: '' })
 const currencySymbol = computed(() => selectedPlan.value?.currency || '₹')
 
 const planPrice = computed(() => {
@@ -409,7 +410,7 @@ const verifyPayment = async (paymentData) => {
 
     if (result.success) {
       // Update user data
-      await authStore.fetchUser()
+      await fetchUser()
       
       // Redirect to builder with success message
       router.push('/builder?payment=success')
@@ -437,6 +438,9 @@ const loadRazorpayScript = () => {
 // Lifecycle
 onMounted(async () => {
   loading.value = true
+  
+  // Fetch user data
+  await fetchUser()
   
   // Get plan details from URL query params
   const urlParams = new URLSearchParams(window.location.search)
