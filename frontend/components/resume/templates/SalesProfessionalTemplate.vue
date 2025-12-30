@@ -61,7 +61,7 @@ const props = defineProps<TemplateProps>()
       <h3 class="bold-title">CORE COMPETENCIES</h3>
       <div class="competency-boxes">
         <template v-for="(skillsArray, category) in data.skills" :key="category">
-          <div v-if="skillsArray.length > 0" class="competency-box">
+          <div v-if="skillsArray && skillsArray.length > 0" class="competency-box">
             <h4>{{ category }}</h4>
             <p>{{ skillsArray.join(' • ') }}</p>
           </div>

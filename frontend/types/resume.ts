@@ -9,6 +9,44 @@
  * Template-agnostic resume data structure
  * All templates must accept this exact interface as props
  */
+export interface ExperienceItem {
+    id: number | string
+    position: string
+    company: string
+    location?: string
+    startDate: string
+    endDate: string | 'Present'
+    current: boolean
+    responsibilities: string[]
+    achievements?: string[]
+}
+
+export interface EducationItem {
+    id: number | string
+    degree: string
+    institution: string
+    location?: string
+    year: string
+    gpa?: string
+    percentage?: string
+    honors?: string[]
+}
+
+export interface SkillCategories {
+    technical?: string[]
+    backend?: string[]
+    frontend?: string[]
+    devops?: string[]
+    languages?: string[]
+    tools?: string[]
+    soft?: string[]
+    other?: string[]
+}
+
+/**
+ * Template-agnostic resume data structure
+ * All templates must accept this exact interface as props
+ */
 export interface ResumeData {
     // Basic Information
     basics: {
@@ -24,41 +62,13 @@ export interface ResumeData {
     }
 
     // Work Experience
-    experience: Array<{
-        id: number | string
-        position: string
-        company: string
-        location?: string
-        startDate: string
-        endDate: string | 'Present'
-        current: boolean
-        responsibilities: string[]
-        achievements?: string[]
-    }>
+    experience: ExperienceItem[]
 
     // Education
-    education: Array<{
-        id: number | string
-        degree: string
-        institution: string
-        location?: string
-        year: string
-        gpa?: string
-        percentage?: string
-        honors?: string[]
-    }>
+    education: EducationItem[]
 
     // Skills (categorized)
-    skills: {
-        technical?: string[]
-        backend?: string[]
-        frontend?: string[]
-        devops?: string[]
-        languages?: string[]
-        tools?: string[]
-        soft?: string[]
-        other?: string[]
-    }
+    skills: SkillCategories
 
     // Projects (optional)
     projects?: Array<{

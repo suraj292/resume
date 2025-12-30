@@ -18,9 +18,10 @@ class ResumeExportController extends Controller
             'template' => 'string|nullable',
         ]);
 
-        $resumeData = $request->resume_data;
+            $resumeData = $request->resume_data;
         $template = $request->template ?? 'default';
         $accentColor = $request->accent_color ?? '#6366f1';
+        $removeBranding = $request->boolean('remove_branding');
         $achievements = $request->achievements ?? [];
 
         // Add achievements to resume data if not already included
@@ -33,7 +34,8 @@ class ResumeExportController extends Controller
             $pdf = Pdf::loadView('pdf.resume', [
                 'data' => $resumeData,
                 'template' => $template,
-                'accentColor' => $accentColor
+                'accentColor' => $accentColor,
+                'removeBranding' => $removeBranding
             ]);
 
             // Configure PDF settings

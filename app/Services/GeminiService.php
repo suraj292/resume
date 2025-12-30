@@ -398,6 +398,7 @@ class GeminiService
                         'topK' => 10,
                         'topP' => 0.7,
                         'maxOutputTokens' => 8192,
+                        'response_mime_type' => 'application/json'
                     ],
                     'safetySettings' => [
                         [
@@ -448,8 +449,8 @@ class GeminiService
     protected function buildResumeParsingPrompt(string $resumeText): string
     {
         // Truncate if too long
-        if (strlen($resumeText) > 4000) {
-            $resumeText = substr($resumeText, 0, 4000) . '... [truncated]';
+        if (strlen($resumeText) > 15000) {
+            $resumeText = substr($resumeText, 0, 15000) . '... [truncated]';
         }
 
         $prompt = "Extract and structure resume information from the following text. Return ONLY valid JSON.\n\n";
@@ -508,32 +509,39 @@ class GeminiService
 
     protected function parseStructuredResumeResponse(string $response): array
     {
-        // Clean up response
-        $response = preg_replace('/^```json\s*/i', '', $response);
-        $response = preg_replace('/```\s*$/i', '', $response);
-        $response = preg_replace('/^```\s*/i', '', $response);
-        $response = trim($response);
-        
-        // Remove any text before first {
-        $jsonStart = strpos($response, '{');
-        if ($jsonStart !== false && $jsonStart > 0) {
-            $response = substr($response, $jsonStart);
-        }
-        
-        // Remove any text after last }
-        $jsonEnd = strrpos($response, '}');
-        if ($jsonEnd !== false && $jsonEnd < strlen($response) - 1) {
-            $response = substr($response, 0, $jsonEnd + 1);
+        // Simple JSON decoding since we use response_mime_type: application/json
+        $data = json_decode($response, true);
+
+        // Fallback for edge cases
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            Log::warning('JSON Parse Error in strict mode, attempting regex fallback', [
+                'error' => json_last_error_msg(),
+                'response_preview' => substr($response, 0, 500)
+            ]);
+            
+            // Clean up response
+            $response = preg_replace('/^```json\s*/i', '', $response);
+            $response = preg_replace('/```\s*$/i', '', $response);
+            $response = preg_replace('/^```\s*/i', '', $response);
+            $response = trim($response);
+            
+            // Remove any text before first {
+            $jsonStart = strpos($response, '{');
+            if ($jsonStart !== false) {
+                $response = substr($response, $jsonStart);
+            }
+            
+            // Remove any text after last }
+            $jsonEnd = strrpos($response, '}');
+            if ($jsonEnd !== false) {
+                $response = substr($response, 0, $jsonEnd + 1);
+            }
+
+            $data = json_decode($response, true);
         }
 
         try {
-            $data = json_decode($response, true);
-
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON Parse Error in resume parsing', [
-                    'error' => json_last_error_msg(),
-                    'response_preview' => substr($response, 0, 500)
-                ]);
                 throw new \Exception('Invalid JSON response from AI');
             }
 

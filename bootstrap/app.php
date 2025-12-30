@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
         ]);
 
         // Enable sessions for API routes to support session-based authentication
@@ -26,6 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\ConfigureCors::class,
+        ]);
+        
+        // Register middleware aliases
+        $middleware->alias([
+            'virus.scan' => \App\Http\Middleware\VirusScanMiddleware::class,
+            'throttle.ai' => \App\Http\Middleware\ThrottleAIRequests::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -362,5 +362,12 @@
             </div>
         </div>
     </div>
+    </div>
+    
+    @if(!($removeBranding ?? false))
+    <div style="position: fixed; bottom: -20px; width: 100%; text-align: center; color: #cbd5e1; font-size: 8px;">
+        Powered by {{ config('app.name', 'Resume Builder') }}
+    </div>
+    @endif
 </body>
 </html>

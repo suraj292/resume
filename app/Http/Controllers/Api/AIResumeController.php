@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\CacheService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GenerateResumeRequest;
 use App\Services\GeminiService;
+use App\Services\PIIAnonymizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,30 +14,44 @@ use Illuminate\Support\Facades\Log;
 class AIResumeController extends Controller
 {
     protected GeminiService $geminiService;
+    protected CacheService $cacheService;
 
-    public function __construct(GeminiService $geminiService)
+    public function __construct(GeminiService $geminiService, CacheService $cacheService)
     {
         $this->geminiService = $geminiService;
+        $this->cacheService = $cacheService;
     }
 
-    public function generateResume(Request $request): JsonResponse
+    public function generateResume(GenerateResumeRequest $request): JsonResponse
     {
-        $request->validate([
-            'resumeContext' => 'nullable|string',
-            'jobDescription' => 'nullable|string',
-            'tone' => 'nullable|string|in:Professional,Creative,Direct',
-            'currentData' => 'nullable|array'
-        ]);
-
         try {
             $resumeContext = $request->input('resumeContext', '');
             $jobDescription = $request->input('jobDescription', '');
             $tone = $request->input('tone', 'Professional');
             $currentData = $request->input('currentData', []);
 
+            // Anonymize PII before sending to AI
+            $resumeContext = PIIAnonymizer::anonymize($resumeContext);
+            $jobDescription = PIIAnonymizer::anonymize($jobDescription);
+            $currentData = PIIAnonymizer::anonymizeArray($currentData);
+
             $prompt = $this->buildGenerateResumePrompt($resumeContext, $jobDescription, $tone, $currentData);
             
-            $response = $this->geminiService->generateContent($prompt);
+            // Allow bypassing cache with a special header or param if needed in dev
+            $forceRefresh = $request->input('force_refresh', false);
+
+            $responseCallback = function() use ($prompt) {
+                return $this->geminiService->generateContent($prompt, [
+                    'response_mime_type' => 'application/json'
+                ]);
+            };
+
+            if ($forceRefresh) {
+                $response = $responseCallback();
+            } else {
+                $promptHash = $this->cacheService->generatePromptHash(['method' => 'generateResume', 'prompt' => $prompt]);
+                $response = $this->cacheService->rememberAIResponse($promptHash, $responseCallback);
+            }
 
             $parsedData = $this->parseAIResponse($response);
 
@@ -70,9 +87,19 @@ class AIResumeController extends Controller
             $currentResume = $request->input('currentResume');
             $jobDescription = $request->input('jobDescription', '');
 
+            // Anonymize inputs
+            $currentResume = PIIAnonymizer::anonymizeArray($currentResume);
+            $jobDescription = PIIAnonymizer::anonymize($jobDescription);
+
             $prompt = $this->buildATSOptimizationPrompt($currentResume, $jobDescription);
             
-            $response = $this->geminiService->generateContent($prompt);
+            $promptHash = $this->cacheService->generatePromptHash(['method' => 'optimizeForATS', 'prompt' => $prompt]);
+            
+            $response = $this->cacheService->rememberAIResponse($promptHash, function() use ($prompt) {
+                return $this->geminiService->generateContent($prompt, [
+                    'response_mime_type' => 'application/json'
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
@@ -104,9 +131,18 @@ class AIResumeController extends Controller
             $bulletPoints = $request->input('bulletPoints');
             $tone = $request->input('tone', 'Professional');
 
+            // Bullets usually don't contain heavy PII but good to practice
+            $bulletPoints = array_map([PIIAnonymizer::class, 'anonymize'], $bulletPoints);
+
             $prompt = $this->buildBulletPointsPrompt($bulletPoints, $tone);
             
-            $response = $this->geminiService->generateContent($prompt);
+            $promptHash = $this->cacheService->generatePromptHash(['method' => 'improveBulletPoints', 'prompt' => $prompt]);
+            
+            $response = $this->cacheService->rememberAIResponse($promptHash, function() use ($prompt) {
+                return $this->geminiService->generateContent($prompt, [
+                    'response_mime_type' => 'application/json'
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
@@ -138,9 +174,19 @@ class AIResumeController extends Controller
             $currentSkills = $request->input('currentSkills');
             $jobDescription = $request->input('jobDescription');
 
+            // Anonymize
+            $currentSkills = PIIAnonymizer::anonymizeArray($currentSkills);
+            $jobDescription = PIIAnonymizer::anonymize($jobDescription);
+
             $prompt = $this->buildSkillGapPrompt($currentSkills, $jobDescription);
             
-            $response = $this->geminiService->generateContent($prompt);
+            $promptHash = $this->cacheService->generatePromptHash(['method' => 'analyzeSkillGap', 'prompt' => $prompt]);
+            
+            $response = $this->cacheService->rememberAIResponse($promptHash, function() use ($prompt) {
+                return $this->geminiService->generateContent($prompt, [
+                    'response_mime_type' => 'application/json'
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
@@ -156,6 +202,98 @@ class AIResumeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to analyze skill gap',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    public function parseResume(Request $request): JsonResponse
+    {
+        $request->validate([
+            'resume_file' => 'required|file|mimes:pdf,docx,doc|max:5120', // Max 5MB
+        ]);
+
+        try {
+            $file = $request->file('resume_file');
+            $extension = $file->getClientOriginalExtension();
+            $path = $file->getPathname();
+
+            $text = '';
+            if (strtolower($extension) === 'pdf') {
+                $text = $this->geminiService->extractTextFromPdf($path);
+            } elseif (in_array(strtolower($extension), ['doc', 'docx'])) {
+                $text = $this->geminiService->extractTextFromDocx($path);
+            }
+
+            if (empty($text)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to extract text from file. Please ensure it is a valid text-based document.'
+                ], 422);
+            }
+
+            // Anonymize extracted text before sending to AI
+            $text = PIIAnonymizer::anonymize($text);
+
+            $parsedData = $this->geminiService->parseResumeToStructuredData($text);
+
+            return response()->json([
+                'success' => true,
+                'data' => $parsedData,
+                'message' => 'Resume parsed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Resume Parsing Error', [
+                'message' => $e->getMessage(),
+                'file' => $request->file('resume_file')->getClientOriginalName()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to parse resume',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    public function generateCoverLetter(Request $request): JsonResponse
+    {
+        $request->validate([
+            'resumeData' => 'required|array',
+            'jobDescription' => 'required|string|min:10',
+        ]);
+
+        try {
+            $resumeData = $request->input('resumeData');
+            $jobDescription = $request->input('jobDescription');
+
+            // Anonymize PII
+            $resumeData = PIIAnonymizer::anonymizeArray($resumeData);
+            $jobDescription = PIIAnonymizer::anonymize($jobDescription);
+
+            $prompt = $this->buildCoverLetterPrompt($resumeData, $jobDescription);
+            
+            $promptHash = $this->cacheService->generatePromptHash(['method' => 'generateCoverLetter', 'prompt' => $prompt]);
+            
+            $response = $this->cacheService->rememberAIResponse($promptHash, function() use ($prompt) {
+                return $this->geminiService->generateContent($prompt);
+            });
+
+            return response()->json([
+                'success' => true,
+                'cover_letter' => $response,
+                'message' => 'Cover letter generated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Cover Letter Generation Error', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate cover letter',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
@@ -325,16 +463,23 @@ PROMPT;
 
     private function parseAIResponse(string $response): array
     {
-        // Try to extract JSON from response
+        // Simple JSON decoding since we use response_mime_type: application/json
+        $decoded = json_decode($response, true);
+        
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Fallback for edge cases where Gemini might still wrap in markdown despite mime_type
         if (preg_match('/\{[\s\S]*\}/', $response, $matches)) {
             $decoded = json_decode($matches[0], true);
             if ($decoded) {
                 return $decoded;
             }
         }
-
-        // Fallback: return raw response
-        return ['rawResponse' => $response];
+        
+        Log::error('Failed to parse AI response', ['response' => $response]);
+        throw new \Exception('Invalid JSON response from AI');
     }
 
     private function parseATSSuggestions(string $response): array

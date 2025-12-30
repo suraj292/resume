@@ -1,5 +1,16 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "lib": [
+      "esnext",
+      "dom",
+      "webworker"
+    ]
+  },
   "files": [],
   "references": [
     {

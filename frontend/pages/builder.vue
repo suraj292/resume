@@ -2,30 +2,10 @@
 import type { ResumeData, ThemeConfig, TemplateMetadata } from '~/types/resume'
 import { useResumeTemplate } from '~/composables/useResumeTemplate'
 import { useResumeTheme } from '~/composables/useResumeTheme'
-import toastr from 'toastr'
-import 'toastr/build/toastr.min.css'
 
-// Configure toastr
-toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: 'toast-top-right',
-  timeOut: 5000,
-  extendedTimeOut: 2000,
-  showMethod: 'slideDown',
-  hideMethod: 'slideUp',
-  showDuration: 300,
-  hideDuration: 200,
-  preventDuplicates: true,
-  newestOnTop: true,
-  toastClass: 'toastr-custom',
-  iconClasses: {
-    error: 'toast-error',
-    info: 'toast-info',
-    success: 'toast-success',
-    warning: 'toast-warning'
-  }
-}
+
+// Toast
+const { success, error: showError, info, warning } = useToast()
 
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -75,6 +55,21 @@ onMounted(async () => {
       console.log('Not authenticated, showing modal')
       showAuthModal.value = true
     }
+
+    // A/B Experiment: Default Template
+    // Only apply if user hasn't explicitly selected one (simple check: if it matches default)
+    const experimentTemplate = getVariant({
+        id: 'default_template_v1',
+        variants: ['software-engineer', 'modern-two-column', 'creative-designer'],
+        weights: [0.33, 0.33, 0.33]
+    })
+    
+    // If not restored from history/storage, apply experiment
+    if (!localStorage.getItem('resume-data')) {
+        selectedTemplate.value = experimentTemplate
+    }
+
+
   } catch (error) {
     console.log('Auth check failed (backend may be offline):', error)
     // Don't show auth modal if backend is offline - allow using the app without auth
@@ -86,7 +81,16 @@ onMounted(async () => {
 const activeTab = ref('upload')
 const sidebarOpen = ref(false)
 const previewModalOpen = ref(false)
-const lastSaved = ref('2m ago')
+
+
+// Import history composable
+import { useHistory } from '~/composables/useHistory'
+import { useAnalytics } from '~/composables/useAnalytics'
+import { useExperiments } from '~/composables/useExperiments'
+import { useSocialShare } from '~/composables/useSocialShare'
+import { useVersions } from '~/composables/useVersions'
+import { useCoverLetter } from '~/composables/useCoverLetter'
+import { useJobTracker } from '~/composables/useJobTracker'
 
 // Form Data - Comprehensive Resume Structure
 const formData = ref({
@@ -129,11 +133,63 @@ const formData = ref({
   achievements: ['']
 })
 
+// Initialize History
+const { undo, redo, canUndo, canRedo } = useHistory(formData)
+
+// Initialize Analytics & Experiments
+const { trackEvent } = useAnalytics()
+const { getVariant } = useExperiments()
+
+const { share, isSupported: isShareSupported } = useSocialShare()
+const showShareModal = ref(false)
+const shareUrl = computed(() => typeof window !== 'undefined' ? window.location.origin : '')
+
+// Version History
+const { versions, saveVersion, restoreVersion, deleteVersion } = useVersions()
+const handleRestoreVersion = (id: string) => {
+    const data = restoreVersion(id)
+    if (data) {
+        formData.value = data
+        successMessage.value = '✓ Version restored successfully'
+        setTimeout(() => successMessage.value = '', 2000)
+    }
+}
+const handleSaveVersion = (name: string) => {
+    saveVersion(name, formData.value)
+}
+
+// Cover Letter
+const { coverLetter, isGenerating: isGeneratingCoverLetter, generateCoverLetter } = useCoverLetter()
+const handleGenerateCoverLetter = (jobDesc: string) => {
+    generateCoverLetter(formData.value, jobDesc)
+}
+
+// Job Tracker
+const { applications, addApplication, updateStatus, deleteApplication, updateApplication } = useJobTracker()
+
+const handleShare = async () => {
+    trackEvent('share_initiated', { platform: isShareSupported.value ? 'native' : 'modal' })
+    
+    const shareData = {
+        title: 'My Professional Resume',
+        text: `I just created my resume using this awesome builder! Check it out.`,
+        url: shareUrl.value
+    }
+
+    if (isShareSupported.value) {
+        await share(shareData)
+    } else {
+        showShareModal.value = true
+    }
+}
+
 // Loading States
 const isProcessing = ref(false)
 const uploadError = ref('')
 const successMessage = ref('')
 const isTemplateLoading = ref(false)
+const savingStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('saved')
+const lastSaved = ref<Date>(new Date())
 
 // Input Modes
 const resumeInputMode = ref('upload')
@@ -142,7 +198,8 @@ const resumeText = ref('')
 const jobDescription = ref('')
 
 // AI Settings
-const atsScore = ref(0)
+// atsScore is now derived from realTimeScore primarily, but can be overridden by AI analysis if needed
+const atsScore = ref(0) 
 const selectedTone = ref('Professional')
 const tones = ['Professional', 'Creative', 'Direct']
 const aiResults = ref({
@@ -177,6 +234,13 @@ const totalPages = ref(1)
 const templatesData = await import('~/data/templates.json').then(m => m.default || m) as TemplateMetadata[]
 const templatesFromJSON = ref<TemplateMetadata[]>(templatesData)
 const selectedTemplate = ref(templatesData[0]?.id || 'software-engineer')
+const previewContainer = ref<HTMLElement | null>(null)
+
+watch(selectedTemplate, () => {
+  if (previewContainer.value) {
+    previewContainer.value.scrollTop = 0
+  }
+})
 
 // New template system
 const { getTemplateComponent } = useResumeTemplate()
@@ -184,7 +248,7 @@ const { currentTheme, updateTheme } = useResumeTheme()
 
 // Dynamic template component (using shallowRef to avoid unnecessary reactivity)
 const currentTemplateComponent = shallowRef(null)
-const previewScale = ref(0.97)
+// previewScale moved to ResumePreview component
 
 // Watch for template changes and load component dynamically
 watch(selectedTemplate, async (newTemplateId) => {
@@ -205,6 +269,13 @@ watch(selectedTemplate, async (newTemplateId) => {
       successMessage.value = `✓ Template switched to ${template.name}`
       setTimeout(() => successMessage.value = '', 2000)
     }
+
+    // Analytics
+    trackEvent('template_selected', { 
+        template_id: newTemplateId,
+        template_name: template?.name
+    })
+
   } catch (error) {
     console.error('Template loading failed:', error)
     uploadError.value = 'Failed to load template'
@@ -216,14 +287,14 @@ watch(selectedTemplate, async (newTemplateId) => {
 // Colors
 const selectedColor = ref('indigo')
 const customColor = ref('#6366f1')
-const colorPalettes = ref([
+const colorPalettes = ref(Object.freeze([
   { id: 'indigo', name: 'Royal Indigo', category: 'Default Corporate', hex: '#4f46e5' },
   { id: 'emerald', name: 'Growth Emerald', category: 'Finance & Healthcare', hex: '#059669' },
   { id: 'rose', name: 'Passion Rose', category: 'Creative & NGO', hex: '#e11d48' },
   { id: 'slate', name: 'Classic Slate', category: 'Modern Minimalist', hex: '#334155' },
   { id: 'amber', name: 'Solar Amber', category: 'High Energy & Sales', hex: '#d97706' },
   { id: 'violet', name: 'Deep Violet', category: 'Luxury & Visionary', hex: '#7c3aed' }
-])
+]))
 
 // Personal Fields
 const personalFields = ref([
@@ -238,13 +309,7 @@ const personalFields = ref([
 ])
 
 // Tabs
-const tabs = ref([
-  { id: 'upload', name: 'Import & Job', icon: 'fa-cloud-arrow-up' },
-  { id: 'manual', name: 'Manual Info', icon: 'fa-pen-to-square' },
-  { id: 'ai', name: 'AI Assistant', icon: 'fa-wand-magic-sparkles' },
-  { id: 'templates', name: 'Templates', icon: 'fa-layer-group' },
-  { id: 'colors', name: 'Color Palette', icon: 'fa-palette' }
-])
+// Tabs defined in Sidebar component
 
 // Computed
 const currentAccentColor = computed(() => {
@@ -254,23 +319,67 @@ const currentAccentColor = computed(() => {
 })
 
 // Transform form data to ResumeData interface for templates
-const resumeDataFormatted = computed<ResumeData>(() => ({
+import { useDebounceFn } from '~/composables/useDebounce'
+
+// ... existing imports ...
+
+// Transform form data to ResumeData interface for templates
+const resumeDataFormatted = ref<ResumeData>({
+    basics: {
+        fullName: '',
+        title: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedin: '',
+        github: '',
+        portfolio: '',
+        summary: ''
+    },
+    experience: [],
+    education: [],
+    skills: {
+        backend: [],
+        frontend: [],
+        devops: [],
+        other: []
+    },
+    achievements: []
+})
+
+const formatResumeData = (data: typeof formData.value): ResumeData => ({
   basics: {
-    fullName: formData.value.fullName || '',
-    title: formData.value.title || '',
-    email: formData.value.email || '',
-    phone: formData.value.phone || '',
-    location: formData.value.location || '',
-    linkedin: formData.value.linkedin,
-    github: formData.value.github,
-    portfolio: formData.value.portfolio,
-    summary: formData.value.summary
+    fullName: data.fullName || '',
+    title: data.title || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    location: data.location || '',
+    linkedin: data.linkedin,
+    github: data.github,
+    portfolio: data.portfolio,
+    summary: data.summary
   },
-  experience: formData.value.experience || [],
-  education: formData.value.education || [],
-  skills: formData.value.skills || {},
-  achievements: formData.value.achievements?.filter((a: string) => a) || []
-}))
+  experience: data.experience || [],
+  education: data.education || [],
+  skills: data.skills || {},
+  achievements: data.achievements?.filter((a: string) => a) || []
+})
+
+const updateFormattedData = useDebounceFn(() => {
+  resumeDataFormatted.value = formatResumeData(formData.value)
+}, 300)
+
+// Initialize immediately
+onMounted(() => {
+    resumeDataFormatted.value = formatResumeData(formData.value)
+})
+
+watch(formData, () => {
+  updateFormattedData()
+}, { deep: true })
+
+// Initialize Real-time ATS (using formatted data and moved after declarations)
+const { realTimeScore, realTimeSuggestions, missingKeywords: realTimeMissingKeywords } = useATS(resumeDataFormatted, jobDescription)
 
 // Current theme configuration
 const currentThemeConfig = computed<ThemeConfig>(() => ({
@@ -285,15 +394,9 @@ watch(currentThemeConfig, (newTheme) => {
   updateTheme(newTheme)
 })
 
-// Zoom controls
-const adjustZoom = (delta: number) => {
-  previewScale.value = Math.max(0.3, Math.min(1.5, previewScale.value + delta))
-}
+// Zoom controls moved to ResumePreview component
 
-const scoreCircleDashoffset = computed(() => {
-  const circumference = 264
-  return circumference - (atsScore.value / 100) * circumference
-})
+
 
 const previewKey = computed(() => {
   return JSON.stringify({
@@ -304,9 +407,7 @@ const previewKey = computed(() => {
   })
 })
 
-const hasSkills = computed(() => {
-  return Object.values(formData.value.skills).some(arr => arr.length > 0)
-})
+// hasSkills usage removed or replaced by ResumePreview internal logic
 
 const hasExperience = computed(() => {
   return formData.value.experience.length > 0 && formData.value.experience[0]?.position
@@ -356,84 +457,7 @@ const templatePrimaryColor = computed(() => {
   return config?.layout?.primaryColor || currentAccentColor.value
 })
 
-// Smart multi-page logic - detect when content exceeds A4 page height
-const needsSecondPage = computed(() => {
-  // Estimate content height in pixels
-  let estimatedHeight = 0
-  
-  // Header section: ~150px
-  estimatedHeight += 150
-  
-  // Summary: base 100px + 1px per character (wrapping considered)
-  if (formData.value.summary) {
-    estimatedHeight += 100 + Math.ceil(formData.value.summary.length / 2)
-  }
-  
-  // Skills section: base 100px + 5px per skill
-  const skillCount = Object.values(formData.value.skills)
-    .reduce((sum, arr) => sum + arr.length, 0)
-  if (skillCount > 0) {
-    estimatedHeight += 100 + (skillCount * 5)
-  }
-  
-  // Experience: 150px base per entry + 30px per responsibility
-  formData.value.experience.forEach(exp => {
-    if (exp.position) {
-      estimatedHeight += 150
-      const respCount = exp.responsibilities.filter(r => r).length
-      estimatedHeight += respCount * 30
-    }
-  })
-  
-  // Education: 80px per entry
-  const eduCount = formData.value.education.filter(e => e.degree).length
-  estimatedHeight += eduCount * 80
-  
-  // Achievements: base 100px + 30px per achievement
-  const achCount = formData.value.achievements?.filter(a => a).length || 0
-  if (achCount > 0) {
-    estimatedHeight += 100 + (achCount * 30)
-  }
-  
-  // Page capacity is ~1000px usable height (A4 page minus padding)
-  // Show second page if content exceeds this threshold
-  return estimatedHeight > 1000
-})
-
-// Split data for page 1 (when multi-page is needed)
-const page1Data = computed<ResumeData>(() => {
-  if (!needsSecondPage.value) {
-    return resumeDataFormatted.value
-  }
-  
-  // Page 1: Header, Summary, Skills, First 2 experiences
-  return {
-    ...resumeDataFormatted.value,
-    experience: resumeDataFormatted.value.experience.slice(0, 2),
-    education: [], // Move to page 2
-    achievements: [] // Move to page 2
-  }
-})
-
-// Split data for page 2 (when multi-page is needed)
-const page2Data = computed<ResumeData | null>(() => {
-  if (!needsSecondPage.value) {
-    return null
-  }
-  
-  // Page 2: Remaining experience, Education, Achievements (no header/summary duplicate)
-  return {
-    ...resumeDataFormatted.value,
-    basics: {
-      ...resumeDataFormatted.value.basics,
-      fullName: '', // Don't repeat name
-      title: '', // Don't repeat title
-      summary: '' // Don't repeat summary
-    },
-    experience: resumeDataFormatted.value.experience.slice(2),
-    skills: {} // Don't repeat skills
-  }
-})
+// Multi-page logic moved to ResumePreview component
 
 // Methods
 const switchTab = (tabId: string) => {
@@ -521,54 +545,56 @@ const handleResumeUpload = async (event: Event) => {
   successMessage.value = ''
 
   try {
-    const { extractTextFromFile, parseResumeToStructuredData } = useGemini()
-    
-    // Extract text from file using Gemini API
-    toastr.info('Extracting text from file...', 'Processing')
-    const text = await extractTextFromFile(file)
-    
-    if (text) {
-      resumeText.value = text
-      
-      // Parse the extracted text into structured data using Gemini API
-      try {
-        toastr.info('Parsing resume data with AI...', 'Processing')
-        const parsedData = await parseResumeToStructuredData(text)
+    const uploadData = new FormData()
+    uploadData.append('resume_file', file)
 
-        // console.log(parsedData);
-        
-        if (parsedData) {
-          populateFormWithParsedData(parsedData)
-          
-          // Update ATS score if returned
-          if (parsedData.atsScore) {
-            atsScore.value = parsedData.atsScore
-            atsAnalysisCompleted.value = true
-          }
-          
-          toastr.success('Resume uploaded and parsed successfully! All fields have been populated.', 'Success')
-        } else {
-          // Fallback to basic parsing
-          parseResumeContent(text)
-          toastr.success('Resume uploaded successfully! Basic information extracted.', 'Success')
-        }
-      } catch (parseError: any) {
-        console.error('Parse error:', parseError)
-        // Fallback to basic parsing if AI parsing fails
-        parseResumeContent(text)
-        toastr.warning('Resume uploaded. Using basic text extraction.', 'Partial Success')
+    info('Uploading and parsing resume...', 'Processing')
+    
+    // Call backend API to parse resume
+    const response = await $fetch<{ success: boolean; data: any; message?: string }>('/api/ai/parse-resume', {
+      method: 'POST',
+      body: uploadData
+    })
+
+    if (response.success && response.data) {
+      const parsedData = response.data
+      
+      // Populate form
+      populateFormWithParsedData(parsedData)
+      
+      // Update ATS score if returned
+      if (parsedData.atsScore) {
+        atsScore.value = parsedData.atsScore
+        atsAnalysisCompleted.value = true
       }
+      
+      // Set resume text if returned, or we might need to fetch it separately if needed for context
+      // For now, we assume the parsed data is enough, or the backend could return extracted text too.
+      // If backend doesn't return raw text, we might miss it for the "Paste" tab context, but that's acceptable.
+      // Actually, let's ask backend to return extracted text if possible, but for now parsedData is key.
+      
+      success('Resume uploaded and parsed successfully!', 'Success')
+    } else {
+      throw new Error(response.message || 'Failed to parse resume')
     }
+
   } catch (error: any) {
     console.error('Resume upload error:', error)
-    toastr.error(error.message || 'Failed to extract text from resume', 'Error')
+    // Handle specific backend errors
+    const errorMessage = error.response?._data?.message || error.message || 'Failed to upload/parse resume'
+    showError(errorMessage, 'Error')
+    
+    // Fallback: If backend fails, we could try client-side if key exists, but we are removing client-side key for security.
+    // So we just show error.
   } finally {
     isProcessing.value = false
+    // Reset file input
+    target.value = ''
   }
 }
 
 const populateFormWithParsedData = (parsedData: any) => {
-  // Populate personal information
+  // Populate personal information - Only overwrite if new value is present
   if (parsedData.fullName) formData.value.fullName = parsedData.fullName
   if (parsedData.title) formData.value.title = parsedData.title
   if (parsedData.email) formData.value.email = parsedData.email
@@ -579,20 +605,26 @@ const populateFormWithParsedData = (parsedData: any) => {
   if (parsedData.portfolio) formData.value.portfolio = parsedData.portfolio
   if (parsedData.summary) formData.value.summary = parsedData.summary
 
-  // Populate skills
+  // Populate skills - Merge strategies
   if (parsedData.skills) {
+    // Helper to merge unique skills
+    const mergeSkills = (current: string[], incoming: string[]) => {
+       const combined = new Set([...current, ...incoming])
+       return Array.from(combined)
+    }
+
     formData.value.skills = {
-      backend: parsedData.skills.backend || [],
-      frontend: parsedData.skills.frontend || [],
-      devops: parsedData.skills.devops || [],
-      other: parsedData.skills.other || []
+      backend: mergeSkills(formData.value.skills.backend, parsedData.skills.backend || []),
+      frontend: mergeSkills(formData.value.skills.frontend, parsedData.skills.frontend || []),
+      devops: mergeSkills(formData.value.skills.devops, parsedData.skills.devops || []),
+      other: mergeSkills(formData.value.skills.other, parsedData.skills.other || [])
     }
   }
 
-  // Populate experience
+  // Populate experience - Replace strategy (safest for complex objects to avoid duplication/mismatch)
   if (parsedData.experience && parsedData.experience.length > 0) {
     formData.value.experience = parsedData.experience.map((exp: any, index: number) => ({
-      id: index + 1,
+      id: Date.now() + index, // Better ID generation
       position: exp.position || '',
       company: exp.company || '',
       location: exp.location || '',
@@ -603,10 +635,10 @@ const populateFormWithParsedData = (parsedData: any) => {
     }))
   }
 
-  // Populate education
+  // Populate education - Replace strategy
   if (parsedData.education && parsedData.education.length > 0) {
     formData.value.education = parsedData.education.map((edu: any, index: number) => ({
-      id: index + 1,
+      id: Date.now() + index,
       degree: edu.degree || '',
       institution: edu.institution || '',
       year: edu.year || '',
@@ -614,9 +646,10 @@ const populateFormWithParsedData = (parsedData: any) => {
     }))
   }
 
-  // Populate achievements
+  // Populate achievements - Merge unique
   if (parsedData.achievements && parsedData.achievements.length > 0) {
-    formData.value.achievements = parsedData.achievements
+    const uniqueAchievements = new Set([...formData.value.achievements, ...parsedData.achievements].filter(a => a))
+    formData.value.achievements = Array.from(uniqueAchievements)
   }
 }
 
@@ -638,64 +671,11 @@ const parseResumeContent = (text: string) => {
   }
 }
 
-const addExperience = () => {
-  formData.value.experience.push({
-    id: Date.now(),
-    position: '',
-    company: '',
-    location: '',
-    startDate: '',
-    endDate: '',
-    current: false,
-    responsibilities: ['']
-  })
-}
 
-const removeExperience = (index: number) => {
-  if (formData.value.experience.length > 1) {
-    formData.value.experience.splice(index, 1)
-  }
-}
 
-const addResponsibility = (expIndex: number) => {
-  formData.value.experience[expIndex]?.responsibilities.push('')
-}
+// Education management moved to EducationForm component
 
-const removeResponsibility = (expIndex: number, respIndex: number) => {
-  const exp = formData.value.experience[expIndex]
-  if (exp && exp.responsibilities.length > 1) {
-    exp.responsibilities.splice(respIndex, 1)
-  }
-}
 
-const addEducation = () => {
-  formData.value.education.push({
-    id: Date.now(),
-    degree: '',
-    institution: '',
-    year: '',
-    percentage: ''
-  })
-}
-
-const removeEducation = (index: number) => {
-  if (formData.value.education.length > 1) {
-    formData.value.education.splice(index, 1)
-  }
-}
-
-const addSkill = (category: keyof typeof formData.value.skills) => {
-  if (process.client) {
-    const skill = prompt(`Enter new ${category} skill:`)
-    if (skill && skill.trim()) {
-      formData.value.skills[category].push(skill.trim())
-    }
-  }
-}
-
-const removeSkill = (category: keyof typeof formData.value.skills, index: number) => {
-  formData.value.skills[category].splice(index, 1)
-}
 
 const addAchievement = () => {
   formData.value.achievements.push('')
@@ -732,12 +712,13 @@ const handleJobUpload = async (event: Event) => {
     }
   } catch (error: any) {
     console.error('Job upload error:', error)
-    toastr.error(error.data?.error || 'Failed to extract text from job description', 'Error')
+    showError(error.data?.error || 'Failed to extract text from job description', 'Error')
   } finally {
     isProcessing.value = false
   }
 }
 
+// Save context for AI
 // Save context for AI
 const saveContext = async () => {
   try {
@@ -748,16 +729,41 @@ const saveContext = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     // Show success message using toastr
-    toastr.success('Context saved for AI processing', 'Success')
+    success('Context saved for AI processing', 'Success')
+    savingStatus.value = 'saved'
+    lastSaved.value = new Date()
+    
+    trackEvent('context_saved', { timestamp: lastSaved.value })
     
   } catch (error: any) {
     console.error('Save context error:', error)
     const errorMsg = error.data?.message || error.message || 'Failed to save context'
-    toastr.error(errorMsg, 'Error')
+    showError(errorMsg, 'Error')
+    savingStatus.value = 'error'
   } finally {
     isProcessing.value = false
   }
 }
+
+// Autosave Logic
+const autoSave = useDebounceFn(async () => {
+  if (savingStatus.value === 'saving' || isProcessing.value) return
+
+  savingStatus.value = 'saving'
+  // In a real app, this would be an API call
+  // For now, we simulate a save delay
+  await new Promise(resolve => setTimeout(resolve, 800))
+  
+  savingStatus.value = 'saved'
+  lastSaved.value = new Date()
+}, 2000)
+
+watch([formData, jobDescription], () => {
+  if (savingStatus.value !== 'saving') {
+     savingStatus.value = 'saving' // optimistic saving state immediately on change
+     autoSave()
+  }
+}, { deep: true })
 
 // AI method implementations
 const generateResume = async () => {
@@ -822,13 +828,13 @@ Summary: ${formData.value.summary}
       
       // Show API message using toastr
       const message = response.message || 'Resume generated successfully!'
-      toastr.success(message, 'Success')
+      success(message, 'Success')
     }
     
   } catch (error: any) {
     console.error('Generate resume error:', error)
     const errorMsg = error.data?.message || error.message || 'Failed to generate resume. Please try again.'
-    toastr.error(errorMsg, 'Error')
+    showError(errorMsg, 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -852,7 +858,7 @@ const optimizeForATS = async () => {
     if (response.success && response.suggestions) {
       aiResults.value.atsOptimization = response.suggestions
       
-      // Update global ATS score refs
+      // Update global ATS score refs - we keep the AI one as "official" but UI might show real-time
       if (response.suggestions.atsScore) {
         atsScore.value = response.suggestions.atsScore
         atsAnalysisCompleted.value = true
@@ -866,13 +872,13 @@ const optimizeForATS = async () => {
         message = 'ATS optimization complete! Review suggestions.'
       }
       
-      toastr.success(message, 'Success')
+      success(message, 'Success')
     }
     
   } catch (error: any) {
     console.error('ATS optimization error:', error)
     const errorMsg = error.data?.message || error.message || 'Failed to optimize for ATS. Please try again.'
-    toastr.error(errorMsg, 'Error')
+    showError(errorMsg, 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -913,13 +919,13 @@ const improveBulletPoints = async () => {
       
       // Show API message using toastr
       const message = response.message || `Improved ${response.improvedBullets.length} bullet points! Review below.`
-      toastr.success(message, 'Success')
+      success(message, 'Success')
     }
     
   } catch (error: any) {
     console.error('Improve bullets error:', error)
     const errorMsg = error.data?.message || error.message || 'Failed to improve bullet points. Please try again.'
-    toastr.error(errorMsg, 'Error')
+    showError(errorMsg, 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -952,13 +958,13 @@ const analyzeSkillGap = async () => {
       // Show API message using toastr
       const matchPercentage = response.analysis.matchPercentage || 0
       const message = response.message || `Skill match: ${matchPercentage}%. Check analysis below.`
-      toastr.success(message, 'Success')
+      success(message, 'Success')
     }
     
   } catch (error: any) {
     console.error('Skill gap analysis error:', error)
     const errorMsg = error.data?.message || error.message || 'Failed to analyze skill gap. Please try again.'
-    toastr.error(errorMsg, 'Error')
+    showError(errorMsg, 'Error')
   } finally {
     isProcessing.value = false
   }
@@ -986,7 +992,7 @@ const applyImprovedBullets = () => {
     }
   })
   
-  toastr.success('Improved bullets applied to your experience!', 'Success')
+  success('Improved bullets applied to your experience!', 'Success')
 }
 
 // Add missing skills from skill gap analysis
@@ -1022,7 +1028,7 @@ const addMissingSkills = () => {
     }
   })
   
-  toastr.success(`Added ${missingSkills.length} missing skills to your resume!`, 'Success')
+  success(`Added ${missingSkills.length} missing skills to your resume!`, 'Success')
 }
 
 const exportPDF = async () => {
@@ -1100,8 +1106,14 @@ const exportPDF = async () => {
     pdf.save(`${formData.value.fullName || 'Resume'}_Resume.pdf`)
     
     // Show success message
+    // Show success message
     successMessage.value = '✓ PDF downloaded successfully!'
     setTimeout(() => successMessage.value = '', 3000)
+    
+    trackEvent('pdf_exported', { 
+        template: selectedTemplate.value,
+        ats_score: atsScore.value
+    })
     
   } catch (error) {
     console.error('PDF export error:', error)
@@ -1112,26 +1124,49 @@ const exportPDF = async () => {
   }
 }
 
+const showLinkedInModal = ref(false)
+
+const handleLinkedInImport = (file: File) => {
+    showLinkedInModal.value = false
+    // Reuse the existing resume upload handler
+    // We wrap the file in an event-like object structure expected by the handler if needed, 
+    // or we can refactor handleResumeUpload to accept a File directly. 
+    // Looking at the code, handleResumeUpload expects an Event. 
+    // Let's modify handleResumeUpload or create a wrapper.
+    
+    // Creating a synthetic event to reuse existing logic
+    const dataTransfer = new DataTransfer()
+    dataTransfer.items.add(file)
+    const event = { target: { files: dataTransfer.files } } as unknown as Event
+    
+    handleResumeUpload(event)
+}
+
 useHead({
   title: 'Resume Builder'
 })
 </script>
 
 <template>
-  <div v-if="atsScore > 0" :class="['ats-floating-badge', { 'ats-pulse-burst': isPulsing }]">
-    <button @click="atsScore = 0" class="absolute -top-1 -right-1 w-4 h-4 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center text-[10px] transition-colors z-10">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
+  <div v-if="realTimeScore > 0" :class="['ats-floating-badge', { 'ats-pulse-burst': isPulsing }]">
     <div class="ats-shimmer-sweep"></div>
-    <div class="ats-floating-label">ATS Score</div>
+    <div class="ats-floating-label">Real-Time Score</div>
     <div class="ats-floating-score-wrapper">
-      <span class="ats-floating-score">{{ atsScore }}</span>
+      <span class="ats-floating-score">{{ realTimeScore }}</span>
       <span class="ats-floating-total">/100</span>
     </div>
   </div>
 
   <!-- Auth Required Modal -->
   <AuthRequiredModal v-if="showAuthModal" @close="showAuthModal = false" />
+  
+  <!-- Share Modal -->
+  <UiShareModal 
+    :is-open="showShareModal" 
+    :share-text="'I just created my resume using this awesome builder! Check it out.'"
+    :share-url="shareUrl"
+    @close="showShareModal = false" 
+  />
 
   <!-- Full Screen Loading Overlay -->
   <div v-if="isProcessing" class="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center">
@@ -1148,6 +1183,15 @@ useHead({
     <!-- Navigation -->
     <CommonNavbar />
     
+    <!-- Mobile Sticky Action Sheet -->
+    <BuilderMobileActionSheet 
+      :is-processing="isProcessing"
+      :last-saved="lastSaved"
+      @preview="openMobilePreview"
+      @save="saveContext"
+      @generate="activeTab = 'ai'"
+    />
+
     <!-- Builder Action Bar -->
     <div class="h-14 bg-slate-900 text-white flex items-center justify-between px-4 z-40 flex-shrink-0 sticky top-20">
       <div class="flex items-center gap-3">
@@ -1156,8 +1200,34 @@ useHead({
         </button>
         <h1 class="font-bold text-sm sm:text-base">Resume Builder</h1>
       </div>
+      
+      <!-- History Controls -->
+      <div class="hidden sm:flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+        <button 
+          @click="undo" 
+          :disabled="!canUndo"
+          :class="['w-8 h-8 flex items-center justify-center rounded-md transition-all', !canUndo ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-700 text-white']"
+          title="Undo (Ctrl+Z)"
+        >
+          <i class="fa-solid fa-rotate-left text-xs"></i>
+        </button>
+        <button 
+          @click="redo" 
+          :disabled="!canRedo"
+          :class="['w-8 h-8 flex items-center justify-center rounded-md transition-all', !canRedo ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-700 text-white']"
+          title="Redo (Ctrl+Y)"
+        >
+          <i class="fa-solid fa-rotate-right text-xs"></i>
+        </button>
+      </div>
+
       <div class="flex items-center gap-2">
         <span class="text-xs font-medium text-slate-400 hidden sm:block italic">Draft saved {{ lastSaved }}</span>
+        <button @click="handleShare" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2" title="Share">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span class="hidden sm:inline">Share</span>
+        </button>
+
         <button @click="exportPDF" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
           <i class="fa-solid fa-download text-[10px]"></i>
           <span class="hidden sm:inline">Export PDF</span>
@@ -1169,27 +1239,20 @@ useHead({
     <div class="flex flex-1 overflow-hidden lg:flex-row">
       
       <!-- Icon-Only Sidebar -->
-      <aside 
-        id="mobile-sidebar"
-        :class="['w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 z-40 fixed left-0 top-28 bottom-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:top-0', { 'mobile-sidebar-hidden': !sidebarOpen }]">
-        <div class="flex flex-col gap-4">
-          <div v-for="tab in tabs" :key="tab.id" class="nav-item">
-            <button 
-              @click="switchTab(tab.id)" 
-              :class="['nav-btn w-10 h-10 flex items-center justify-center rounded-xl transition-all', activeTab === tab.id ? 'nav-btn-active bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600']">
-              <i :class="`fa-solid ${tab.icon} text-base`"></i>
-            </button>
-            <div class="tooltip">{{ tab.name }}</div>
-          </div>
-        </div>
-      </aside>
+      <BuilderSidebar 
+        :active-tab="activeTab" 
+        :sidebar-open="sidebarOpen"
+        @update:active-tab="switchTab"
+        @update:sidebar-open="sidebarOpen = $event"
+        @close-mobile-sidebar="toggleMobileSidebar"
+      />
 
       <!-- Dynamic Workspace -->
       <main class="flex-1 flex overflow-hidden h-[calc(100vh-136px)]">
         
         <!-- Editor Content (Left) - Fixed, No Scroll -->
         <section class="flex-1 lg:flex-[0.8] bg-white overflow-hidden border-r border-slate-200 w-full flex flex-col">
-          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 h-full overflow-y-auto custom-scrollbar">
+          <div class="max-w-xl mx-auto py-6 sm:py-10 px-4 sm:px-6 h-full overflow-y-auto custom-scrollbar pb-24 lg:pb-10">
             
             <!-- Tab: Upload & Job Context -->
             <div v-show="activeTab === 'upload'" class="tab-content">
@@ -1224,6 +1287,16 @@ useHead({
                       <p class="text-sm font-bold text-slate-700">Drop your current resume</p>
                       <p class="text-[9px] text-slate-400 mt-1">PDF or Word</p>
                     </div>
+                  </div>
+
+                  
+                  <!-- LinkedIn Import Option -->
+                  <div v-show="resumeInputMode === 'upload'" class="mt-2 text-center">
+                    <p class="text-[9px] text-slate-400 mb-2">- OR -</p>
+                    <button @click="showLinkedInModal = true" class="text-xs bg-[#0077b5] hover:bg-[#006097] text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 mx-auto shadow-sm shadow-blue-200">
+                      <i class="fa-brands fa-linkedin"></i>
+                      Import from LinkedIn
+                    </button>
                   </div>
 
                   <!-- Paste Mode -->
@@ -1288,248 +1361,22 @@ useHead({
               </header>
 
               <div class="space-y-4">
-                <!-- Full Name -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Full Name</label>
-                    <input v-model="formData.fullName" type="text" placeholder="e.g. John Doe"
-                      class="w-full bg-transparent font-bold text-slate-800 outline-none text-base">
-                  </div>
-                </div>
-
-                <!-- Professional Title -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Professional Title</label>
-                    <input v-model="formData.title" type="text" placeholder="e.g. Software Engineer"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- Email -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</label>
-                    <input v-model="formData.email" type="email" placeholder="john@example.com"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- Phone -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone Number</label>
-                    <input v-model="formData.phone" type="tel" placeholder="+1 (555) 000-0000"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- Location -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location / Address</label>
-                    <input v-model="formData.location" type="text" placeholder="New York, NY"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- LinkedIn -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">LinkedIn Profile</label>
-                    <input v-model="formData.linkedin" type="url" placeholder="linkedin.com/in/yourprofile"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- GitHub -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">GitHub Profile</label>
-                    <input v-model="formData.github" type="url" placeholder="github.com/yourusername"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- Portfolio -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Website</label>
-                    <input v-model="formData.portfolio" type="url" placeholder="yourwebsite.com"
-                      class="w-full bg-transparent font-semibold text-slate-700 outline-none text-sm">
-                  </div>
-                </div>
-
-                <!-- Summary -->
-                <div class="group relative bg-white border border-slate-200 p-4 rounded-2xl hover:border-indigo-300 transition-colors flex items-start gap-4 shadow-sm">
-                  <div class="drag-handle mt-1.5 text-slate-300 hover:text-indigo-400 transition-colors cursor-grab">
-                    <i class="fa-solid fa-grip-vertical"></i>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Professional Summary</label>
-                    <textarea v-model="formData.summary" rows="4" placeholder="Brief overview of your professional background..."
-                      class="w-full bg-transparent font-normal text-slate-700 outline-none text-sm resize-none"></textarea>
-                  </div>
-                </div>
+                <BuilderPersonalInfoForm v-model="formData" />
               </div>
 
               <!-- Skills Section -->
               <div class="mt-8">
-                <h3 class="text-lg font-bold text-slate-900 mb-4">Skills</h3>
-                <div class="space-y-4">
-                  <!-- Backend Skills -->
-                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-2">
-                      <label class="text-sm font-bold text-slate-700">Backend</label>
-                      <button @click="addSkill('backend')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <span v-for="(skill, index) in formData.skills.backend" :key="index" 
-                        class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                        {{ skill }}
-                        <button @click="removeSkill('backend', index)" class="hover:text-blue-900">
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Frontend Skills -->
-                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-2">
-                      <label class="text-sm font-bold text-slate-700">Frontend</label>
-                      <button @click="addSkill('frontend')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <span v-for="(skill, index) in formData.skills.frontend" :key="index" 
-                        class="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                        {{ skill }}
-                        <button @click="removeSkill('frontend', index)" class="hover:text-green-900">
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- DevOps Skills -->
-                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-2">
-                      <label class="text-sm font-bold text-slate-700">DevOps</label>
-                      <button @click="addSkill('devops')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <span v-for="(skill, index) in formData.skills.devops" :key="index" 
-                        class="inline-flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
-                        {{ skill }}
-                        <button @click="removeSkill('devops', index)" class="hover:text-orange-900">
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Other Skills -->
-                  <div class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-2">
-                      <label class="text-sm font-bold text-slate-700">Other</label>
-                      <button @click="addSkill('other')" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <span v-for="(skill, index) in formData.skills.other" :key="index" 
-                        class="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
-                        {{ skill }}
-                        <button @click="removeSkill('other', index)" class="hover:text-purple-900">
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <BuilderSkillsForm v-model="formData.skills" />
               </div>
 
               <!-- Experience Section -->
               <div class="mt-8">
-                <div class="flex justify-between items-center mb-4">
-                  <h3 class="text-lg font-bold text-slate-900">Work Experience</h3>
-                  <button @click="addExperience" class="text-indigo-600 hover:text-indigo-700 text-sm font-bold">+ Add Experience</button>
-                </div>
-                <div class="space-y-4">
-                  <div v-for="(exp, index) in formData.experience" :key="exp.id" class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-start mb-3">
-                      <h4 class="text-sm font-bold text-slate-900">Experience {{ index + 1 }}</h4>
-                      <button @click="removeExperience(index)" v-if="formData.experience.length > 1" class="text-red-600 hover:text-red-700">
-                        <i class="fa-solid fa-trash text-sm"></i>
-                      </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                      <input v-model="exp.position" type="text" placeholder="Position" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="exp.company" type="text" placeholder="Company" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="exp.startDate" type="text" placeholder="Start Date" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="exp.endDate" type="text" placeholder="End Date" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div class="mb-2">
-                      <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs font-bold text-slate-700">Responsibilities</label>
-                        <button @click="addResponsibility(index)" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold">+ Add</button>
-                      </div>
-                      <div v-for="(resp, rIndex) in exp.responsibilities" :key="rIndex" class="flex gap-2 mb-2">
-                        <input v-model="exp.responsibilities[rIndex]" type="text" placeholder="Responsibility" 
-                          class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                        <button @click="removeResponsibility(index, rIndex)" v-if="exp.responsibilities.length > 1" class="text-red-600 hover:text-red-700">
-                          <i class="fa-solid fa-trash text-sm"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <BuilderExperienceForm v-model="formData.experience" />
               </div>
 
               <!-- Education Section -->
               <div class="mt-8">
-                <div class="flex justify-between items-center mb-4">
-                  <h3 class="text-lg font-bold text-slate-900">Education</h3>
-                  <button @click="addEducation" class="text-indigo-600 hover:text-indigo-700 text-sm font-bold">+ Add Education</button>
-                </div>
-                <div class="space-y-4">
-                  <div v-for="(edu, index) in formData.education" :key="edu.id" class="bg-white border border-slate-200 p-4 rounded-2xl">
-                    <div class="flex justify-between items-start mb-3">
-                      <h4 class="text-sm font-bold text-slate-900">Education {{ index + 1 }}</h4>
-                      <button @click="removeEducation(index)" v-if="formData.education.length > 1" class="text-red-600 hover:text-red-700">
-                        <i class="fa-solid fa-trash text-sm"></i>
-                      </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                      <input v-model="edu.degree" type="text" placeholder="Degree" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="edu.institution" type="text" placeholder="Institution" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="edu.year" type="text" placeholder="Year" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                      <input v-model="edu.percentage" type="text" placeholder="GPA/Percentage" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                  </div>
-                </div>
+                <BuilderEducationForm v-model:education="formData.education" />
               </div>
 
               <!-- Achievements -->
@@ -1641,44 +1488,53 @@ useHead({
                 </div>
 
                 <!-- AI Results Display -->
-                <div v-if="aiResults.atsOptimization" class="p-5 bg-blue-50 rounded-3xl border border-blue-200">
+                <div v-if="realTimeScore > 0 || aiResults.atsOptimization" class="p-5 bg-blue-50 rounded-3xl border border-blue-200" aria-live="polite">
                   <h3 class="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-robot"></i>
                     ATS Optimization Results
                   </h3>
                   
                   <!-- ATS Score -->
-                  <div v-if="aiResults.atsOptimization.atsScore" class="mb-4 p-4 bg-white rounded-xl">
+                  <div class="mb-4 p-4 bg-white rounded-xl">
                     <div class="flex items-center justify-between mb-2">
-                      <span class="text-xs font-bold text-slate-700">ATS Score</span>
-                      <span class="text-2xl font-bold text-blue-600">{{ aiResults.atsOptimization.atsScore }}/100</span>
+                      <span class="text-xs font-bold text-slate-700">Real-Time Score</span>
+                      <span class="text-2xl font-bold text-blue-600">{{ realTimeScore }}/100</span>
                     </div>
                     <div class="w-full bg-blue-200 rounded-full h-3">
-                      <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" :style="{ width: aiResults.atsOptimization.atsScore + '%' }"></div>
+                      <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" :style="{ width: realTimeScore + '%' }"></div>
                     </div>
-                    <p class="text-[10px] text-slate-500 mt-2">
-                      {{ aiResults.atsOptimization.atsScore >= 80 ? 'Excellent! Your resume is well-optimized.' : 
-                         aiResults.atsOptimization.atsScore >= 60 ? 'Good, but there\'s room for improvement.' : 
-                         'Needs improvement to pass ATS systems.' }}
-                    </p>
+                    
+                    <!-- Real-time Suggestions -->
+                     <div v-if="realTimeSuggestions.length > 0" class="mt-4 space-y-2">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase">Quick Improvements:</p>
+                        <div v-for="(suggestion, idx) in realTimeSuggestions.slice(0, 3)" :key="idx" 
+                             class="flex items-center gap-2 text-xs text-slate-600">
+                             <i class="fa-solid fa-circle-exclamation text-amber-500 text-[10px]"></i>
+                             <span>{{ suggestion.feedback }}</span>
+                        </div>
+                     </div>
                   </div>
 
-                  <!-- Missing Keywords -->
-                  <div v-if="aiResults.atsOptimization.missingKeywords && aiResults.atsOptimization.missingKeywords.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                  <!-- Missing Keywords (Real-time + AI) -->
+                  <div v-if="(realTimeMissingKeywords.length > 0 || (aiResults.atsOptimization?.missingKeywords?.length > 0))" class="mb-4 p-4 bg-white rounded-xl">
                     <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
                       <i class="fa-solid fa-exclamation-triangle text-amber-600"></i>
-                      Missing Keywords ({{ aiResults.atsOptimization.missingKeywords.length }})
+                      Missing Keywords
                     </p>
                     <div class="flex flex-wrap gap-2">
-                      <span v-for="(keyword, idx) in aiResults.atsOptimization.missingKeywords" :key="idx" 
-                        class="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold">
+                      <span v-for="(keyword, idx) in realTimeMissingKeywords" :key="'rt-' + idx" 
+                        class="px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-bold" title="Detected via real-time analysis">
+                        {{ keyword }}
+                      </span>
+                       <span v-if="aiResults.atsOptimization?.missingKeywords" v-for="(keyword, idx) in aiResults.atsOptimization.missingKeywords" :key="'ai-' + idx" 
+                        class="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold" title="Detected via AI analysis">
                         {{ keyword }}
                       </span>
                     </div>
                   </div>
 
                   <!-- Priority Changes -->
-                  <div v-if="aiResults.atsOptimization.priorityChanges && aiResults.atsOptimization.priorityChanges.length > 0" class="mb-4 p-4 bg-white rounded-xl">
+                  <div v-if="aiResults.atsOptimization?.priorityChanges && aiResults.atsOptimization.priorityChanges.length > 0" class="mb-4 p-4 bg-white rounded-xl">
                     <p class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-2">
                       <i class="fa-solid fa-star text-amber-500"></i>
                       Priority Changes
@@ -1693,7 +1549,7 @@ useHead({
                   </div>
 
                   <!-- All Suggestions -->
-                  <div v-if="aiResults.atsOptimization.suggestions && aiResults.atsOptimization.suggestions.length > 0" class="p-4 bg-white rounded-xl">
+                  <div v-if="aiResults.atsOptimization?.suggestions && aiResults.atsOptimization.suggestions.length > 0" class="p-4 bg-white rounded-xl">
                     <p class="text-xs font-bold text-slate-700 mb-2">All Suggestions ({{ aiResults.atsOptimization.suggestions.length }})</p>
                     <div class="space-y-2 max-h-64 overflow-y-auto">
                       <div v-for="(suggestion, idx) in aiResults.atsOptimization.suggestions" :key="idx" 
@@ -1844,42 +1700,11 @@ useHead({
                 <p class="text-slate-400 text-xs mt-1 font-medium">Select a design that matches your industry and seniority level.</p>
               </header>
 
-              <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                <div v-for="template in templatesFromJSON" :key="template.id" @click="selectTemplate(template.id)"
-                  :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-100']">
-                  
-                  <!-- Dynamic Template Thumbnail -->
-                  <div :class="['aspect-[3/4] rounded-xl mb-2 sm:mb-3 overflow-hidden', template.thumbnail.bg]">
-                    <div :class="['w-full h-full flex', template.thumbnail.mainClass]">
-                      <template v-for="(element, idx) in template.thumbnail.elements" :key="idx">
-                        <div :class="element.class">
-                          <template v-if="element.children">
-                            <template v-for="(child, cidx) in element.children" :key="cidx">
-                              <div :class="child.class">
-                                <template v-if="child.children">
-                                  <div v-for="(grandchild, gidx) in child.children" :key="gidx" :class="grandchild.class"></div>
-                                </template>
-                              </div>
-                            </template>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-
-                  <div class="px-1 sm:px-2 pb-1 sm:pb-2">
-                    <h3 class="font-bold text-xs sm:text-sm text-slate-800 truncate">{{ template.name }}</h3>
-                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">{{ template.type }}</p>
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      <span v-for="tag in template.tags.slice(0, 2)" :key="tag" class="text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">{{ tag }}</span>
-                    </div>
-                  </div>
-                  
-                  <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-check text-white text-[10px] sm:text-xs"></i>
-                  </div>
-                </div>
-              </div>
+              <BuilderTemplateSelector 
+                :model-value="selectedTemplate" 
+                @update:model-value="selectTemplate" 
+                :templates="templatesFromJSON" 
+              />
             </div>
 
             <!-- Tab: Colors -->
@@ -1891,10 +1716,12 @@ useHead({
 
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button v-for="color in colorPalettes" :key="color.id" @click="selectColor(color)"
-                  :class="['color-card relative text-left bg-white border-2 p-3 sm:p-4 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedColor === color.id ? 'color-card-active border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-100']">
+                  :aria-label="`Select ${color.name} color`"
+                  :aria-pressed="selectedColor === color.id"
+                  :class="['color-card relative text-left bg-white border-2 p-3 sm:p-4 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500', selectedColor === color.id ? 'color-card-active border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-100']">
                   
                   <!-- Color Preview with Gradient -->
-                  <div class="relative w-full h-14 sm:h-16 rounded-xl mb-2 sm:mb-3 overflow-hidden shadow-inner">
+                  <div class="relative w-full h-14 sm:h-16 rounded-xl mb-2 sm:mb-3 overflow-hidden shadow-inner" aria-hidden="true">
                     <div :style="{ backgroundColor: color.hex }" class="absolute inset-0"></div>
                     <div :style="getColorGradientStyle(color.hex)" class="absolute inset-0"></div>
                   </div>
@@ -1908,7 +1735,7 @@ useHead({
                 </button>
 
                 <!-- Custom Color -->
-                <div class="relative bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 p-3 sm:p-4 rounded-2xl hover:border-indigo-300 transition-all">
+                <div class="relative bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 p-3 sm:p-4 rounded-2xl hover:border-indigo-300 transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
                   <label for="custom-color-input" class="cursor-pointer block">
                     <div class="relative w-full h-14 sm:h-16 rounded-xl mb-2 sm:mb-3 overflow-hidden shadow-inner border-2 border-white">
                       <input id="custom-color-input" v-model="customColor" @input="handleCustomColor" type="color"
@@ -1925,233 +1752,51 @@ useHead({
               </div>
             </div>
 
-            <!-- Tab: Summary -->
-            <div v-show="activeTab === 'summary'" class="space-y-8">
-              <h2 class="text-2xl font-black text-slate-900 mb-4">Professional Summary</h2>
-              <div class="space-y-4">
-                <textarea 
-                  v-model="formData.summary" 
-                  rows="6" 
-                  class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                  placeholder="Write a compelling professional summary..."></textarea>
-              </div>
-              
-              <!-- Skills -->
-              <div class="space-y-4">
-                <h3 class="text-lg font-bold text-slate-900">Skills</h3>
-                <div v-for="(skillsArray, category) in formData.skills" :key="category" class="space-y-2">
-                  <div class="flex justify-between items-center">
-                    <label class="block text-sm font-bold text-slate-700 capitalize">{{ category }}</label>
-                    <button 
-                      @click="addSkill(category)" 
-                      class="text-xs text-indigo-600 hover:text-indigo-700 font-bold">
-                      + Add Skill
-                    </button>
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <span 
-                      v-for="(skill, index) in skillsArray" 
-                      :key="index" 
-                      class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-2">
-                      {{ skill }}
-                      <button @click="removeSkill(category, index)" class="text-indigo-600 hover:text-indigo-800">
-                        <i class="fa-solid fa-times text-xs"></i>
-                      </button>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Work Experience -->
-              <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-bold text-slate-900">Work Experience</h3>
-                  <button @click="addExperience" class="text-sm text-indigo-600 hover:text-indigo-700 font-bold">
-                    + Add Experience
-                  </button>
-                </div>
-                <div v-for="(exp, expIndex) in formData.experience" :key="exp.id" class="p-4 border border-slate-200 rounded-lg space-y-3">
-                  <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-slate-900">Experience {{ expIndex + 1 }}</h4>
-                    <button @click="removeExperience(expIndex)" class="text-red-600 hover:text-red-700">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                  <input 
-                    v-model="exp.position" 
-                    type="text" 
-                    placeholder="Position" 
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                  <input 
-                    v-model="exp.company" 
-                    type="text" 
-                    placeholder="Company" 
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                  <div class="space-y-2">
-                    <label class="block text-xs font-bold text-slate-700">Responsibilities</label>
-                    <div v-for="(resp, respIndex) in exp.responsibilities" :key="respIndex" class="flex gap-2">
-                      <input 
-                        v-model="exp.responsibilities[respIndex]" 
-                        type="text" 
-                        placeholder="Responsibility" 
-                        class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                      <button @click="removeResponsibility(expIndex, respIndex)" class="text-red-600 hover:text-red-700">
-                        <i class="fa-solid fa-minus"></i>
-                      </button>
-                    </div>
-                    <button @click="addResponsibility(expIndex)" class="text-xs text-indigo-600 hover:text-indigo-700 font-bold">
-                      + Add Responsibility
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Education -->
-              <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-bold text-slate-900">Education</h3>
-                  <button @click="addEducation" class="text-sm text-indigo-600 hover:text-indigo-700 font-bold">
-                    + Add Education
-                  </button>
-                </div>
-                <div v-for="(edu, eduIndex) in formData.education" :key="edu.id" class="p-4 border border-slate-200 rounded-lg space-y-3">
-                  <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-slate-900">Education {{ eduIndex + 1 }}</h4>
-                    <button @click="removeEducation(eduIndex)" class="text-red-600 hover:text-red-700">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                  <input 
-                    v-model="edu.degree" 
-                    type="text" 
-                    placeholder="Degree" 
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                  <input 
-                    v-model="edu.institution" 
-                    type="text" 
-                    placeholder="Institution" 
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                </div>
-              </div>
-              
-              <!-- Achievements -->
-              <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-bold text-slate-900">Achievements</h3>
-                  <button @click="addAchievement" class="text-sm text-indigo-600 hover:text-indigo-700 font-bold">
-                    + Add Achievement
-                  </button>
-                </div>
-                <div v-for="(achievement, achIndex) in formData.achievements" :key="achIndex" class="flex gap-2">
-                  <input 
-                    v-model="formData.achievements[achIndex]" 
-                    type="text" 
-                    placeholder="Achievement" 
-                    class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm">
-                  <button @click="removeAchievement(achIndex)" class="text-red-600 hover:text-red-700">
-                    <i class="fa-solid fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
+            <!-- Tab: Version History -->
+            <div v-show="activeTab === 'history'" class="tab-content h-full">
+                <BuilderVersionHistoryPanel 
+                    :versions="versions"
+                    @save="handleSaveVersion"
+                    @restore="handleRestoreVersion"
+                    @delete="deleteVersion"
+                />
             </div>
+
+            <!-- Tab: Cover Letter -->
+            <div v-show="activeTab === 'cover-letter'" class="tab-content h-full">
+                <BuilderCoverLetterPanel
+                    v-model="coverLetter"
+                    :is-generating="isGeneratingCoverLetter"
+                    @generate="handleGenerateCoverLetter"
+                />
+            </div>
+
+            <!-- Tab: Job Tracker -->
+            <div v-show="activeTab === 'tracker'" class="tab-content h-full">
+                <BuilderJobTrackerPanel
+                    :applications="applications"
+                    @add="addApplication"
+                    @update-status="updateStatus"
+                    @delete="deleteApplication"
+                />
+            </div>
+
+
 
           </div>
         </section>
 
         <!-- Preview Panel (Right) - Scrollable -->
-        <section class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
+        <section ref="previewContainer" class="hidden lg:flex flex-[1.5] preview-container items-start justify-center p-12 overflow-y-auto custom-scrollbar h-full">
           <div class="w-full max-w-[900px]">
-            <!-- Multi-Page Container with minimal gap -->
-            <div class="space-y-8">
-              <!-- Page 1 -->
-              <div 
-                id="resume-preview"
-                class="resume-paper bg-white shadow-2xl transition-all duration-300"
-                :class="{ 'overflow-hidden': needsSecondPage }"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  height: needsSecondPage ? '297mm' : 'auto',
-                  maxHeight: needsSecondPage ? '297mm' : 'none',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center'
-                }"
-              >
-                <!-- Loading State -->
-                <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                  <p>Loading template...</p>
-                </div>
-                
-                <!-- Dynamic Template Component - Page 1 -->
-                <div v-else-if="currentTemplateComponent" class="resume-content p-16">
-                  <ClientOnly>
-                    <Transition name="fade" mode="out-in">
-                      <component 
-                        :key="selectedTemplate + '-page1'"
-                        :is="currentTemplateComponent"
-                        :data="page1Data"
-                        :theme="currentThemeConfig"
-                      />
-                    </Transition>
-                  </ClientOnly>
-                </div>
-                
-                <!-- Fallback Loading State -->
-                <div v-else class="p-16 text-center text-slate-400">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                  <p>Loading template...</p>
-                </div>
-              </div>
-
-              <!-- Page 2 (Conditional) -->
-              <div 
-                v-if="needsSecondPage && currentTemplateComponent && page2Data"
-                class="resume-paper bg-white shadow-2xl transition-all duration-300"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  height: 'auto',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center'
-                }"
-              >
-                <div class="resume-content p-16">
-                  <!-- Page Indicator -->
-                  <div class="text-right text-xs text-slate-400 mb-6 font-medium">Page 2</div>
-                  
-                  <ClientOnly>
-                    <Transition name="fade" mode="out-in">
-                      <component 
-                        :key="selectedTemplate + '-page2'"
-                        :is="currentTemplateComponent"
-                        :data="page2Data"
-                        :theme="currentThemeConfig"
-                      />
-                    </Transition>
-                  </ClientOnly>
-                </div>
-              </div>
-            </div>
-
-            <!-- Preview Controls -->
-            <div class="preview-controls flex items-center justify-center gap-4 mt-6">
-              <button 
-                @click="adjustZoom(-0.1)" 
-                class="zoom-btn w-10 h-10 flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-all"
-              >
-                <i class="fa-solid fa-minus text-slate-600"></i>
-              </button>
-              <span class="zoom-level text-sm font-bold text-slate-600 min-w-[4rem] text-center">
-                {{ Math.round(previewScale * 100) }}%
-              </span>
-              <button 
-                @click="adjustZoom(0.1)" 
-                class="zoom-btn w-10 h-10 flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-all"
-              >
-                <i class="fa-solid fa-plus text-slate-600"></i>
-              </button>
-            </div>
+            <BuilderResumePreview 
+              :resume-data="resumeDataFormatted" 
+              :current-theme-config="currentThemeConfig"
+              :selected-template="selectedTemplate"
+              :current-template-component="currentTemplateComponent"
+              :is-template-loading="isTemplateLoading"
+              @update:total-pages="totalPages = $event"
+            />
           </div>
         </section>
       </main>
@@ -2166,66 +1811,27 @@ useHead({
             <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
-        <div class="preview-container p-4 space-y-4">
-          <!-- Page 1 -->
-          <div 
-            :key="selectedTemplate + '-mobile-page1'" 
-            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: needsSecondPage ? '297mm' : 'auto', padding: '1rem' }"
-          >
-            <!-- Loading State -->
-            <div v-if="isTemplateLoading" class="p-8 text-center text-slate-400">
-              <i class="fa-solid fa-spinner fa-spin text-xl mb-3"></i>
-              <p class="text-sm">Loading template...</p>
-            </div>
-            
-            <!-- Dynamic Template Component - Page 1 -->
-            <div v-else-if="currentTemplateComponent" class="resume-content">
-              <ClientOnly>
-                <Transition name="fade" mode="out-in">
-                  <component 
-                    :key="selectedTemplate + '-mobile'  "
-                    :is="currentTemplateComponent"
-                    :data="page1Data"
-                    :theme="currentThemeConfig"
-                  />
-                </Transition>
-              </ClientOnly>
-            </div>
-            
-            <!-- Fallback Loading State -->
-            <div v-else class="p-8 text-center text-slate-400">
-              <i class="fa-solid fa-spinner fa-spin text-xl mb-3"></i>
-              <p class="text-sm">Loading template...</p>
-            </div>
-          </div>
-
-          <!-- Page 2 (Conditional) -->
-          <div 
-            v-if="needsSecondPage && currentTemplateComponent && page2Data"
-            :key="selectedTemplate + '-mobile-page2'" 
-            class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', padding: '1rem' }"
-          >
-            <div class="resume-content">
-              <!-- Page Indicator for Mobile -->
-              <div class="text-right text-xs text-slate-400 mb-4 font-medium">Page 2</div>
-              
-              <ClientOnly>
-                <Transition name="fade" mode="out-in">
-                  <component 
-                    :key="selectedTemplate + '-mobile-page2'"
-                    :is="currentTemplateComponent"
-                    :data="page2Data"
-                    :theme="currentThemeConfig"
-                  />
-                </Transition>
-              </ClientOnly>
-            </div>
-          </div>
+        <div class="preview-container p-4 flex justify-center min-h-screen pb-20">
+          <BuilderResumePreview 
+            :resume-data="resumeDataFormatted"
+            :current-theme-config="currentThemeConfig"
+            :selected-template="selectedTemplate"
+            :current-template-component="currentTemplateComponent"
+            :is-template-loading="isTemplateLoading"
+            :initial-scale="0.5"
+            :show-controls="false"
+            @update:total-pages="totalPages = $event"
+          />
         </div>
       </div>
     </div>
+
+    <!-- Modals -->
+    <BuilderLinkedInImportModal 
+        v-if="showLinkedInModal"
+        @close="showLinkedInModal = false"
+        @import="handleLinkedInImport"
+    />
 
     <!-- Floating Preview Button (Mobile Only) -->
     <button @click="openMobilePreview" class="preview-fab lg:hidden" aria-label="Preview Resume">

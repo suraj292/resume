@@ -75,6 +75,9 @@ class AuthController extends Controller
             ]);
         }
 
+        // Regenerate session to prevent session fixation attacks
+        $request->session()->regenerate();
+
         // Revoke all previous tokens
         $user->tokens()->delete();
 

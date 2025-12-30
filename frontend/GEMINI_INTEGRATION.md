@@ -18,6 +18,7 @@ npm install @google/generative-ai
 Add your Gemini API key to `.env`:
 
 ```bash
+# Frontend .env
 NUXT_PUBLIC_API_BASE=http://localhost:8000
 NUXT_PUBLIC_GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
@@ -26,7 +27,7 @@ Get your API key from: https://aistudio.google.com/app/apikey
 
 ### 3. Runtime Configuration
 
-The API key is exposed via `nuxt.config.ts`:
+The API key and API base URL are exposed via `nuxt.config.ts`:
 
 ```typescript
 runtimeConfig: {
@@ -94,70 +95,33 @@ const handleResumeUpload = async (event: Event) => {
   // Populate form
   populateFormWithParsedData(parsedData)
 }
-```
 
-### In builder2.vue
-
-```typescript
-// Enhance text
+// Enhance text (Example)
 const optimizeText = async (index: number) => {
   const { enhanceText } = useGemini()
-  const original = resumeData.experience[index].description
+  const original = resumeData.value.experiences[index].description
   const enhanced = await enhanceText(original)
-  resumeData.experience[index].description = enhanced
-}
-
-// Generate summary
-const generateSummary = async () => {
-  const { generateSummary: geminiGenerateSummary } = useGemini()
-  const context = {
-    role: resumeData.personal.title,
-    skills: resumeData.skills,
-    experience: resumeData.experience
-  }
-  const summary = await geminiGenerateSummary(context)
-  resumeData.summary = summary
+  resumeData.value.experiences[index].description = enhanced
 }
 ```
-
-## Features
-
-### ✅ Text Extraction
-- **PDF Support**: Extracts text from PDF files using Gemini's vision capabilities
-- **DOCX Support**: Processes Word documents
-- **TXT Support**: Direct text file reading
-
-### ✅ AI Parsing
-- **Structured Data**: Converts raw text to JSON format
-- **Field Detection**: Automatically identifies name, email, phone, etc.
-- **Skills Categorization**: Separates skills into backend, frontend, devops, other
-- **Experience Parsing**: Extracts job titles, companies, dates, responsibilities
-
-### ✅ Text Enhancement
-- **Professional Tone**: Rewrites bullet points with action verbs
-- **Result-Oriented**: Focuses on achievements and impact
-- **Concise**: Keeps descriptions under 30 words
-
-### ✅ Summary Generation
-- **Context-Aware**: Uses role, skills, and experience
-- **Compelling**: Highlights key strengths
-- **Professional**: 3-sentence format
 
 ## Error Handling
 
 All functions include comprehensive error handling:
 
 ```typescript
+const { error } = useToast()
+
 try {
   const { extractTextFromFile } = useGemini()
   const text = await extractTextFromFile(file)
-} catch (error) {
-  if (error.message.includes('API key not found')) {
+} catch (err) {
+  if (err.message.includes('API key not found')) {
     // Show API key modal
     showApiModal.value = true
   } else {
     // Show error toast
-    toastr.error(error.message, 'Error')
+    error(err.message, 'Error')
   }
 }
 ```
