@@ -45,6 +45,7 @@ class Plan extends Model
     protected $appends = [
         'formatted_monthly_price',
         'formatted_yearly_price',
+        'comparison_features',
     ];
 
     /**
@@ -61,6 +62,20 @@ class Plan extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Get comparison features for pricing table.
+     */
+    public function getComparisonFeaturesAttribute(): array
+    {
+        return [
+            'resumes' => $this->resume_limit == -1 ? 'Unlimited' : $this->resume_limit,
+            'ai_optimization' => $this->ai_optimization,
+            'cover_letter' => $this->cover_letter,
+            'ats_scans' => $this->ats_scan_limit == -1 ? 'Unlimited' : $this->ats_scan_limit,
+            'export_formats' => $this->monthly_price == 0 ? 'TXT' : 'PDF, DOCX',
+        ];
     }
 
     /**

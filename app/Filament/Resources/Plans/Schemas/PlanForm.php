@@ -3,13 +3,26 @@
 namespace App\Filament\Resources\Plans\Schemas;
 
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class PlanForm
 {
+    // Currency mapping
+    protected static array $currencyMap = [
+        'USD' => '$',
+        'INR' => '₹',
+        'EUR' => '€',
+        'GBP' => '£',
+        'AUD' => 'A$',
+        'CAD' => 'C$',
+    ];
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -26,23 +39,45 @@ class PlanForm
                     ->columnSpanFull(),
                 
                 // Pricing
+                Select::make('currency_code')
+                    ->required()
+                    ->options([
+                        'USD' => 'USD - US Dollar ($)',
+                        'INR' => 'INR - Indian Rupee (₹)',
+                        'EUR' => 'EUR - Euro (€)',
+                        'GBP' => 'GBP - British Pound (£)',
+                        'AUD' => 'AUD - Australian Dollar (A$)',
+                        'CAD' => 'CAD - Canadian Dollar (C$)',
+                    ])
+                    ->default('USD')
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, ?string $state) {
+                        $currencyMap = [
+                            'USD' => '$',
+                            'INR' => '₹',
+                            'EUR' => '€',
+                            'GBP' => '£',
+                            'AUD' => 'A$',
+                            'CAD' => 'C$',
+                        ];
+                        $set('currency', $currencyMap[$state] ?? '$');
+                    })
+                    ->label('Currency Code'),
                 TextInput::make('currency')
                     ->required()
+                    ->disabled()
+                    ->dehydrated()
                     ->default('$')
                     ->label('Currency Symbol'),
-                TextInput::make('currency_code')
-                    ->required()
-                    ->default('USD')
-                    ->label('Currency Code (USD/INR)'),
                 TextInput::make('monthly_price')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$')
+                    ->prefix(fn (Get $get): string => $get('currency') ?? '$')
                     ->label('Monthly Price'),
                 TextInput::make('yearly_price')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$')
+                    ->prefix(fn (Get $get): string => $get('currency') ?? '$')
                     ->label('Yearly Price'),
                 
                 // Usage Limits

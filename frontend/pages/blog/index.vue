@@ -1,76 +1,141 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
+// State
 const searchQuery = ref('')
+const selectedCategory = ref(null)
+const loading = ref(true)
+const error = ref(null)
 
-const categories = [
-  { name: 'Resume Tips', count: 24 },
-  { name: 'ATS Secrets', count: 18 },
-  { name: 'Career Advice', count: 32 },
-  { name: 'Cover Letters', count: 12 }
-]
+// Data
+const featuredPost = ref(null)
+const blogPosts = ref([])
+const trendingPosts = ref([])
+const categories = ref([])
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 12,
+  total: 0
+})
 
-const featuredPost = {
-  title: '10 Hidden Keywords That Will Triple Your Interview Chances in 2024',
-  excerpt: 'Stop guessing what recruiters want. We analyzed 100,000 job descriptions to find the power words that consistently beat the ATS algorithms.',
-  category: 'ATS Strategy',
-  author: 'Sarah Jenkins',
-  date: 'Oct 24, 2023',
-  readTime: '8 min read',
-  image: 'https://picsum.photos/seed/resume/1200/600'
+// Fetch featured post
+const fetchFeaturedPost = async () => {
+  try {
+    const response = await fetch(`${apiBase}/api/blogs/featured`)
+    const data = await response.json()
+    if (data && data.length > 0) {
+      featuredPost.value = data[0]
+    }
+  } catch (err) {
+    console.error('Error fetching featured post:', err)
+  }
 }
 
-const blogPosts = [
-  {
-    id: 1,
-    title: 'How to Explain Employment Gaps on Your Resume',
-    excerpt: "Don't let a career break hurt your chances. Here are 5 ATS-friendly ways to frame your time off positively.",
-    category: 'Guides',
-    readTime: '5 min read',
-    date: 'Oct 20, 2023',
-    image: 'https://picsum.photos/seed/work/600/400'
-  },
-  {
-    id: 2,
-    title: 'Best Fonts for Resumes: What Recruiters Actually Read',
-    excerpt: 'Is Times New Roman dead? We rank the top 10 fonts for readability and parsing compatibility.',
-    category: 'Templates',
-    readTime: '4 min read',
-    date: 'Oct 18, 2023',
-    image: 'https://picsum.photos/seed/office/600/400'
-  },
-  {
-    id: 3,
-    title: 'Resume vs CV: Which One Do You Really Need?',
-    excerpt: 'The definitive guide to understanding the differences and when to use each format.',
-    category: 'Tech',
-    readTime: '6 min read',
-    date: 'Oct 15, 2023',
-    image: 'https://picsum.photos/seed/tech/600/400'
-  },
-  {
-    id: 4,
-    title: 'Action Verbs List: 100+ Words to Replace "Responsible For"',
-    excerpt: 'Stop using passive language. Energize your bullet points with these powerful action verbs.',
-    category: 'Writing',
-    readTime: '3 min read',
-    date: 'Oct 10, 2023',
-    image: 'https://picsum.photos/seed/writing/600/400'
+// Fetch blog posts
+const fetchBlogs = async (page = 1) => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    let url = `${apiBase}/api/blogs?page=${page}&per_page=12`
+    
+    if (searchQuery.value) {
+      url += `&search=${encodeURIComponent(searchQuery.value)}`
+    }
+    
+    if (selectedCategory.value) {
+      url += `&category=${encodeURIComponent(selectedCategory.value)}`
+    }
+    
+    const response = await fetch(url)
+    const data = await response.json()
+    
+    blogPosts.value = data.data || []
+    pagination.value = {
+      current_page: data.current_page,
+      last_page: data.last_page,
+      per_page: data.per_page,
+      total: data.total
+    }
+  } catch (err) {
+    console.error('Error fetching blogs:', err)
+    error.value = 'Failed to load blog posts. Please try again later.'
+  } finally {
+    loading.value = false
   }
-]
+}
 
-const trendingPosts = [
-  {
-    title: '5 Things You Should Remove From Your Resume Immediately',
-    date: 'Oct 22, 2023',
-    image: 'https://picsum.photos/seed/trend1/100/100'
-  },
-  {
-    title: 'How to Beat the Applicant Tracking System',
-    date: 'Oct 19, 2023',
-    image: 'https://picsum.photos/seed/trend2/100/100'
+// Fetch trending posts
+const fetchTrendingPosts = async () => {
+  try {
+    const response = await fetch(`${apiBase}/api/blogs/trending`)
+    const data = await response.json()
+    trendingPosts.value = data || []
+  } catch (err) {
+    console.error('Error fetching trending posts:', err)
   }
-]
+}
+
+// Fetch categories
+const fetchCategories = async () => {
+  try {
+    const response = await fetch(`${apiBase}/api/blog-categories`)
+    const data = await response.json()
+    categories.value = data || []
+  } catch (err) {
+    console.error('Error fetching categories:', err)
+  }
+}
+
+// Handle search
+const handleSearch = () => {
+  fetchBlogs(1)
+}
+
+// Handle category filter
+const filterByCategory = (categorySlug) => {
+  selectedCategory.value = categorySlug === selectedCategory.value ? null : categorySlug
+  fetchBlogs(1)
+}
+
+// Handle pagination
+const goToPage = (page) => {
+  if (page >= 1 && page <= pagination.value.last_page) {
+    fetchBlogs(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Format date
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Get image URL
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://picsum.photos/seed/default/600/400'
+  if (imagePath.startsWith('http')) return imagePath
+  return `${apiBase}/storage/${imagePath}`
+}
+
+// Computed
+const hasNextPage = computed(() => pagination.value.current_page < pagination.value.last_page)
+const hasPrevPage = computed(() => pagination.value.current_page > 1)
+
+// Initialize
+onMounted(async () => {
+  await Promise.all([
+    fetchFeaturedPost(),
+    fetchBlogs(),
+    fetchTrendingPosts(),
+    fetchCategories()
+  ])
+})
 </script>
 
 <template>
@@ -93,13 +158,13 @@ const trendingPosts = [
     </section>
 
     <!-- FEATURED POST -->
-    <section class="container mx-auto px-6 py-12">
+    <section v-if="featuredPost" class="container mx-auto px-6 py-12">
       <article class="relative group rounded-3xl overflow-hidden shadow-lg animate-slide-up hover:shadow-2xl transition-all duration-300">
-        <NuxtLink to="/blog/1" class="block relative h-[400px] md:h-[500px]">
-          <img :src="featuredPost.image" alt="Featured Post" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        <NuxtLink :to="`/blog/${featuredPost.slug}`" class="block relative h-[400px] md:h-[500px]">
+          <img :src="getImageUrl(featuredPost.featured_image)" :alt="featuredPost.title" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
           <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90"></div>
           <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full md:w-2/3">
-            <span class="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg mb-4">{{ featuredPost.category }}</span>
+            <span class="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg mb-4">{{ featuredPost.category?.name || 'Featured' }}</span>
             <h2 class="text-3xl md:text-4xl font-display font-bold text-white mb-4 leading-tight group-hover:text-indigo-200 transition-colors">
               {{ featuredPost.title }}
             </h2>
@@ -107,12 +172,12 @@ const trendingPosts = [
               {{ featuredPost.excerpt }}
             </p>
             <div class="flex items-center gap-3 text-white/80 text-sm">
-              <img src="https://ui-avatars.com/api/?name=Sarah+J&background=6366f1&color=fff" class="w-8 h-8 rounded-full">
+              <img :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(featuredPost.author || 'Author')}&background=6366f1&color=fff`" class="w-8 h-8 rounded-full">
               <span class="font-semibold">{{ featuredPost.author }}</span>
               <span>•</span>
-              <span>{{ featuredPost.date }}</span>
+              <span>{{ formatDate(featuredPost.published_at) }}</span>
               <span>•</span>
-              <span>{{ featuredPost.readTime }}</span>
+              <span>{{ featuredPost.read_time }} min read</span>
             </div>
           </div>
         </NuxtLink>
@@ -124,35 +189,57 @@ const trendingPosts = [
 
         <!-- BLOG GRID -->
         <div class="lg:col-span-8">
-          <div class="grid md:grid-cols-2 gap-8 mb-12">
+          <!-- Error Message -->
+          <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {{ error }}
+          </div>
 
-            <!-- Blog Posts -->
+          <!-- Loading State -->
+          <div v-if="loading" class="grid md:grid-cols-2 gap-8 mb-12">
+            <div v-for="i in 4" :key="i" class="bg-white rounded-2xl overflow-hidden border border-slate-100 animate-pulse">
+              <div class="h-48 bg-slate-200"></div>
+              <div class="p-6">
+                <div class="h-4 bg-slate-200 rounded mb-3"></div>
+                <div class="h-4 bg-slate-200 rounded w-3/4 mb-4"></div>
+                <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blog Posts -->
+          <div v-else class="grid md:grid-cols-2 gap-8 mb-12">
             <article 
               v-for="(post, index) in blogPosts" 
               :key="post.id"
               class="blog-card bg-white rounded-2xl overflow-hidden border border-slate-100 flex flex-col h-full animate-slide-up"
               :style="{ animationDelay: `${(index % 2) * 0.1}s` }"
             >
-              <NuxtLink :to="`/blog/${post.id}`" class="block h-48 overflow-hidden relative">
-                <img :src="post.image" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
-                <span class="absolute top-4 left-4 bg-white/90 backdrop-blur text-slate-800 text-xs font-bold px-3 py-1 rounded-full">{{ post.category }}</span>
+              <NuxtLink :to="`/blog/${post.slug}`" class="block h-48 overflow-hidden relative">
+                <img :src="getImageUrl(post.featured_image)" :alt="post.title" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                <span class="absolute top-4 left-4 bg-white/90 backdrop-blur text-slate-800 text-xs font-bold px-3 py-1 rounded-full">{{ post.category?.name || 'Uncategorized' }}</span>
               </NuxtLink>
               <div class="p-6 flex flex-col flex-grow">
                 <h3 class="text-xl font-bold text-slate-900 mb-3 hover:text-indigo-600 transition-colors">
-                  <NuxtLink :to="`/blog/${post.id}`">{{ post.title }}</NuxtLink>
+                  <NuxtLink :to="`/blog/${post.slug}`">{{ post.title }}</NuxtLink>
                 </h3>
                 <p class="text-slate-500 text-sm mb-4 line-clamp-2 flex-grow">
                   {{ post.excerpt }}
                 </p>
                 <div class="flex items-center justify-between text-xs text-slate-400 mt-auto pt-4 border-t border-slate-50">
-                  <span>{{ post.readTime }}</span>
-                  <span>{{ post.date }}</span>
+                  <span>{{ post.read_time }} min read</span>
+                  <span>{{ formatDate(post.published_at) }}</span>
                 </div>
               </div>
             </article>
 
+            <!-- No Results -->
+            <div v-if="!loading && blogPosts.length === 0" class="md:col-span-2 text-center py-12">
+              <i class="fa-regular fa-folder-open text-4xl text-slate-300 mb-4"></i>
+              <p class="text-slate-500">No blog posts found. Try adjusting your search or filters.</p>
+            </div>
+
             <!-- Ad Placeholder (after 2 posts) -->
-            <div class="md:col-span-2 my-4 animate-fade-in">
+            <div v-if="blogPosts.length >= 2" class="md:col-span-2 my-4 animate-fade-in">
               <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
                 <span class="absolute top-0 right-0 bg-slate-200 text-slate-500 text-[10px] px-2 py-0.5 rounded-bl">Sponsored</span>
                 <div class="w-full md:w-1/3 h-32 bg-slate-200 rounded-lg flex items-center justify-center text-slate-400">
@@ -169,16 +256,36 @@ const trendingPosts = [
           </div>
 
           <!-- PAGINATION -->
-          <div class="flex justify-center items-center gap-2 mt-12 animate-fade-in">
-            <button class="w-10 h-10 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-600 transition-all flex items-center justify-center">
+          <div v-if="!loading && blogPosts.length > 0" class="flex justify-center items-center gap-2 mt-12 animate-fade-in">
+            <button 
+              @click="goToPage(pagination.current_page - 1)"
+              :disabled="!hasPrevPage"
+              class="w-10 h-10 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-600 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <button class="w-10 h-10 rounded-lg bg-indigo-600 text-white font-bold shadow-md">1</button>
-            <button class="w-10 h-10 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:border-indigo-200 transition-all">2</button>
-            <button class="w-10 h-10 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:border-indigo-200 transition-all">3</button>
-            <span class="text-slate-400">...</span>
-            <button class="w-10 h-10 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:border-indigo-200 transition-all">12</button>
-            <button class="w-10 h-10 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-600 transition-all flex items-center justify-center">
+            
+            <template v-for="page in pagination.last_page" :key="page">
+              <button 
+                v-if="page === 1 || page === pagination.last_page || Math.abs(page - pagination.current_page) <= 1"
+                @click="goToPage(page)"
+                :class="[
+                  'w-10 h-10 rounded-lg font-bold transition-all',
+                  page === pagination.current_page 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-indigo-200'
+                ]"
+              >
+                {{ page }}
+              </button>
+              <span v-else-if="Math.abs(page - pagination.current_page) === 2" class="text-slate-400">...</span>
+            </template>
+            
+            <button 
+              @click="goToPage(pagination.current_page + 1)"
+              :disabled="!hasNextPage"
+              class="w-10 h-10 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-600 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
@@ -193,23 +300,36 @@ const trendingPosts = [
             <div class="relative">
               <input 
                 v-model="searchQuery"
+                @keyup.enter="handleSearch"
                 type="text" 
                 placeholder="Search articles..."
                 class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               >
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
             </div>
+            <button 
+              @click="handleSearch"
+              class="w-full mt-3 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Search
+            </button>
           </div>
 
           <!-- Categories -->
           <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h4 class="font-bold text-slate-900 mb-4">Categories</h4>
             <ul class="space-y-2">
-              <li v-for="category in categories" :key="category.name">
-                <a href="#" class="flex justify-between items-center text-slate-600 hover:text-indigo-600 transition-colors group">
+              <li v-for="category in categories" :key="category.id">
+                <button 
+                  @click="filterByCategory(category.slug)"
+                  :class="[
+                    'flex justify-between items-center w-full text-left transition-colors group',
+                    selectedCategory === category.slug ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+                  ]"
+                >
                   <span class="group-hover:translate-x-1 transition-transform">{{ category.name }}</span>
-                  <span class="bg-slate-100 text-xs px-2 py-0.5 rounded-full text-slate-500">{{ category.count }}</span>
-                </a>
+                  <span class="bg-slate-100 text-xs px-2 py-0.5 rounded-full text-slate-500">{{ category.blogs_count || 0 }}</span>
+                </button>
               </li>
             </ul>
           </div>
@@ -222,23 +342,23 @@ const trendingPosts = [
           </div>
 
           <!-- Trending Posts -->
-          <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div v-if="trendingPosts.length > 0" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h4 class="font-bold text-slate-900 mb-4">Trending Now</h4>
             <div class="space-y-4">
               <NuxtLink 
                 v-for="(post, index) in trendingPosts" 
                 :key="index"
-                to="/blog/1" 
+                :to="`/blog/${post.slug}`" 
                 class="flex gap-4 group"
               >
                 <div class="w-16 h-16 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0">
-                  <img :src="post.image" class="w-full h-full object-cover">
+                  <img :src="getImageUrl(post.featured_image)" :alt="post.title" class="w-full h-full object-cover">
                 </div>
                 <div>
                   <h5 class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
                     {{ post.title }}
                   </h5>
-                  <span class="text-xs text-slate-400 mt-1 block">{{ post.date }}</span>
+                  <span class="text-xs text-slate-400 mt-1 block">{{ formatDate(post.published_at) }}</span>
                 </div>
               </NuxtLink>
             </div>
@@ -263,6 +383,7 @@ const trendingPosts = [
 
 .line-clamp-2 {
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

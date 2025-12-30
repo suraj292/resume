@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AIResumeController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\PlansController;
 use App\Http\Controllers\Api\ResumeAnalysisController;
 use App\Http\Controllers\Api\SocialAuthController;
@@ -75,3 +76,11 @@ Route::post('/resume/export-with-template', [\App\Http\Controllers\Api\ResumeHTM
 
 // Get single plan
 Route::get('/plans/{id}', [PlansController::class, 'show']);
+
+// Blog routes (public)
+Route::get('/blogs', [BlogController::class, 'index']);
+Route::get('/blogs/featured', [BlogController::class, 'featured']);
+Route::get('/blogs/trending', [BlogController::class, 'trending']);
+Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+Route::get('/blog-categories', [BlogController::class, 'categories']);
+Route::get('/blogs/category/{slug}', [BlogController::class, 'byCategory']);

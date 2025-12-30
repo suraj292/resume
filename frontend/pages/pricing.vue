@@ -153,39 +153,78 @@ onMounted(async () => {
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200">
                                 <th class="p-4 pl-8 font-semibold text-slate-600">Features</th>
-                                <th class="p-4 text-center font-bold text-slate-700">Free</th>
-                                <th class="p-4 text-center font-bold text-indigo-600 bg-indigo-50/50">Pro</th>
-                                <th class="p-4 text-center font-bold text-slate-900">Career+</th>
+                                <th v-for="plan in plans" :key="`header-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center font-bold',
+                                        plan.is_popular ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
+                                    ]">
+                                    {{ plan.name }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="text-sm">
-                            <!-- Row 1 -->
+                            <!-- Resumes Row -->
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                 <td class="p-4 pl-8 text-slate-700">Resumes</td>
-                                <td class="p-4 text-center text-slate-500">1</td>
-                                <td class="p-4 text-center font-bold text-slate-900 bg-indigo-50/20">Unlimited</td>
-                                <td class="p-4 text-center font-bold text-slate-900">Unlimited</td>
+                                <td v-for="plan in plans" :key="`resumes-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center',
+                                        plan.is_popular ? 'bg-indigo-50/20 font-bold text-slate-900' : 'text-slate-500'
+                                    ]">
+                                    {{ plan.comparison_features.resumes }}
+                                </td>
                             </tr>
-                            <!-- Row 2 -->
+                            
+                            <!-- AI Optimization Row -->
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                 <td class="p-4 pl-8 text-slate-700">AI Rewrites</td>
-                                <td class="p-4 text-center text-slate-300"><i class="fa-solid fa-minus"></i></td>
-                                <td class="p-4 text-center text-green-500 bg-indigo-50/20"><i class="fa-solid fa-check"></i></td>
-                                <td class="p-4 text-center text-green-500"><i class="fa-solid fa-check"></i></td>
+                                <td v-for="plan in plans" :key="`ai-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center',
+                                        plan.is_popular ? 'bg-indigo-50/20' : ''
+                                    ]">
+                                    <i v-if="plan.comparison_features.ai_optimization" 
+                                       class="fa-solid fa-check text-green-500"></i>
+                                    <i v-else class="fa-solid fa-minus text-slate-300"></i>
+                                </td>
                             </tr>
-                            <!-- Row 3 -->
+                            
+                            <!-- Cover Letter Row -->
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                 <td class="p-4 pl-8 text-slate-700">Cover Letter Gen</td>
-                                <td class="p-4 text-center text-slate-300"><i class="fa-solid fa-minus"></i></td>
-                                <td class="p-4 text-center text-slate-300 bg-indigo-50/20"><i class="fa-solid fa-minus"></i></td>
-                                <td class="p-4 text-center text-green-500"><i class="fa-solid fa-check"></i></td>
+                                <td v-for="plan in plans" :key="`cover-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center',
+                                        plan.is_popular ? 'bg-indigo-50/20' : ''
+                                    ]">
+                                    <i v-if="plan.comparison_features.cover_letter" 
+                                       class="fa-solid fa-check text-green-500"></i>
+                                    <i v-else class="fa-solid fa-minus text-slate-300"></i>
+                                </td>
                             </tr>
-                             <!-- Row 4 -->
-                             <tr class="hover:bg-slate-50 transition-colors">
+                            
+                            <!-- ATS Scans Row -->
+                            <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                <td class="p-4 pl-8 text-slate-700">ATS Scans</td>
+                                <td v-for="plan in plans" :key="`ats-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center',
+                                        plan.is_popular ? 'bg-indigo-50/20 font-bold text-slate-900' : 'text-slate-500'
+                                    ]">
+                                    {{ plan.comparison_features.ats_scans }}
+                                </td>
+                            </tr>
+                            
+                            <!-- Export Formats Row -->
+                            <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="p-4 pl-8 text-slate-700">Export Formats</td>
-                                <td class="p-4 text-center text-slate-500">TXT</td>
-                                <td class="p-4 text-center text-slate-900 bg-indigo-50/20">PDF, DOCX</td>
-                                <td class="p-4 text-center text-slate-900">PDF, DOCX</td>
+                                <td v-for="plan in plans" :key="`export-${plan.id}`" 
+                                    :class="[
+                                        'p-4 text-center',
+                                        plan.is_popular ? 'bg-indigo-50/20 text-slate-900' : 'text-slate-500'
+                                    ]">
+                                    {{ plan.comparison_features.export_formats }}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
