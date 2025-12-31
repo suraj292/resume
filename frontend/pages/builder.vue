@@ -37,20 +37,23 @@ onMounted(async () => {
       localStorage.setItem('auth_token', token)
       console.log('Token stored:', token)
       
-      // Remove token from URL for security
-      await router.replace({ query: {} })
-      
-      // Small delay to ensure localStorage is written
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      // Fetch user data
+      // Fetch user data first
       const userData = await fetchUser()
       console.log('User data after OAuth:', userData)
+      
+      // Remove token from URL for security (after fetching user)
+      await router.replace({ query: {} })
+      
+      // If user data was fetched successfully, show success message
+      if (userData) {
+        success('Successfully logged in!', 'Welcome')
+      }
     } else {
       await fetchUser()
     }
     
     // Check auth status and show modal if not authenticated
+    // This check now happens after fetchUser completes
     if (!isAuthenticated.value) {
       console.log('Not authenticated, showing modal')
       showAuthModal.value = true

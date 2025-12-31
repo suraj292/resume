@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', {
         headers['Content-Type'] = 'application/json'
         headers['Accept'] = 'application/json'
 
-        const response: any = await $fetch('/api/user', {
+        const response: any = await $fetch('/api/v1/user', {
           baseURL: config.public.apiBase,
           credentials: 'include',
           headers
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', {
         this.error = null
 
         const config = useRuntimeConfig()
-        const data: any = await $fetch('/api/login', {
+        const data: any = await $fetch('/api/v1/login', {
           method: 'POST',
           baseURL: config.public.apiBase,
           body: credentials,
@@ -88,7 +88,7 @@ export const useAuthStore = defineStore('auth', {
         this.error = null
 
         const config = useRuntimeConfig()
-        const data: any = await $fetch('/api/register', {
+        const data: any = await $fetch('/api/v1/register', {
           method: 'POST',
           baseURL: config.public.apiBase,
           body: userData,
@@ -123,7 +123,7 @@ export const useAuthStore = defineStore('auth', {
           headers['Authorization'] = `Bearer ${token}`
         }
 
-        await $fetch('/api/logout', {
+        await $fetch('/api/v1/logout', {
           method: 'POST',
           baseURL: config.public.apiBase,
           credentials: 'include',
