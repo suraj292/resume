@@ -519,9 +519,14 @@ const page2Data = computed<ResumeData | null>(() => {
   return {
     ...resumeDataFormatted.value,
     basics: {
-      ...resumeDataFormatted.value.basics,
       fullName: '', // Don't repeat name
       title: '', // Don't repeat title
+      email: '', // Don't repeat contact info
+      phone: '', // Don't repeat contact info
+      location: '', // Don't repeat contact info
+      linkedin: '', // Don't repeat social links
+      github: '', // Don't repeat social links
+      portfolio: '', // Don't repeat social links
       summary: '' // Don't repeat summary
     },
     experience: resumeDataFormatted.value.experience.slice(2),
