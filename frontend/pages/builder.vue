@@ -266,6 +266,8 @@ const contentAnalysis = ref({
 // Page management
 const currentPage = ref(1)
 const totalPages = ref(1)
+const resumePreviewRef = ref<HTMLElement | null>(null)
+const actualContentHeight = ref(0)
 
 // Templates from JSON
 const templatesData = await import('~/data/templates.json').then(m => m.default || m) as TemplateMetadata[]
@@ -450,48 +452,176 @@ const templatePrimaryColor = computed(() => {
   return config?.layout?.primaryColor || currentAccentColor.value
 })
 
+// Measure actual content height for dynamic page splitting
+const measureContentHeight = () => {
+  if (!process.client || !resumePreviewRef.value) return 0
+  
+  return resumePreviewRef.value.scrollHeight || 0
+}
+
+// Watch for content changes and update measurements
+watch([formData, selectedTemplate], async () => {
+  if (process.client) {
+    await nextTick()
+    actualContentHeight.value = measureContentHeight()
+  }
+}, { deep: true })
+
 // Smart multi-page logic - detect when content exceeds A4 page height
+// A4 page is 297mm height, which is approximately 1123px at 96dpi
+// With padding/margins, usable height is approximately 1050px per page
 const needsSecondPage = computed(() => {
-  // Estimate content height in pixels
+  const currentTemplate = currentTemplateConfig.value
+  // Identify two-column templates
+  const twoColumnTemplates = ['modern-two-column', 'devops-engineer']
+  const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
+  
+  // Use actual measured height if available, otherwise fall back to estimation
+  if (actualContentHeight.value > 0) {
+    // A4 usable height is approximately 1050px (accounting for padding)
+    return actualContentHeight.value > 1050
+  }
+  
+  if (isTwoColumnLayout) {
+    // For two-column layouts: Only check if Experience exceeds main content height
+    // Sidebar content (Education/Skills/Certifications) doesn't affect page splitting
+    let experienceHeight = 0
+    
+    // Header + Summary in main content area
+    experienceHeight += 150 // Reduced header overhead for two-column
+    if (formData.value.summary) {
+      experienceHeight += 50 + Math.ceil(formData.value.summary.length * 0.5)
+    }
+    
+    // Calculate total experience height
+    formData.value.experience.forEach(exp => {
+      if (exp.position) {
+        experienceHeight += 90 // Tighter spacing
+        const respCount = exp.responsibilities.filter(r => r).length
+        experienceHeight += respCount * 20
+      }
+    })
+    
+    // Only need second page if experience column exceeds page height
+    return experienceHeight > 1050
+  }
+  
+  // For single-column layouts: More accurate content height estimation
   let estimatedHeight = 0
   
-  // Header section: ~150px
-  estimatedHeight += 150
+  // Header section: ~140px (tighter than before)
+  estimatedHeight += 140
   
-  // Summary: base 100px + 1px per character (wrapping considered)
+  // Summary: base 60px + 0.6px per character (more accurate wrapping)
   if (formData.value.summary) {
-    estimatedHeight += 100 + Math.ceil(formData.value.summary.length / 2)
+    estimatedHeight += 60 + Math.ceil(formData.value.summary.length * 0.6)
   }
   
-  // Skills section: base 100px + 5px per skill
-  const skillCount = Object.values(formData.value.skills)
-    .reduce((sum, arr) => sum + arr.length, 0)
-  if (skillCount > 0) {
-    estimatedHeight += 100 + (skillCount * 5)
+  // Skills section: base 60px + 18px per skill category with skills
+  const skillCategories = Object.entries(formData.value.skills).filter(([_, arr]) => arr.length > 0)
+  if (skillCategories.length > 0) {
+    estimatedHeight += 60 + (skillCategories.length * 18)
   }
   
-  // Experience: 150px base per entry + 30px per responsibility
+  // Experience: 100px base per entry + 22px per responsibility (more accurate)
   formData.value.experience.forEach(exp => {
     if (exp.position) {
-      estimatedHeight += 150
+      estimatedHeight += 100
       const respCount = exp.responsibilities.filter(r => r).length
-      estimatedHeight += respCount * 30
+      estimatedHeight += respCount * 22
     }
   })
   
-  // Education: 80px per entry
+  // Education: 60px per entry (tighter)
   const eduCount = formData.value.education.filter(e => e.degree).length
-  estimatedHeight += eduCount * 80
+  estimatedHeight += eduCount * 60
   
-  // Achievements: base 100px + 30px per achievement
+  // Achievements: base 60px + 22px per achievement
   const achCount = formData.value.achievements?.filter(a => a).length || 0
   if (achCount > 0) {
-    estimatedHeight += 100 + (achCount * 30)
+    estimatedHeight += 60 + (achCount * 22)
   }
   
-  // Page capacity is ~1000px usable height (A4 page minus padding)
-  // Show second page if content exceeds this threshold
-  return estimatedHeight > 1000
+  // Page capacity is ~1050px usable height (A4 page minus padding)
+  return estimatedHeight > 1050
+})
+
+// Calculate how much content fits on page 1
+const experienceCountForPage1 = computed(() => {
+  if (!needsSecondPage.value) {
+    return formData.value.experience.length
+  }
+  
+  const currentTemplate = currentTemplateConfig.value
+  // Identify two-column templates
+  const twoColumnTemplates = ['modern-two-column', 'devops-engineer']
+  const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
+  
+  if (isTwoColumnLayout) {
+    // For two-column layouts: Education/Skills/Certs in sidebar, Experience in main area
+    // Main area has more vertical space available
+    let page1UsedHeight = 150 // Header + margins (reduced)
+    
+    if (formData.value.summary) {
+      page1UsedHeight += 50 + Math.ceil(formData.value.summary.length * 0.5)
+    }
+    
+    // Remaining height for experience
+    const remainingHeight = 1050 - page1UsedHeight
+    
+    // Calculate how many experience entries fit
+    let experienceCount = 0
+    let experienceHeight = 0
+    
+    for (const exp of formData.value.experience) {
+      if (exp.position) {
+        const expItemHeight = 90 + (exp.responsibilities.filter(r => r).length * 20)
+        if (experienceHeight + expItemHeight <= remainingHeight) {
+          experienceHeight += expItemHeight
+          experienceCount++
+        } else {
+          break
+        }
+      }
+    }
+    
+    // Ensure at least 2 experiences on page 1 for two-column layout
+    return Math.max(2, experienceCount)
+  }
+  
+  // For single-column layouts: More aggressive space utilization
+  let page1UsedHeight = 140 // Header (reduced from 180)
+  
+  if (formData.value.summary) {
+    page1UsedHeight += 60 + Math.ceil(formData.value.summary.length * 0.6)
+  }
+  
+  const skillCategories = Object.entries(formData.value.skills).filter(([_, arr]) => arr.length > 0)
+  if (skillCategories.length > 0) {
+    page1UsedHeight += 60 + (skillCategories.length * 18)
+  }
+  
+  // Calculate remaining space for experience
+  const remainingHeight = 1050 - page1UsedHeight
+  
+  // Calculate how many experience entries fit with tighter spacing
+  let experienceCount = 0
+  let experienceHeight = 0
+  
+  for (const exp of formData.value.experience) {
+    if (exp.position) {
+      const expItemHeight = 100 + (exp.responsibilities.filter(r => r).length * 22)
+      if (experienceHeight + expItemHeight <= remainingHeight) {
+        experienceHeight += expItemHeight
+        experienceCount++
+      } else {
+        break
+      }
+    }
+  }
+  
+  // Ensure at least 1 experience on page 1 if there's any
+  return Math.max(1, experienceCount)
 })
 
 // Split data for page 1 (when multi-page is needed)
@@ -500,10 +630,25 @@ const page1Data = computed<ResumeData>(() => {
     return resumeDataFormatted.value
   }
   
-  // Page 1: Header, Summary, Skills, First 2 experiences
+  const currentTemplate = currentTemplateConfig.value
+  // Identify two-column templates
+  const twoColumnTemplates = ['modern-two-column', 'devops-engineer']
+  const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
+  
+  if (isTwoColumnLayout) {
+    // For two-column layouts: Keep Education/Skills/Achievements on page 1 (sidebar)
+    // Only split Experience (main content area)
+    return {
+      ...resumeDataFormatted.value,
+      experience: resumeDataFormatted.value.experience.slice(0, experienceCountForPage1.value)
+      // Keep education, skills, achievements - they go in the sidebar on page 1
+    }
+  }
+  
+  // For single-column layouts: Header, Summary, Skills, and limited experience
   return {
     ...resumeDataFormatted.value,
-    experience: resumeDataFormatted.value.experience.slice(0, 2),
+    experience: resumeDataFormatted.value.experience.slice(0, experienceCountForPage1.value),
     education: [], // Move to page 2
     achievements: [] // Move to page 2
   }
@@ -515,7 +660,35 @@ const page2Data = computed<ResumeData | null>(() => {
     return null
   }
   
-  // Page 2: Remaining experience, Education, Achievements (no header/summary duplicate)
+  const currentTemplate = currentTemplateConfig.value
+  // Identify two-column templates
+  const twoColumnTemplates = ['modern-two-column', 'devops-engineer']
+  const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
+  
+  if (isTwoColumnLayout) {
+    // For two-column layouts: Only remaining experience on page 2
+    // Education/Skills/Achievements already shown on page 1 in sidebar
+    return {
+      ...resumeDataFormatted.value,
+      basics: {
+        fullName: '', // Don't repeat name
+        title: '', // Don't repeat title
+        email: '', // Don't repeat contact info
+        phone: '', // Don't repeat contact info
+        location: '', // Don't repeat contact info
+        linkedin: '', // Don't repeat social links
+        github: '', // Don't repeat social links
+        portfolio: '', // Don't repeat social links
+        summary: '' // Don't repeat summary
+      },
+      experience: resumeDataFormatted.value.experience.slice(experienceCountForPage1.value),
+      skills: {}, // Don't repeat skills
+      education: [], // Already shown on page 1
+      achievements: [] // Already shown on page 1
+    }
+  }
+  
+  // For single-column layouts: Remaining experience, Education, Achievements
   return {
     ...resumeDataFormatted.value,
     basics: {
@@ -529,7 +702,7 @@ const page2Data = computed<ResumeData | null>(() => {
       portfolio: '', // Don't repeat social links
       summary: '' // Don't repeat summary
     },
-    experience: resumeDataFormatted.value.experience.slice(2),
+    experience: resumeDataFormatted.value.experience.slice(experienceCountForPage1.value),
     skills: {} // Don't repeat skills
   }
 })
