@@ -31,8 +31,8 @@ const otherSkills = computed(() => {
 
 <template>
   <article class="resume-template software-engineer" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Header Section -->
-    <header class="resume-header">
+    <!-- Header Section (only on page 1) -->
+    <header v-if="data.basics.fullName" class="resume-header">
       <h1 class="name">{{ data.basics.fullName }}</h1>
       <h2 class="title">{{ data.basics.title }}</h2>
       
@@ -156,6 +156,7 @@ const otherSkills = computed(() => {
   line-height: 1.5;
   color: #1e293b;
   background: white;
+  padding: 4rem;
   
   /* Proper print breaks */
   break-inside: avoid-page;

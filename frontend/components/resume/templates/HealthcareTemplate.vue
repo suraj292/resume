@@ -23,7 +23,7 @@ const hasProjects = computed(() =>
 <template>
   <article class="resume-template data-scientist" :style="{ '--primary-color': theme.primaryColor }">
     <!-- Header with Stats Badge -->
-    <header class="resume-header">
+    <header v-if="data.basics.fullName" class="resume-header">
       <div class="header-content">
         <div class="name-block">
           <h1 class="name">{{ data.basics.fullName }}</h1>
@@ -133,6 +133,7 @@ const hasProjects = computed(() =>
   line-height: 1.5;
   color: #1e293b;
   background: white;
+  padding: 4rem;
   break-inside: avoid-page;
 }
 

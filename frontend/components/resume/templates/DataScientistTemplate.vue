@@ -141,6 +141,9 @@ const hasProjects = computed(() =>
   line-height: 1.5;
   color: #1e293b;
   background: white;
+  padding: 4rem;
+  
+  /* Proper print breaks */
   break-inside: avoid-page;
 }
 

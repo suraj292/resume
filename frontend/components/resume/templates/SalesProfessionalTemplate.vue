@@ -6,8 +6,8 @@ const props = defineProps<TemplateProps>()
 
 <template>
   <article class="resume-template marketing" :style="{ '--primary-color': theme.primaryColor }">
-    <!-- Bold Header with Impact -->
-    <header class="marketing-header">
+    <!-- Bold Header with Impact (only on page 1) -->
+    <header v-if="data.basics.fullName" class="marketing-header">
       <div class="impact-row">
         <span class="impact-label">MARKETING PROFESSIONAL</span>
         <span class="location">{{ data.basics.location }}</span>
@@ -61,7 +61,7 @@ const props = defineProps<TemplateProps>()
       <h3 class="bold-title">CORE COMPETENCIES</h3>
       <div class="competency-boxes">
         <template v-for="(skillsArray, category) in data.skills" :key="category">
-          <div v-if="skillsArray.length > 0" class="competency-box">
+          <div v-if="skillsArray?.length && skillsArray.length > 0" class="competency-box">
             <h4>{{ category }}</h4>
             <p>{{ skillsArray.join(' • ') }}</p>
           </div>
@@ -92,7 +92,7 @@ const props = defineProps<TemplateProps>()
   line-height: 1.5;
   color: #1e293b;
   background: white;
-  padding: 2.5rem 3rem;
+  padding: 4rem;
 }
 
 /* Marketing Header */

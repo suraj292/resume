@@ -129,7 +129,7 @@ const hasPortfolio = computed(() =>
   line-height: 1.5;
   color: #1e293b;
   background: white;
-  padding: 2.5rem 3rem;
+  padding: 4rem;
 }
 
 /* Creative Header */

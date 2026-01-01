@@ -2165,8 +2165,8 @@ useHead({
                 :style="{ 
                   width: '210mm',
                   minHeight: '297mm',
-                  height: needsSecondPage ? '297mm' : 'auto',
-                  maxHeight: needsSecondPage ? '297mm' : 'none',
+                  height: '297mm',
+                  overflow: 'hidden',
                   transform: `scale(${previewScale})`,
                   transformOrigin: 'top center'
                 }"
@@ -2178,7 +2178,7 @@ useHead({
                 </div>
                 
                 <!-- Dynamic Template Component - Page 1 -->
-                <div v-else-if="currentTemplateComponent" class="resume-content p-16">
+                <div v-else-if="currentTemplateComponent" class="resume-content">
                   <ClientOnly>
                     <Transition name="fade" mode="out-in">
                       <component 
@@ -2206,11 +2206,13 @@ useHead({
                   width: '210mm',
                   minHeight: '297mm',
                   height: 'auto',
+                  maxHeight: '297mm',
+                  overflow: 'hidden',
                   transform: `scale(${previewScale})`,
                   transformOrigin: 'top center'
                 }"
               >
-                <div class="resume-content p-16">
+                <div class="resume-content">
                   <!-- Page Indicator -->
                   <div class="text-right text-xs text-slate-400 mb-6 font-medium">Page 2</div>
                   
@@ -2265,7 +2267,7 @@ useHead({
           <div 
             :key="selectedTemplate + '-mobile-page1'" 
             class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: needsSecondPage ? '297mm' : 'auto', padding: '1rem' }"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: '297mm', overflow: 'hidden' }"
           >
             <!-- Loading State -->
             <div v-if="isTemplateLoading" class="p-8 text-center text-slate-400">
@@ -2299,7 +2301,7 @@ useHead({
             v-if="needsSecondPage && currentTemplateComponent && page2Data"
             :key="selectedTemplate + '-mobile-page2'" 
             class="bg-white shadow-2xl mx-auto overflow-hidden relative transition-all duration-300"
-            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', padding: '1rem' }"
+            :style="{ width: '100%', maxWidth: '210mm', minHeight: '297mm', height: 'auto', maxHeight: '297mm', overflow: 'hidden' }"
           >
             <div class="resume-content">
               <!-- Page Indicator for Mobile -->

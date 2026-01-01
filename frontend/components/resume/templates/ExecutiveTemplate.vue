@@ -102,6 +102,7 @@ const allSkills = computed(() => {
   line-height: 1.6;
   color: #1e293b;
   background: white;
+  padding: 4rem;
   break-inside: avoid-page;
 }
 
