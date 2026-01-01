@@ -2157,75 +2157,83 @@ useHead({
           <div class="w-full max-w-[900px]">
             <!-- Multi-Page Container with minimal gap -->
             <div class="space-y-8">
-              <!-- Page 1 -->
-              <div 
-                id="resume-preview"
-                class="resume-paper bg-white shadow-2xl transition-all duration-300"
-                :class="{ 'overflow-hidden': needsSecondPage }"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  height: '297mm',
-                  overflow: 'hidden',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center'
-                }"
-              >
-                <!-- Loading State -->
-                <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                  <p>Loading template...</p>
-                </div>
-                
-                <!-- Dynamic Template Component - Page 1 -->
-                <div v-else-if="currentTemplateComponent" class="resume-content">
-                  <ClientOnly>
-                    <Transition name="fade" mode="out-in">
-                      <component 
-                        :key="selectedTemplate + '-page1'"
-                        :is="currentTemplateComponent"
-                        :data="page1Data"
-                        :theme="currentThemeConfig"
-                      />
-                    </Transition>
-                  </ClientOnly>
-                </div>
-                
-                <!-- Fallback Loading State -->
-                <div v-else class="p-16 text-center text-slate-400">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
-                  <p>Loading template...</p>
+              <!-- Scaling wrapper for Page 1 -->
+              <div :style="{ height: `calc(297mm * ${previewScale})`, display: 'flex', justifyContent: 'center' }">
+                <!-- Page 1 -->
+                <div 
+                  id="resume-preview"
+                  class="resume-paper bg-white shadow-2xl transition-all duration-300"
+                  :class="{ 'overflow-hidden': needsSecondPage }"
+                  :style="{ 
+                    width: '210mm',
+                    minHeight: '297mm',
+                    height: '297mm',
+                    overflow: 'hidden',
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top center'
+                  }"
+                >
+                  <!-- Loading State -->
+                  <div v-if="isTemplateLoading" class="p-16 text-center text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                    <p>Loading template...</p>
+                  </div>
+                  
+                  <!-- Dynamic Template Component - Page 1 -->
+                  <div v-else-if="currentTemplateComponent" class="resume-content">
+                    <ClientOnly>
+                      <Transition name="fade" mode="out-in">
+                        <component 
+                          :key="selectedTemplate + '-page1'"
+                          :is="currentTemplateComponent"
+                          :data="page1Data"
+                          :theme="currentThemeConfig"
+                        />
+                      </Transition>
+                    </ClientOnly>
+                  </div>
+                  
+                  <!-- Fallback Loading State -->
+                  <div v-else class="p-16 text-center text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-4"></i>
+                    <p>Loading template...</p>
+                  </div>
                 </div>
               </div>
 
-              <!-- Page 2 (Conditional) -->
+              <!-- Scaling wrapper for Page 2 (Conditional) -->
               <div 
                 v-if="needsSecondPage && currentTemplateComponent && page2Data"
-                class="resume-paper bg-white shadow-2xl transition-all duration-300"
-                :style="{ 
-                  width: '210mm',
-                  minHeight: '297mm',
-                  height: 'auto',
-                  maxHeight: '297mm',
-                  overflow: 'hidden',
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: 'top center'
-                }"
+                :style="{ height: `calc(297mm * ${previewScale})`, display: 'flex', justifyContent: 'center' }"
               >
-                <div class="resume-content">
-                  <!-- Page Indicator -->
-                  <div class="text-right text-xs text-slate-400 mb-6 font-medium">Page 2</div>
-                  
-                  <ClientOnly>
-                    <Transition name="fade" mode="out-in">
-                      <component 
-                        :key="selectedTemplate + '-page2'"
-                        :is="currentTemplateComponent"
-                        :data="page2Data"
-                        :theme="currentThemeConfig"
-                      />
-                    </Transition>
-                  </ClientOnly>
+                <!-- Page 2 -->
+                <div 
+                  class="resume-paper bg-white shadow-2xl transition-all duration-300"
+                  :style="{ 
+                    width: '210mm',
+                    minHeight: '297mm',
+                    height: 'auto',
+                    maxHeight: '297mm',
+                    overflow: 'hidden',
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top center'
+                  }"
+                >
+                  <div class="resume-content">
+                    <!-- Page Indicator -->
+                    <div class="text-right text-xs text-slate-400 mb-6 font-medium">Page 2</div>
+                    
+                    <ClientOnly>
+                      <Transition name="fade" mode="out-in">
+                        <component 
+                          :key="selectedTemplate + '-page2'"
+                          :is="currentTemplateComponent"
+                          :data="page2Data"
+                          :theme="currentThemeConfig"
+                        />
+                      </Transition>
+                    </ClientOnly>
+                  </div>
                 </div>
               </div>
             </div>
