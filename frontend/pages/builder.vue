@@ -47,6 +47,94 @@ onMounted(() => {
 })
 
 
+// Load dummy data function
+const loadDummyData = async () => {
+  try {
+    // Show loading indicator
+    // isProcessing.value = true
+    
+    // Add a delay to show the loading state
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const dummyData = await import('~/data/dummydata.json').then(m => m.default || m)
+    
+    // Populate personal information
+    formData.value.fullName = dummyData.name || ''
+    formData.value.title = dummyData.title || ''
+    formData.value.email = dummyData.contact?.email || ''
+    formData.value.phone = dummyData.contact?.phone || ''
+    formData.value.location = dummyData.contact?.location || ''
+    formData.value.linkedin = dummyData.contact?.linkedin || ''
+    formData.value.github = '' // Not in dummy data
+    formData.value.portfolio = dummyData.contact?.website || ''
+    formData.value.summary = dummyData.summary || ''
+    
+    // Populate skills - map from dummy data structure to form structure
+    if (dummyData.skills) {
+      // Categorize technical skills
+      const technicalSkills = dummyData.skills.technical || []
+      formData.value.skills = {
+        backend: technicalSkills.filter((s: string) => 
+          ['Node.js', 'Python', 'PostgreSQL', 'MongoDB', 'GraphQL', 'REST APIs'].includes(s)
+        ),
+        frontend: technicalSkills.filter((s: string) => 
+          ['JavaScript', 'TypeScript', 'React'].includes(s)
+        ),
+        devops: technicalSkills.filter((s: string) => 
+          ['AWS', 'Docker', 'Kubernetes'].includes(s)
+        ),
+        other: dummyData.skills.soft || []
+      }
+    }
+    
+    // Populate experience
+    if (dummyData.experience && Array.isArray(dummyData.experience)) {
+      formData.value.experience = dummyData.experience.map((exp: any, index: number) => ({
+        id: index + 1,
+        position: exp.position || '',
+        company: exp.company || '',
+        location: exp.location || '',
+        startDate: exp.duration?.split(' - ')[0] || '',
+        endDate: exp.duration?.split(' - ')[1] || '',
+        current: exp.duration?.includes('Present') || false,
+        responsibilities: exp.achievements || ['']
+      }))
+    }
+    
+    // Populate education
+    if (dummyData.education && Array.isArray(dummyData.education)) {
+      formData.value.education = dummyData.education.map((edu: any, index: number) => ({
+        id: index + 1,
+        degree: edu.degree || '',
+        institution: edu.institution || '',
+        year: edu.duration || '',
+        percentage: edu.gpa || ''
+      }))
+    }
+    
+    // Populate achievements - can use certifications or projects
+    const achievements: string[] = []
+    if (dummyData.certifications && Array.isArray(dummyData.certifications)) {
+      dummyData.certifications.forEach((cert: any) => {
+        achievements.push(`${cert.name} - ${cert.issuer} (${cert.date})`)
+      })
+    }
+    if (dummyData.projects && Array.isArray(dummyData.projects)) {
+      dummyData.projects.forEach((project: any) => {
+        achievements.push(`${project.name}: ${project.description}`)
+      })
+    }
+    formData.value.achievements = achievements.length > 0 ? achievements : ['']
+    
+  } catch (error) {
+    console.error('Failed to load dummy data:', error)
+    toastr.error('Failed to load sample data', 'Error')
+  } finally {
+    // Hide loading indicator
+    isProcessing.value = false
+  }
+}
+
 // Check authentication on mount
 onMounted(async () => {
   try {
@@ -75,10 +163,16 @@ onMounted(async () => {
       console.log('Not authenticated, showing modal')
       showAuthModal.value = true
     }
+    
+    // Load dummy data
+    await loadDummyData()
   } catch (error) {
     console.log('Auth check failed (backend may be offline):', error)
     // Don't show auth modal if backend is offline - allow using the app without auth
     showAuthModal.value = false
+    
+    // Still try to load dummy data even if auth fails
+    await loadDummyData()
   }
 })
 
