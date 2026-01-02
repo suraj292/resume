@@ -48,6 +48,18 @@ const { templates: templatesFromJSON, selectedTemplateId: selectedTemplate, isTe
 const { isAuthenticated, fetchUser } = useAuth()
 const showAuthModal = ref(false)
 
+// Real DOM measurements for accurate page splitting
+const actualMeasurements = ref({
+  header: 0,
+  summary: 0,
+  skills: 0,
+  experience: [] as number[],
+  education: [] as number[],
+  achievements: 0
+})
+const actualPage1ExpCount = ref(0)
+const measurementsDirty = ref(true)
+
 // ATS Badge Animation Loop
 const isPulsing = ref(false)
 onMounted(() => {
@@ -113,6 +125,40 @@ onMounted(async () => {
     // Still try to load templates and dummy data even if auth fails
     await templateStore.loadTemplates()
     await loadDummyData()
+  }
+  
+  // Setup ResizeObserver for automatic content measurement
+  if (process.client) {
+    await nextTick()
+    
+    const observeResume = () => {
+      const resumePreview = document.querySelector('.resume-paper')
+      if (!resumePreview) {
+        // Retry after a delay if not found
+        setTimeout(observeResume, 500)
+        return
+      }
+      
+      const resizeObserver = new ResizeObserver(() => {
+        actualContentHeight.value = resumePreview?.scrollHeight || 0
+        // Debounce re-measurement
+        if (!measurementsDirty.value) {
+          measurementsDirty.value = true
+          setTimeout(() => {
+            measureActualContent()
+          }, 300)
+        }
+      })
+      
+      resizeObserver.observe(resumePreview)
+    }
+    
+    observeResume()
+    
+    // Initial measurement
+    setTimeout(() => {
+      measureActualContent()
+    }, 1000)
   }
 })
 
@@ -190,11 +236,96 @@ const measureContentHeight = () => {
   return resumePreviewRef.value.scrollHeight || 0
 }
 
+// Measure actual rendered content sections
+const measureActualContent = async () => {
+  if (!process.client) return
+  
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 100)) // Wait for render
+  
+  const previewContainer = document.querySelector('.resume-paper')
+  if (!previewContainer) return
+  
+  // Measure each section
+  const measurements = {
+    header: 0,
+    summary: 0,
+    skills: 0,
+    experience: [] as number[],
+    education: [] as number[],
+    achievements: 0
+  }
+  
+  // Header (name, title, contact)
+  const headerEl = previewContainer.querySelector('[data-section="header"]')
+  if (headerEl) measurements.header = (headerEl as HTMLElement).offsetHeight
+  
+  // Summary
+  const summaryEl = previewContainer.querySelector('[data-section="summary"]')
+  if (summaryEl) measurements.summary = (summaryEl as HTMLElement).offsetHeight
+  
+  // Skills
+  const skillsEl = previewContainer.querySelector('[data-section="skills"]')
+  if (skillsEl) measurements.skills = (skillsEl as HTMLElement).offsetHeight
+  
+  // Individual experience entries
+  const expItems = previewContainer.querySelectorAll('[data-section="experience-item"]')
+  expItems.forEach((item) => {
+    measurements.experience.push((item as HTMLElement).offsetHeight)
+  })
+  
+  // Individual education entries
+  const eduItems = previewContainer.querySelectorAll('[data-section="education-item"]')
+  eduItems.forEach((item) => {
+    measurements.education.push((item as HTMLElement).offsetHeight)
+  })
+  
+  // Achievements
+  const achievementsEl = previewContainer.querySelector('[data-section="achievements"]')
+  if (achievementsEl) measurements.achievements = (achievementsEl as HTMLElement).offsetHeight
+  
+  actualMeasurements.value = measurements
+  measurementsDirty.value = false
+  
+  // Calculate optimal page breaks
+  calculateOptimalPageBreaks()
+}
+
+// Calculate optimal page breaks based on real measurements
+const calculateOptimalPageBreaks = () => {
+  const A4_HEIGHT_PX = 1123 // A4 at 96dpi
+  const USABLE_HEIGHT = 1050 // With margins
+  
+  let currentHeight = actualMeasurements.value.header + 
+                     actualMeasurements.value.summary + 
+                     actualMeasurements.value.skills
+  
+  let expCount = 0
+  
+  for (let i = 0; i < actualMeasurements.value.experience.length; i++) {
+    const expHeight = actualMeasurements.value.experience[i] || 100 // fallback
+    if (currentHeight + expHeight <= USABLE_HEIGHT) {
+      currentHeight += expHeight
+      expCount++
+    } else {
+      break
+    }
+  }
+  
+  actualPage1ExpCount.value = Math.max(1, expCount)
+}
+
 // Watch for content changes and update measurements
 watch([formData, selectedTemplate], async () => {
   if (process.client) {
+    measurementsDirty.value = true
     await nextTick()
     actualContentHeight.value = measureContentHeight()
+    
+    // Trigger re-measurement after content settles
+    setTimeout(() => {
+      measureActualContent()
+    }, 200)
   }
 }, { deep: true })
 
@@ -202,6 +333,18 @@ watch([formData, selectedTemplate], async () => {
 // A4 page is 297mm height, which is approximately 1123px at 96dpi
 // With padding/margins, usable height is approximately 1050px per page
 const needsSecondPage = computed(() => {
+  // Use real measurements if available and fresh
+  if (!measurementsDirty.value && actualMeasurements.value.experience.length > 0) {
+    const totalHeight = actualMeasurements.value.header +
+                       actualMeasurements.value.summary +
+                       actualMeasurements.value.skills +
+                       actualMeasurements.value.experience.reduce((sum, h) => sum + h, 0) +
+                       actualMeasurements.value.education.reduce((sum, h) => sum + h, 0) +
+                       actualMeasurements.value.achievements
+    
+    return totalHeight > 1050
+  }
+  
   const currentTemplate = currentTemplateConfig.value
   // Identify two-column templates
   const twoColumnTemplates = ['modern-two-column', 'devops-engineer']
@@ -281,6 +424,11 @@ const needsSecondPage = computed(() => {
 const experienceCountForPage1 = computed(() => {
   if (!needsSecondPage.value) {
     return formData.value.experience.length
+  }
+  
+  // Use real measurements if available
+  if (!measurementsDirty.value && actualPage1ExpCount.value > 0) {
+    return actualPage1ExpCount.value
   }
   
   const currentTemplate = currentTemplateConfig.value
@@ -367,12 +515,17 @@ const page1Data = computed<ResumeData>(() => {
   const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
   
   if (isTwoColumnLayout) {
-    // For two-column layouts: Keep Education/Skills/Achievements on page 1 (sidebar)
-    // Only split Experience (main content area)
+    // For two-column layouts: Distribute content across both columns on both pages
+    // Page 1: Partial experience (left) + Partial education/skills (right)
+    const eduSplit = Math.ceil(resumeDataFormatted.value.education.length / 2)
+    const achSplit = Math.ceil((resumeDataFormatted.value.achievements?.length || 0) / 2)
+    
     return {
       ...resumeDataFormatted.value,
-      experience: resumeDataFormatted.value.experience.slice(0, experienceCountForPage1.value)
-      // Keep education, skills, achievements - they go in the sidebar on page 1
+      experience: resumeDataFormatted.value.experience.slice(0, experienceCountForPage1.value),
+      education: resumeDataFormatted.value.education.slice(0, eduSplit),
+      achievements: resumeDataFormatted.value.achievements?.slice(0, achSplit) || [],
+      skills: resumeDataFormatted.value.skills // Keep all skills on page 1
     }
   }
   
@@ -397,25 +550,29 @@ const page2Data = computed<ResumeData | null>(() => {
   const isTwoColumnLayout = twoColumnTemplates.includes(currentTemplate?.id || '')
   
   if (isTwoColumnLayout) {
-    // For two-column layouts: Only remaining experience on page 2
-    // Education/Skills/Achievements already shown on page 1 in sidebar
+    // For two-column layouts: Continue both columns on page 2
+    // Left column: remaining experience
+    // Right column: remaining education and achievements
+    const eduSplit = Math.ceil(resumeDataFormatted.value.education.length / 2)
+    const achSplit = Math.ceil((resumeDataFormatted.value.achievements?.length || 0) / 2)
+    
     return {
       ...resumeDataFormatted.value,
       basics: {
-        fullName: '', // Don't repeat name
-        title: '', // Don't repeat title
-        email: '', // Don't repeat contact info
-        phone: '', // Don't repeat contact info
-        location: '', // Don't repeat contact info
-        linkedin: '', // Don't repeat social links
-        github: '', // Don't repeat social links
-        portfolio: '', // Don't repeat social links
+        fullName: '', // Don't repeat header
+        title: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedin: '',
+        github: '',
+        portfolio: '',
         summary: '' // Don't repeat summary
       },
       experience: resumeDataFormatted.value.experience.slice(experienceCountForPage1.value),
-      skills: {}, // Don't repeat skills
-      education: [], // Already shown on page 1
-      achievements: [] // Already shown on page 1
+      education: resumeDataFormatted.value.education.slice(eduSplit),
+      achievements: resumeDataFormatted.value.achievements?.slice(achSplit) || [],
+      skills: {} // Skills already shown on page 1
     }
   }
   
@@ -619,6 +776,22 @@ const populateFormWithParsedData = (parsedData: any) => {
   // Populate achievements
   if (parsedData.achievements && parsedData.achievements.length > 0) {
     formData.value.achievements = parsedData.achievements
+  }
+  
+  // Store PDF layout metadata if available
+  if (parsedData.layoutMetadata) {
+    // If parsed data includes layout hints, use them
+    if (parsedData.layoutMetadata.page1ExperienceCount) {
+      actualPage1ExpCount.value = parsedData.layoutMetadata.page1ExperienceCount
+    }
+  }
+  
+  // Trigger measurement after content is populated
+  if (process.client) {
+    measurementsDirty.value = true
+    setTimeout(() => {
+      measureActualContent()
+    }, 300)
   }
 }
 

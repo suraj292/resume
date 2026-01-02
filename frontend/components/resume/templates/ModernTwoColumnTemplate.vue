@@ -16,7 +16,7 @@ const allSkills = computed(() => {
 <template>
   <article class="resume-template modern-two-column" :style="{ '--primary-color': theme.primaryColor }">
     <!-- Header with Avatar and Name (only on page 1) -->
-    <header v-if="data.basics.fullName" class="resume-header">
+    <header v-if="data.basics.fullName" class="resume-header" data-section="header">
       <div class="avatar-circle">
         <i class="fa-solid fa-user"></i>
       </div>
@@ -37,7 +37,7 @@ const allSkills = computed(() => {
     </header>
 
     <!-- Summary Section -->
-    <section v-if="data.basics.summary" class="summary-section">
+    <section v-if="data.basics.summary" class="summary-section" data-section="summary">
       <h2 class="section-title">SUMMARY</h2>
       <p class="summary-text">{{ data.basics.summary }}</p>
     </section>
@@ -49,7 +49,7 @@ const allSkills = computed(() => {
         <section v-if="data.experience.length > 0" class="experience-section">
           <h2 class="section-title">EXPERIENCE</h2>
           
-          <div v-for="exp in data.experience" :key="exp.id" class="experience-item">
+          <div v-for="exp in data.experience" :key="exp.id" class="experience-item" data-section="experience-item">
             <h3 class="job-title">{{ exp.position }} <span class="company-name">{{ exp.company }}</span></h3>
             <p class="job-subtitle">{{ exp.company }} – {{ exp.location || 'Remote' }}</p>
             <ul v-if="exp.responsibilities.length > 0" class="responsibilities-list">
@@ -61,13 +61,13 @@ const allSkills = computed(() => {
         </section>
       </div>
 
-      <!-- Right Column: Education & Skills -->
+      <!-- Right Column: Education & Skills (visible on page 1, empty on page 2) -->
       <div class="right-column">
         <!-- Education -->
         <section v-if="data.education.length > 0" class="education-section">
           <h2 class="section-title">EDUCATION</h2>
           
-          <div v-for="edu in data.education" :key="edu.id" class="education-item">
+          <div v-for="edu in data.education" :key="edu.id" class="education-item" data-section="education-item">
             <h3 class="degree-title">{{ edu.degree }}</h3>
             <p class="institution-name">{{ edu.institution }}</p>
             <p v-if="edu.year" class="education-year">{{ edu.year }}</p>
@@ -75,7 +75,7 @@ const allSkills = computed(() => {
         </section>
 
         <!-- Skills -->
-        <section v-if="allSkills.length > 0" class="skills-section">
+        <section v-if="allSkills.length > 0" class="skills-section" data-section="skills">
           <h2 class="section-title">SKILLS</h2>
           
           <div class="skills-grid">
@@ -86,7 +86,7 @@ const allSkills = computed(() => {
         </section>
 
         <!-- Achievements -->
-        <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section">
+        <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section" data-section="achievements">
           <h2 class="section-title">ACHIEVEMENTS</h2>
           
           <ul class="achievements-list">
@@ -199,12 +199,14 @@ const allSkills = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2.5rem;
+  align-items: start;
 }
 
 /* Left Column - Experience */
 .left-column {
   border-right: 1px solid #e5e7eb;
   padding-right: 2.5rem;
+  min-height: 100%;
 }
 
 .experience-section {
@@ -254,6 +256,7 @@ const allSkills = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-height: 100%;
 }
 
 .education-section {

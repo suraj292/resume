@@ -11,7 +11,7 @@ const hasPortfolio = computed(() =>
 <template>
   <article class="resume-template creative" :style="{ '--primary-color': theme.primaryColor }">
     <!-- Creative Header with Accent (only on page 1) -->
-    <header v-if="data.basics.fullName" class="creative-header">
+    <header v-if="data.basics.fullName" class="creative-header" data-section="header">
       <div class="accent-block"></div>
       <div class="header-content">
         <h1 class="creative-name">{{ data.basics.fullName }}</h1>
@@ -35,7 +35,7 @@ const hasPortfolio = computed(() =>
     </header>
 
     <!-- About Section -->
-    <section v-if="data.basics.summary" class="about-section">
+    <section v-if="data.basics.summary" class="about-section" data-section="summary">
       <div class="section-header">
         <span class="section-number">01</span>
         <h3>About Me</h3>
@@ -69,7 +69,7 @@ const hasPortfolio = computed(() =>
         <h3>Experience</h3>
       </div>
       
-      <div v-for="exp in data.experience" :key="exp.id" class="exp-card">
+      <div v-for="exp in data.experience" :key="exp.id" class="exp-card" data-section="experience-item">
         <div class="exp-title-row">
           <h4>{{ exp.position }}</h4>
           <span class="year-badge">{{ exp.startDate.split(' ')[1] || exp.startDate }}</span>
@@ -81,36 +81,35 @@ const hasPortfolio = computed(() =>
       </div>
     </section>
 
-    <!-- Skills & Education Side by Side -->
-    <div class="bottom-grid">
-      <section v-if="Object.values(data.skills).some(s => s.length > 0)" class="skills-box">
-        <div class="section-header">
-          <span class="section-number">04</span>
-          <h3>Skills</h3>
-        </div>
-        <div class="skills-cloud">
-          <template v-for="(skillsArray, category) in data.skills" :key="category">
-            <span v-if="skillsArray && skillsArray.length > 0" v-for="skill in skillsArray.slice(0, 12)" :key="skill" class="skill-bubble">{{ skill }}</span>
-          </template>
-        </div>
-      </section>
+    <!-- Skills Section -->
+    <section v-if="Object.values(data.skills).some(s => s.length > 0)" class="skills-section" data-section="skills">
+      <div class="section-header">
+        <span class="section-number">04</span>
+        <h3>Skills</h3>
+      </div>
+      <div class="skills-cloud">
+        <template v-for="(skillsArray, category) in data.skills" :key="category">
+          <span v-if="skillsArray && skillsArray.length > 0" v-for="skill in skillsArray.slice(0, 12)" :key="skill" class="skill-bubble">{{ skill }}</span>
+        </template>
+      </div>
+    </section>
 
-      <section v-if="data.education.length > 0" class="education-box">
-        <div class="section-header">
-          <span class="section-number">05</span>
-          <h3>Education</h3>
-        </div>
-        <div v-for="edu in data.education" :key="edu.id" class="edu-item">
-          <h4>{{ edu.degree }}</h4>
-          <p>{{ edu.institution }} · {{ edu.year }}</p>
-        </div>
-      </section>
-    </div>
-
-    <!-- Achievements -->
-    <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section">
+    <!-- Education Section -->
+    <section v-if="data.education.length > 0" class="education-section">
       <div class="section-header">
         <span class="section-number">05</span>
+        <h3>Education</h3>
+      </div>
+      <div v-for="edu in data.education" :key="edu.id" class="edu-item" data-section="education-item">
+        <h4>{{ edu.degree }}</h4>
+        <p>{{ edu.institution }} · {{ edu.year }}</p>
+      </div>
+    </section>
+
+    <!-- Achievements -->
+    <section v-if="data.achievements && data.achievements.length > 0" class="achievements-section" data-section="achievements">
+      <div class="section-header">
+        <span class="section-number">06</span>
         <h3>Achievements</h3>
       </div>
       <ul class="achievements-list">
@@ -331,15 +330,9 @@ const hasPortfolio = computed(() =>
   margin-bottom: 0.25rem;
 }
 
-/* Bottom Grid */
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.skills-box,
-.education-box {
+/* Skills Section */
+.skills-section {
+  margin-bottom: 2rem;
   break-inside: avoid;
 }
 
@@ -348,6 +341,12 @@ const hasPortfolio = computed(() =>
   flex-wrap: wrap;
   gap: 0.5rem;
   padding-left: 3.5rem;
+}
+
+/* Education Section */
+.education-section {
+  margin-bottom: 2rem;
+  break-inside: avoid;
 }
 
 .skill-bubble {
@@ -363,6 +362,7 @@ const hasPortfolio = computed(() =>
 .edu-item {
   margin-bottom: 1rem;
   padding-left: 3.5rem;
+  break-inside: avoid;
 }
 
 .edu-item h4 {
@@ -403,8 +403,9 @@ const hasPortfolio = computed(() =>
   
   .portfolio-card,
   .exp-card,
-  .skills-box,
-  .education-box {
+  .skills-section,
+  .education-section,
+  .achievements-section {
     page-break-inside: avoid;
   }
 }
