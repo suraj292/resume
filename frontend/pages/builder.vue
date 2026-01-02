@@ -1,35 +1,48 @@
 <script setup lang="ts">
 import type { ResumeData, ThemeConfig, TemplateMetadata } from '~/types/resume'
+import { useResumeStore } from '~/stores/resume'
+import { useTemplateStore } from '~/stores/template'
 import { useResumeTemplate } from '~/composables/useResumeTemplate'
 import { useResumeTheme } from '~/composables/useResumeTheme'
+import { storeToRefs } from 'pinia'
 import toastr from 'toastr'
 import 'toastr/build/toastr.min.css'
 
-// Configure toastr
-toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: 'toast-top-right',
-  timeOut: 5000,
-  extendedTimeOut: 2000,
-  showMethod: 'slideDown',
-  hideMethod: 'slideUp',
-  showDuration: 300,
-  hideDuration: 200,
-  preventDuplicates: true,
-  newestOnTop: true,
-  toastClass: 'toastr-custom',
-  iconClasses: {
-    error: 'toast-error',
-    info: 'toast-info',
-    success: 'toast-success',
-    warning: 'toast-warning'
+// Configure toastr (client-only)
+if (process.client) {
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: 'toast-top-right',
+    timeOut: 5000,
+    extendedTimeOut: 2000,
+    showMethod: 'slideDown',
+    hideMethod: 'slideUp',
+    showDuration: 300,
+    hideDuration: 200,
+    preventDuplicates: true,
+    newestOnTop: true,
+    toastClass: 'toastr-custom',
+    iconClasses: {
+      error: 'toast-error',
+      info: 'toast-info',
+      success: 'toast-success',
+      warning: 'toast-warning'
+    }
   }
 }
 
 const config = useRuntimeConfig()
 const route = useRoute()
 const router = useRouter()
+
+// Initialize Pinia stores
+const resumeStore = useResumeStore()
+const templateStore = useTemplateStore()
+
+// Extract reactive refs from stores
+const { formData, isProcessing, uploadError, successMessage, resumeInputMode, jobInputMode, resumeText, jobDescription, selectedTone, aiResults, atsScore, atsAnalysisCompleted, scoreGrade, experienceLevel, keywordMatchPercentage, wordCount, criticalIssuesCount, matchedKeywords, missingKeywords, formattingChecks, criticalIssues, contentAnalysis } = storeToRefs(resumeStore)
+const { templates: templatesFromJSON, selectedTemplateId: selectedTemplate, isTemplateLoading, currentTemplateComponent, selectedColorId: selectedColor, customColor, colorPalettes, previewScale, currentPage, totalPages, actualContentHeight } = storeToRefs(templateStore)
 
 // Auth
 const { isAuthenticated, fetchUser } = useAuth()
@@ -47,91 +60,16 @@ onMounted(() => {
 })
 
 
-// Load dummy data function
+// Initialize stores and load data (runs on both server and client)
+if (process.server) {
+  // On server, just initialize stores with default state
+  await templateStore.loadTemplates()
+}
+
+// Load dummy data function (now uses store action)
 const loadDummyData = async () => {
-  try {
-    // Show loading indicator
-    // isProcessing.value = true
-    
-    // Add a delay to show the loading state
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    const dummyData = await import('~/data/dummydata.json').then(m => m.default || m)
-    
-    // Populate personal information
-    formData.value.fullName = dummyData.name || ''
-    formData.value.title = dummyData.title || ''
-    formData.value.email = dummyData.contact?.email || ''
-    formData.value.phone = dummyData.contact?.phone || ''
-    formData.value.location = dummyData.contact?.location || ''
-    formData.value.linkedin = dummyData.contact?.linkedin || ''
-    formData.value.github = '' // Not in dummy data
-    formData.value.portfolio = dummyData.contact?.website || ''
-    formData.value.summary = dummyData.summary || ''
-    
-    // Populate skills - map from dummy data structure to form structure
-    if (dummyData.skills) {
-      // Categorize technical skills
-      const technicalSkills = dummyData.skills.technical || []
-      formData.value.skills = {
-        backend: technicalSkills.filter((s: string) => 
-          ['Node.js', 'Python', 'PostgreSQL', 'MongoDB', 'GraphQL', 'REST APIs'].includes(s)
-        ),
-        frontend: technicalSkills.filter((s: string) => 
-          ['JavaScript', 'TypeScript', 'React'].includes(s)
-        ),
-        devops: technicalSkills.filter((s: string) => 
-          ['AWS', 'Docker', 'Kubernetes'].includes(s)
-        ),
-        other: dummyData.skills.soft || []
-      }
-    }
-    
-    // Populate experience
-    if (dummyData.experience && Array.isArray(dummyData.experience)) {
-      formData.value.experience = dummyData.experience.map((exp: any, index: number) => ({
-        id: index + 1,
-        position: exp.position || '',
-        company: exp.company || '',
-        location: exp.location || '',
-        startDate: exp.duration?.split(' - ')[0] || '',
-        endDate: exp.duration?.split(' - ')[1] || '',
-        current: exp.duration?.includes('Present') || false,
-        responsibilities: exp.achievements || ['']
-      }))
-    }
-    
-    // Populate education
-    if (dummyData.education && Array.isArray(dummyData.education)) {
-      formData.value.education = dummyData.education.map((edu: any, index: number) => ({
-        id: index + 1,
-        degree: edu.degree || '',
-        institution: edu.institution || '',
-        year: edu.duration || '',
-        percentage: edu.gpa || ''
-      }))
-    }
-    
-    // Populate achievements - can use certifications or projects
-    const achievements: string[] = []
-    if (dummyData.certifications && Array.isArray(dummyData.certifications)) {
-      dummyData.certifications.forEach((cert: any) => {
-        achievements.push(`${cert.name} - ${cert.issuer} (${cert.date})`)
-      })
-    }
-    if (dummyData.projects && Array.isArray(dummyData.projects)) {
-      dummyData.projects.forEach((project: any) => {
-        achievements.push(`${project.name}: ${project.description}`)
-      })
-    }
-    formData.value.achievements = achievements.length > 0 ? achievements : ['']
-    
-  } catch (error) {
-    console.error('Failed to load dummy data:', error)
-    toastr.error('Failed to load sample data', 'Error')
-  } finally {
-    // Hide loading indicator
-    isProcessing.value = false
+  if (process.client) {
+    await resumeStore.loadDummyData()
   }
 }
 
@@ -164,162 +102,41 @@ onMounted(async () => {
       showAuthModal.value = true
     }
     
-    // Load dummy data
+    // Load templates and dummy data
+    await templateStore.loadTemplates()
     await loadDummyData()
   } catch (error) {
     console.log('Auth check failed (backend may be offline):', error)
     // Don't show auth modal if backend is offline - allow using the app without auth
     showAuthModal.value = false
     
-    // Still try to load dummy data even if auth fails
+    // Still try to load templates and dummy data even if auth fails
+    await templateStore.loadTemplates()
     await loadDummyData()
   }
 })
 
-// State
+// View-specific state (not managed by stores)
 const activeTab = ref('upload')
 const sidebarOpen = ref(false)
 const previewModalOpen = ref(false)
 const lastSaved = ref('2m ago')
-
-// Form Data - Comprehensive Resume Structure
-const formData = ref({
-  fullName: '',
-  title: '',
-  email: '',
-  phone: '',
-  location: '',
-  linkedin: '',
-  github: '',
-  portfolio: '',
-  summary: '',
-  skills: {
-    backend: [] as string[],
-    frontend: [] as string[],
-    devops: [] as string[],
-    other: [] as string[]
-  },
-  experience: [
-    {
-      id: 1,
-      position: '',
-      company: '',
-      location: '',
-      startDate: '',
-      endDate: '',
-      current: false,
-      responsibilities: ['']
-    }
-  ],
-  education: [
-    {
-      id: 1,
-      degree: '',
-      institution: '',
-      year: '',
-      percentage: ''
-    }
-  ],
-  achievements: ['']
-})
-
-// Loading States
-const isProcessing = ref(false)
-const uploadError = ref('')
-const successMessage = ref('')
-const isTemplateLoading = ref(false)
-
-// Input Modes
-const resumeInputMode = ref('upload')
-const jobInputMode = ref('paste')
-const resumeText = ref('')
-const jobDescription = ref('')
-
-// AI Settings
-const atsScore = ref(0)
-const selectedTone = ref('Professional')
-const tones = ['Professional', 'Creative', 'Direct']
-const aiResults = ref({
-  atsOptimization: null as any,
-  improvedBullets: [] as string[],
-  skillGapAnalysis: null as any
-})
-
-// ATS Analysis Results
-const atsAnalysisCompleted = ref(false)
-const scoreGrade = ref('Not Analyzed')
-const experienceLevel = ref('Not Detected')
-const keywordMatchPercentage = ref(0)
-const wordCount = ref(0)
-const criticalIssuesCount = ref(0)
-const matchedKeywords = ref([])
-const missingKeywords = ref([])
-const formattingChecks = ref([])
-const criticalIssues = ref([])
-const contentAnalysis = ref({
-  action_verbs_percentage: 0,
-  quantifiable_results_percentage: 0,
-  avg_bullet_length: 0,
-  reading_level: 'Unknown'
-})
-
-// Page management
-const currentPage = ref(1)
-const totalPages = ref(1)
 const resumePreviewRef = ref<HTMLElement | null>(null)
-const actualContentHeight = ref(0)
 
-// Templates from JSON
-const templatesData = await import('~/data/templates.json').then(m => m.default || m) as TemplateMetadata[]
-const templatesFromJSON = ref<TemplateMetadata[]>(templatesData)
-const selectedTemplate = ref(templatesData[0]?.id || 'software-engineer')
+// New template system - use composable
+const { updateTheme } = useResumeTheme()
 
-// New template system
-const { getTemplateComponent } = useResumeTemplate()
-const { currentTheme, updateTheme } = useResumeTheme()
-
-// Dynamic template component (using shallowRef to avoid unnecessary reactivity)
-const currentTemplateComponent = shallowRef(null)
-const previewScale = ref(0.97)
-
-// Watch for template changes and load component dynamically
-watch(selectedTemplate, async (newTemplateId) => {
-  try {
-    isTemplateLoading.value = true
-    currentTemplateComponent.value = null // Clear old component
-    
-    await nextTick() // Ensure cleanup
-    
-    currentTemplateComponent.value = await getTemplateComponent(
-      newTemplateId,
-      templatesFromJSON.value
-    )
-    
-    // Show success feedback
-    const template = templatesFromJSON.value.find(t => t.id === newTemplateId)
-    if (template) {
-      successMessage.value = `✓ Template switched to ${template.name}`
-      setTimeout(() => successMessage.value = '', 2000)
-    }
-  } catch (error) {
-    console.error('Template loading failed:', error)
-    uploadError.value = 'Failed to load template'
-  } finally {
-    isTemplateLoading.value = false
-  }
-}, { immediate: true })
-
-// Colors
-const selectedColor = ref('indigo')
-const customColor = ref('#6366f1')
-const colorPalettes = ref([
-  { id: 'indigo', name: 'Royal Indigo', category: 'Default Corporate', hex: '#4f46e5' },
-  { id: 'emerald', name: 'Growth Emerald', category: 'Finance & Healthcare', hex: '#059669' },
-  { id: 'rose', name: 'Passion Rose', category: 'Creative & NGO', hex: '#e11d48' },
-  { id: 'slate', name: 'Classic Slate', category: 'Modern Minimalist', hex: '#334155' },
-  { id: 'amber', name: 'Solar Amber', category: 'High Energy & Sales', hex: '#d97706' },
-  { id: 'violet', name: 'Deep Violet', category: 'Luxury & Visionary', hex: '#7c3aed' }
-])
+// Computed properties from store getters
+const resumeDataFormatted = computed(() => resumeStore.resumeDataFormatted)
+const hasSkills = computed(() => resumeStore.hasSkills)
+const hasExperience = computed(() => resumeStore.hasExperience)
+const scoreCircleDashoffset = computed(() => resumeStore.scoreCircleDashoffset)
+const currentAccentColor = computed(() => templateStore.currentAccentColor)
+const currentThemeConfig = computed(() => templateStore.currentThemeConfig)
+const currentTemplateConfig = computed(() => templateStore.currentTemplate)
+const templateHeaderClass = computed(() => templateStore.templateHeaderClass)
+const templateNameClass = computed(() => templateStore.templateNameClass)
+const templatePrimaryColor = computed(() => templateStore.templatePrimaryColor)
 
 // Personal Fields
 const personalFields = ref([
@@ -342,54 +159,20 @@ const tabs = ref([
   { id: 'colors', name: 'Color Palette', icon: 'fa-palette' }
 ])
 
-// Computed
-const currentAccentColor = computed(() => {
-  if (customColor.value) return customColor.value
-  const palette = colorPalettes.value.find(p => p.id === selectedColor.value)
-  return palette ? palette.hex : '#4f46e5'
-})
-
-// Transform form data to ResumeData interface for templates
-const resumeDataFormatted = computed<ResumeData>(() => ({
-  basics: {
-    fullName: formData.value.fullName || '',
-    title: formData.value.title || '',
-    email: formData.value.email || '',
-    phone: formData.value.phone || '',
-    location: formData.value.location || '',
-    linkedin: formData.value.linkedin,
-    github: formData.value.github,
-    portfolio: formData.value.portfolio,
-    summary: formData.value.summary
-  },
-  experience: formData.value.experience || [],
-  education: formData.value.education || [],
-  skills: formData.value.skills || {},
-  achievements: formData.value.achievements?.filter((a: string) => a) || []
-}))
-
-// Current theme configuration
-const currentThemeConfig = computed<ThemeConfig>(() => ({
-  primaryColor: customColor.value || currentAccentColor.value,
-  fontFamily: 'inter',
-  spacing: 'normal',
-  typographyScale: 'medium'
-}))
+// Tones for AI
+const tones = ['Professional', 'Creative', 'Direct']
 
 // Update theme when color changes
 watch(currentThemeConfig, (newTheme) => {
   updateTheme(newTheme)
 })
 
-// Zoom controls
+// Zoom controls - use store action
 const adjustZoom = (delta: number) => {
-  previewScale.value = Math.max(0.3, Math.min(1.5, previewScale.value + delta))
+  templateStore.adjustZoom(delta)
 }
 
-const scoreCircleDashoffset = computed(() => {
-  const circumference = 264
-  return circumference - (atsScore.value / 100) * circumference
-})
+
 
 const previewKey = computed(() => {
   return JSON.stringify({
@@ -398,58 +181,6 @@ const previewKey = computed(() => {
     email: formData.value.email,
     template: selectedTemplate.value
   })
-})
-
-const hasSkills = computed(() => {
-  return Object.values(formData.value.skills).some(arr => arr.length > 0)
-})
-
-const hasExperience = computed(() => {
-  return formData.value.experience.length > 0 && formData.value.experience[0]?.position
-})
-
-// Get current template configuration
-const currentTemplateConfig = computed(() => {
-  return templatesFromJSON.value.find(t => t.id === selectedTemplate.value) || templatesFromJSON.value[0]
-})
-
-// Dynamic template styles based on selected template
-const templateHeaderClass = computed(() => {
-  const config = currentTemplateConfig.value
-  if (!config) return 'border-b-4 border-slate-900 pb-8 mb-8'
-  
-  // Different header styles based on template
-  switch (config.id) {
-    case 'executive':
-      return 'text-center border-b-2 border-slate-900 pb-8 mb-8'
-    case 'creative-designer':
-    case 'marketing-professional':
-      return 'border-b-2 pb-6 mb-6'
-    case 'data-scientist':
-      return 'border-b border-slate-300 pb-6 mb-6'
-    default:
-      return 'border-b-4 border-slate-900 pb-8 mb-8'
-  }
-})
-
-const templateNameClass = computed(() => {
-  const config = currentTemplateConfig.value
-  if (!config) return 'text-3xl font-black text-slate-900 tracking-tight uppercase'
-  
-  switch (config.id) {
-    case 'executive':
-      return 'text-4xl font-black text-slate-900 tracking-tight uppercase'
-    case 'creative-designer':
-    case 'content-creator':
-      return 'text-3xl font-bold text-slate-900'
-    default:
-      return 'text-3xl font-black text-slate-900 tracking-tight uppercase'
-  }
-})
-
-const templatePrimaryColor = computed(() => {
-  const config = currentTemplateConfig.value
-  return config?.layout?.primaryColor || currentAccentColor.value
 })
 
 // Measure actual content height for dynamic page splitting
@@ -733,19 +464,19 @@ const closeMobilePreview = () => {
   if (process.client) document.body.style.overflow = ''
 }
 
-const selectTemplate = (templateId: string) => {
-  console.log('Selecting template:', templateId)
-  selectedTemplate.value = templateId
-  const template = templatesFromJSON.value.find(t => t.id === templateId)
-  console.log('Template found:', template)
-  successMessage.value = `✓ Applied ${template?.name || 'template'}`
-  setTimeout(() => successMessage.value = '', 2000)
+const selectTemplate = async (templateId: string) => {
+  try {
+    await templateStore.selectTemplate(templateId)
+    resumeStore.setSuccess(`✓ Applied ${templateStore.currentTemplate?.name || 'template'}`)
+  } catch (error) {
+    console.error('Failed to select template:', error)
+    resumeStore.setError('Failed to load template')
+  }
 }
 
 const handleCustomColor = () => {
-  selectedColor.value = ''
-  successMessage.value = '✓ Custom color applied'
-  setTimeout(() => successMessage.value = '', 2000)
+  templateStore.setCustomColor(customColor.value)
+  resumeStore.setSuccess('✓ Custom color applied')
 }
 
 const adjustColorBrightness = (hex: string, percent: number): string => {
@@ -779,8 +510,7 @@ const getColorGradientStyle = (hex: string) => {
 }
 
 const selectColor = (color: { id: string }) => {
-  selectedColor.value = color.id
-  customColor.value = ''
+  templateStore.selectPaletteColor(color.id)
 }
 
 const handleResumeUpload = async (event: Event) => {
@@ -911,21 +641,13 @@ const parseResumeContent = (text: string) => {
 }
 
 const addExperience = () => {
-  formData.value.experience.push({
-    id: Date.now(),
-    position: '',
-    company: '',
-    location: '',
-    startDate: '',
-    endDate: '',
-    current: false,
-    responsibilities: ['']
-  })
+  resumeStore.addExperience()
 }
 
 const removeExperience = (index: number) => {
   if (formData.value.experience.length > 1) {
-    formData.value.experience.splice(index, 1)
+    const expId = formData.value.experience[index]?.id
+    if (expId) resumeStore.removeExperience(expId)
   }
 }
 
@@ -941,18 +663,13 @@ const removeResponsibility = (expIndex: number, respIndex: number) => {
 }
 
 const addEducation = () => {
-  formData.value.education.push({
-    id: Date.now(),
-    degree: '',
-    institution: '',
-    year: '',
-    percentage: ''
-  })
+  resumeStore.addEducation()
 }
 
 const removeEducation = (index: number) => {
   if (formData.value.education.length > 1) {
-    formData.value.education.splice(index, 1)
+    const eduId = formData.value.education[index]?.id
+    if (eduId) resumeStore.removeEducation(eduId)
   }
 }
 
@@ -2116,42 +1833,51 @@ useHead({
                 <p class="text-slate-400 text-xs mt-1 font-medium">Select a design that matches your industry and seniority level.</p>
               </header>
 
-              <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                <div v-for="template in templatesFromJSON" :key="template.id" @click="selectTemplate(template.id)"
-                  :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-100']">
-                  
-                  <!-- Dynamic Template Thumbnail -->
-                  <div :class="['aspect-[3/4] rounded-xl mb-2 sm:mb-3 overflow-hidden', template.thumbnail.bg]">
-                    <div :class="['w-full h-full flex', template.thumbnail.mainClass]">
-                      <template v-for="(element, idx) in template.thumbnail.elements" :key="idx">
-                        <div :class="element.class">
-                          <template v-if="element.children">
-                            <template v-for="(child, cidx) in element.children" :key="cidx">
-                              <div :class="child.class">
-                                <template v-if="child.children">
-                                  <div v-for="(grandchild, gidx) in child.children" :key="gidx" :class="grandchild.class"></div>
-                                </template>
-                              </div>
+              <ClientOnly>
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                  <div v-for="template in templatesFromJSON" :key="template.id" @click="selectTemplate(template.id)"
+                    :class="['template-card group relative bg-white border-2 p-2 rounded-2xl cursor-pointer hover:border-indigo-200 hover:shadow-lg transition-all', selectedTemplate === template.id ? 'template-card-active border-indigo-600' : 'border-slate-100']">
+                    
+                    <!-- Dynamic Template Thumbnail -->
+                    <div :class="['aspect-[3/4] rounded-xl mb-2 sm:mb-3 overflow-hidden', template.thumbnail.bg]">
+                      <div :class="['w-full h-full flex', template.thumbnail.mainClass]">
+                        <template v-for="(element, idx) in template.thumbnail.elements" :key="idx">
+                          <div :class="element.class">
+                            <template v-if="element.children">
+                              <template v-for="(child, cidx) in element.children" :key="cidx">
+                                <div :class="child.class">
+                                  <template v-if="child.children">
+                                    <div v-for="(grandchild, gidx) in child.children" :key="gidx" :class="grandchild.class"></div>
+                                  </template>
+                                </div>
+                              </template>
                             </template>
-                          </template>
-                        </div>
-                      </template>
+                          </div>
+                        </template>
+                      </div>
                     </div>
-                  </div>
 
-                  <div class="px-1 sm:px-2 pb-1 sm:pb-2">
-                    <h3 class="font-bold text-xs sm:text-sm text-slate-800 truncate">{{ template.name }}</h3>
-                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">{{ template.type }}</p>
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      <span v-for="tag in template.tags.slice(0, 2)" :key="tag" class="text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">{{ tag }}</span>
+                    <div class="px-1 sm:px-2 pb-1 sm:pb-2">
+                      <h3 class="font-bold text-xs sm:text-sm text-slate-800 truncate">{{ template.name }}</h3>
+                      <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">{{ template.type }}</p>
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        <span v-for="tag in template.tags.slice(0, 2)" :key="tag" class="text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">{{ tag }}</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-check text-white text-[10px] sm:text-xs"></i>
+                    
+                    <div v-if="selectedTemplate === template.id" class="absolute top-2 sm:top-4 right-2 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                      <i class="fa-solid fa-check text-white text-[10px] sm:text-xs"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
+                
+                <template #fallback>
+                  <div class="p-8 text-center text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-xl mb-2"></i>
+                    <p class="text-sm">Loading templates...</p>
+                  </div>
+                </template>
+              </ClientOnly>
             </div>
 
             <!-- Tab: Colors -->
